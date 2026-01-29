@@ -1,15 +1,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, PiggyBank } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { TrendingUp, TrendingDown, PiggyBank, Wallet, Target } from 'lucide-react';
 
 interface BalanceCardProps {
   balance: number;
   totalExpenses: number;
   monthlyIncome: number;
+  totalRecurring: number;
+  totalOneTime: number;
+  freeMoneyAfterFixed: number;
+  savingsGoal: number;
 }
 
-export const BalanceCard = ({ balance, totalExpenses, monthlyIncome }: BalanceCardProps) => {
+export const BalanceCard = ({ 
+  balance, 
+  totalExpenses, 
+  monthlyIncome, 
+  totalRecurring, 
+  totalOneTime,
+  freeMoneyAfterFixed,
+  savingsGoal
+}: BalanceCardProps) => {
   const isPositive = balance >= 0;
   const savingsRate = monthlyIncome > 0 ? (balance / monthlyIncome) * 100 : 0;
+  
+  // Progress calculations
+  const fixedExpensesPercent = monthlyIncome > 0 ? (totalRecurring / monthlyIncome) * 100 : 0;
+  const variableExpensesPercent = monthlyIncome > 0 ? (totalOneTime / monthlyIncome) * 100 : 0;
+  const savingsPercent = monthlyIncome > 0 ? (savingsGoal / monthlyIncome) * 100 : 0;
+  const totalUsedPercent = Math.min(fixedExpensesPercent + variableExpensesPercent + savingsPercent, 100);
 
   return (
     <Card className="glass-card overflow-hidden animate-fade-in">
@@ -22,7 +41,7 @@ export const BalanceCard = ({ balance, totalExpenses, monthlyIncome }: BalanceCa
           Balance Disponible
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="flex items-center gap-2">
           {isPositive ? (
             <TrendingUp className="h-6 w-6 text-income" />
@@ -33,16 +52,93 @@ export const BalanceCard = ({ balance, totalExpenses, monthlyIncome }: BalanceCa
             €{Math.abs(balance).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
           </span>
         </div>
-        <div className="mt-4 space-y-2">
+
+        {/* Free Money After Fixed Expenses */}
+        <div className="p-3 rounded-lg bg-recurring-light/50 border border-recurring/20">
+          <div className="flex items-center gap-2 mb-1">
+            <Wallet className="h-4 w-4 text-recurring" />
+            <span className="text-sm font-medium text-recurring">Dinero Libre tras Gastos Fijos</span>
+          </div>
+          <span className="text-2xl font-bold text-recurring">
+            €{freeMoneyAfterFixed.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+          </span>
+          <p className="text-xs text-muted-foreground mt-1">Disponible para ocio antes de tocar ahorros</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Uso del Ingreso</span>
+            <span className="font-medium">{totalUsedPercent.toFixed(1)}%</span>
+          </div>
+          
+          <div className="relative h-4 rounded-full bg-muted overflow-hidden">
+            {/* Fixed expenses (recurring) */}
+            <div 
+              className="absolute h-full bg-expense transition-all"
+              style={{ width: `${Math.min(fixedExpensesPercent, 100)}%` }}
+            />
+            {/* Variable expenses (one-time) */}
+            <div 
+              className="absolute h-full bg-recurring transition-all"
+              style={{ 
+                left: `${Math.min(fixedExpensesPercent, 100)}%`,
+                width: `${Math.min(variableExpensesPercent, 100 - fixedExpensesPercent)}%` 
+              }}
+            />
+            {/* Savings */}
+            <div 
+              className="absolute h-full bg-income transition-all"
+              style={{ 
+                left: `${Math.min(fixedExpensesPercent + variableExpensesPercent, 100)}%`,
+                width: `${Math.min(savingsPercent, 100 - fixedExpensesPercent - variableExpensesPercent)}%` 
+              }}
+            />
+          </div>
+          
+          <div className="flex flex-wrap gap-4 text-xs">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-expense" />
+              <span>Fijos: {fixedExpensesPercent.toFixed(1)}%</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-recurring" />
+              <span>Variables: {variableExpensesPercent.toFixed(1)}%</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-income" />
+              <span>Ahorro: {savingsPercent.toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="space-y-2 pt-2 border-t border-border">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Total gastos</span>
+            <span className="text-muted-foreground">Gastos fijos</span>
             <span className="font-medium text-expense">
-              -€{totalExpenses.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+              -€{totalRecurring.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
             </span>
           </div>
-          {monthlyIncome > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Gastos variables</span>
+            <span className="font-medium text-recurring">
+              -€{totalOneTime.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+          {savingsGoal > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Tasa de ahorro</span>
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Target className="h-3 w-3" /> Ahorro reservado
+              </span>
+              <span className="font-medium text-income">
+                -€{savingsGoal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          )}
+          {monthlyIncome > 0 && (
+            <div className="flex justify-between text-sm pt-2 border-t border-border">
+              <span className="text-muted-foreground">Tasa de ahorro efectiva</span>
               <span className={`font-medium ${savingsRate >= 0 ? 'text-income' : 'text-expense'}`}>
                 {savingsRate.toFixed(1)}%
               </span>

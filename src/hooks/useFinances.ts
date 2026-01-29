@@ -5,7 +5,7 @@ const STORAGE_KEY = 'finance-tracker-data';
 
 const getInitialState = (): FinanceState => {
   if (typeof window === 'undefined') {
-    return { monthlyIncome: 0, expenses: [] };
+    return { monthlyIncome: 0, savingsGoal: 0, expenses: [] };
   }
   
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -13,17 +13,18 @@ const getInitialState = (): FinanceState => {
     try {
       const parsed = JSON.parse(stored);
       return {
-        ...parsed,
-        expenses: parsed.expenses.map((e: Expense) => ({
+        monthlyIncome: parsed.monthlyIncome || 0,
+        savingsGoal: parsed.savingsGoal || 0,
+        expenses: parsed.expenses?.map((e: Expense) => ({
           ...e,
           createdAt: new Date(e.createdAt)
-        }))
+        })) || []
       };
     } catch {
-      return { monthlyIncome: 0, expenses: [] };
+      return { monthlyIncome: 0, savingsGoal: 0, expenses: [] };
     }
   }
-  return { monthlyIncome: 0, expenses: [] };
+  return { monthlyIncome: 0, savingsGoal: 0, expenses: [] };
 };
 
 export const useFinances = () => {
@@ -35,6 +36,10 @@ export const useFinances = () => {
 
   const setMonthlyIncome = (amount: number) => {
     setState(prev => ({ ...prev, monthlyIncome: amount }));
+  };
+
+  const setSavingsGoal = (amount: number) => {
+    setState(prev => ({ ...prev, savingsGoal: amount }));
   };
 
   const addExpense = (name: string, amount: number, isRecurring: boolean) => {
@@ -72,18 +77,22 @@ export const useFinances = () => {
   const totalRecurring = recurringExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalOneTime = oneTimeExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalExpenses = totalRecurring + totalOneTime;
-  const balance = state.monthlyIncome - totalExpenses;
+  const freeMoneyAfterFixed = state.monthlyIncome - totalRecurring;
+  const balance = state.monthlyIncome - totalExpenses - state.savingsGoal;
 
   return {
     monthlyIncome: state.monthlyIncome,
+    savingsGoal: state.savingsGoal,
     expenses: state.expenses,
     recurringExpenses,
     oneTimeExpenses,
     totalRecurring,
     totalOneTime,
     totalExpenses,
+    freeMoneyAfterFixed,
     balance,
     setMonthlyIncome,
+    setSavingsGoal,
     addExpense,
     removeExpense,
     toggleRecurring
