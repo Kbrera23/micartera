@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, TrendingDown, PiggyBank, Wallet, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, PiggyBank, Wallet, Target, Gift } from 'lucide-react';
 
 interface BalanceCardProps {
   balance: number;
@@ -10,6 +10,8 @@ interface BalanceCardProps {
   totalOneTime: number;
   freeMoneyAfterFixed: number;
   savingsGoal: number;
+  totalPurchaseGoalQuotas: number;
+  availableForHobbies: number;
 }
 
 export const BalanceCard = ({ 
@@ -19,7 +21,9 @@ export const BalanceCard = ({
   totalRecurring, 
   totalOneTime,
   freeMoneyAfterFixed,
-  savingsGoal
+  savingsGoal,
+  totalPurchaseGoalQuotas,
+  availableForHobbies
 }: BalanceCardProps) => {
   const isPositive = balance >= 0;
   const savingsRate = monthlyIncome > 0 ? (balance / monthlyIncome) * 100 : 0;
@@ -28,7 +32,8 @@ export const BalanceCard = ({
   const fixedExpensesPercent = monthlyIncome > 0 ? (totalRecurring / monthlyIncome) * 100 : 0;
   const variableExpensesPercent = monthlyIncome > 0 ? (totalOneTime / monthlyIncome) * 100 : 0;
   const savingsPercent = monthlyIncome > 0 ? (savingsGoal / monthlyIncome) * 100 : 0;
-  const totalUsedPercent = Math.min(fixedExpensesPercent + variableExpensesPercent + savingsPercent, 100);
+  const goalsPercent = monthlyIncome > 0 ? (totalPurchaseGoalQuotas / monthlyIncome) * 100 : 0;
+  const totalUsedPercent = Math.min(fixedExpensesPercent + variableExpensesPercent + savingsPercent + goalsPercent, 100);
 
   return (
     <Card className="glass-card overflow-hidden animate-fade-in">
@@ -65,6 +70,20 @@ export const BalanceCard = ({
           <p className="text-xs text-muted-foreground mt-1">Disponible para ocio antes de tocar ahorros</p>
         </div>
 
+        {/* Available for Hobbies after Goals */}
+        {totalPurchaseGoalQuotas > 0 && (
+          <div className="p-3 rounded-lg bg-goal-light/50 border border-goal/20">
+            <div className="flex items-center gap-2 mb-1">
+              <Gift className="h-4 w-4 text-goal" />
+              <span className="text-sm font-medium text-goal">Disponible para Hobbies</span>
+            </div>
+            <span className={`text-2xl font-bold ${availableForHobbies >= 0 ? 'text-goal' : 'text-expense'}`}>
+              €{availableForHobbies.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+            </span>
+            <p className="text-xs text-muted-foreground mt-1">Después de reservar cuotas de objetivos</p>
+          </div>
+        )}
+
         {/* Progress Bar */}
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
@@ -94,6 +113,14 @@ export const BalanceCard = ({
                 width: `${Math.min(savingsPercent, 100 - fixedExpensesPercent - variableExpensesPercent)}%` 
               }}
             />
+            {/* Goals */}
+            <div 
+              className="absolute h-full bg-goal transition-all"
+              style={{ 
+                left: `${Math.min(fixedExpensesPercent + variableExpensesPercent + savingsPercent, 100)}%`,
+                width: `${Math.min(goalsPercent, 100 - fixedExpensesPercent - variableExpensesPercent - savingsPercent)}%` 
+              }}
+            />
           </div>
           
           <div className="flex flex-wrap gap-4 text-xs">
@@ -109,6 +136,12 @@ export const BalanceCard = ({
               <div className="w-3 h-3 rounded-full bg-income" />
               <span>Ahorro: {savingsPercent.toFixed(1)}%</span>
             </div>
+            {goalsPercent > 0 && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-goal" />
+                <span>Objetivos: {goalsPercent.toFixed(1)}%</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -133,6 +166,16 @@ export const BalanceCard = ({
               </span>
               <span className="font-medium text-income">
                 -€{savingsGoal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          )}
+          {totalPurchaseGoalQuotas > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Gift className="h-3 w-3" /> Cuotas objetivos
+              </span>
+              <span className="font-medium text-goal">
+                -€{totalPurchaseGoalQuotas.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
               </span>
             </div>
           )}

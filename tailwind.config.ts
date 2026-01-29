@@ -62,6 +62,11 @@ export default {
           foreground: "hsl(var(--recurring-foreground))",
           light: "hsl(var(--recurring-light))",
         },
+        goal: {
+          DEFAULT: "hsl(var(--goal))",
+          foreground: "hsl(var(--goal-foreground))",
+          light: "hsl(var(--goal-light))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

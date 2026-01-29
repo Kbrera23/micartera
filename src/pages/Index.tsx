@@ -3,6 +3,8 @@ import { IncomeCard } from '@/components/IncomeCard';
 import { BalanceCard } from '@/components/BalanceCard';
 import { AddExpenseForm } from '@/components/AddExpenseForm';
 import { ExpenseList } from '@/components/ExpenseList';
+import { AddPurchaseGoalForm } from '@/components/AddPurchaseGoalForm';
+import { PurchaseGoalsSection } from '@/components/PurchaseGoalsSection';
 import { Wallet } from 'lucide-react';
 
 const Index = () => {
@@ -16,11 +18,17 @@ const Index = () => {
     totalExpenses,
     freeMoneyAfterFixed,
     balance,
+    purchaseGoalsWithQuotas,
+    totalPurchaseGoalQuotas,
+    availableForHobbies,
+    hasInsufficientFunds,
     setMonthlyIncome,
     setSavingsGoal,
     addExpense,
     removeExpense,
-    toggleRecurring
+    toggleRecurring,
+    addPurchaseGoal,
+    removePurchaseGoal
   } = useFinances();
 
   return (
@@ -43,7 +51,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="container max-w-5xl mx-auto px-4 py-6">
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left Column - Income & Form */}
+          {/* Left Column - Income & Forms */}
           <div className="space-y-6">
             <IncomeCard
               monthlyIncome={monthlyIncome}
@@ -52,9 +60,10 @@ const Index = () => {
               onSetSavingsGoal={setSavingsGoal}
             />
             <AddExpenseForm onAddExpense={addExpense} />
+            <AddPurchaseGoalForm onAddGoal={addPurchaseGoal} />
           </div>
 
-          {/* Middle Column - Balance */}
+          {/* Middle Column - Balance & Lists */}
           <div className="lg:col-span-2 space-y-6">
             <BalanceCard
               balance={balance}
@@ -64,6 +73,17 @@ const Index = () => {
               totalOneTime={totalOneTime}
               freeMoneyAfterFixed={freeMoneyAfterFixed}
               savingsGoal={savingsGoal}
+              totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
+              availableForHobbies={availableForHobbies}
+            />
+
+            {/* Purchase Goals Section */}
+            <PurchaseGoalsSection
+              goals={purchaseGoalsWithQuotas}
+              totalQuotas={totalPurchaseGoalQuotas}
+              availableForHobbies={availableForHobbies}
+              hasInsufficientFunds={hasInsufficientFunds}
+              onRemove={removePurchaseGoal}
             />
 
             {/* Expense Lists */}
