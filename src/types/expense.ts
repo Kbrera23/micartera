@@ -8,5 +8,6 @@ export interface Expense {
 
 export interface FinanceState {
   monthlyIncome: number;
+  savingsGoal: number;
   expenses: Expense[];
 }

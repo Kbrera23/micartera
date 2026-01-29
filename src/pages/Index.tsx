@@ -8,13 +8,16 @@ import { Wallet } from 'lucide-react';
 const Index = () => {
   const {
     monthlyIncome,
+    savingsGoal,
     recurringExpenses,
     oneTimeExpenses,
     totalRecurring,
     totalOneTime,
     totalExpenses,
+    freeMoneyAfterFixed,
     balance,
     setMonthlyIncome,
+    setSavingsGoal,
     addExpense,
     removeExpense,
     toggleRecurring
@@ -44,7 +47,9 @@ const Index = () => {
           <div className="space-y-6">
             <IncomeCard
               monthlyIncome={monthlyIncome}
+              savingsGoal={savingsGoal}
               onSetIncome={setMonthlyIncome}
+              onSetSavingsGoal={setSavingsGoal}
             />
             <AddExpenseForm onAddExpense={addExpense} />
           </div>
@@ -55,6 +60,10 @@ const Index = () => {
               balance={balance}
               totalExpenses={totalExpenses}
               monthlyIncome={monthlyIncome}
+              totalRecurring={totalRecurring}
+              totalOneTime={totalOneTime}
+              freeMoneyAfterFixed={freeMoneyAfterFixed}
+              savingsGoal={savingsGoal}
             />
 
             {/* Expense Lists */}

@@ -2,26 +2,36 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Wallet, Check, Pencil } from 'lucide-react';
+import { Wallet, Check, Pencil, PiggyBank } from 'lucide-react';
 
 interface IncomeCardProps {
   monthlyIncome: number;
+  savingsGoal: number;
   onSetIncome: (amount: number) => void;
+  onSetSavingsGoal: (amount: number) => void;
 }
 
-export const IncomeCard = ({ monthlyIncome, onSetIncome }: IncomeCardProps) => {
-  const [isEditing, setIsEditing] = useState(monthlyIncome === 0);
-  const [inputValue, setInputValue] = useState(monthlyIncome.toString());
+export const IncomeCard = ({ monthlyIncome, savingsGoal, onSetIncome, onSetSavingsGoal }: IncomeCardProps) => {
+  const [isEditingIncome, setIsEditingIncome] = useState(monthlyIncome === 0);
+  const [isEditingSavings, setIsEditingSavings] = useState(false);
+  const [incomeValue, setIncomeValue] = useState(monthlyIncome.toString());
+  const [savingsValue, setSavingsValue] = useState(savingsGoal.toString());
 
-  const handleSave = () => {
-    const amount = parseFloat(inputValue) || 0;
+  const handleSaveIncome = () => {
+    const amount = parseFloat(incomeValue) || 0;
     onSetIncome(amount);
-    setIsEditing(false);
+    setIsEditingIncome(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleSaveSavings = () => {
+    const amount = parseFloat(savingsValue) || 0;
+    onSetSavingsGoal(amount);
+    setIsEditingSavings(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, type: 'income' | 'savings') => {
     if (e.key === 'Enter') {
-      handleSave();
+      type === 'income' ? handleSaveIncome() : handleSaveSavings();
     }
   };
 
@@ -36,22 +46,23 @@ export const IncomeCard = ({ monthlyIncome, onSetIncome }: IncomeCardProps) => {
           Ingreso Mensual
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {isEditing ? (
+      <CardContent className="space-y-4">
+        {/* Income Section */}
+        {isEditingIncome ? (
           <div className="flex gap-2">
             <div className="relative flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
               <Input
                 type="number"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
+                value={incomeValue}
+                onChange={(e) => setIncomeValue(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, 'income')}
                 className="pl-8 text-xl font-semibold"
                 placeholder="0.00"
                 autoFocus
               />
             </div>
-            <Button onClick={handleSave} className="bg-income hover:bg-income/90">
+            <Button onClick={handleSaveIncome} className="bg-income hover:bg-income/90">
               <Check className="h-5 w-5" />
             </Button>
           </div>
@@ -64,8 +75,8 @@ export const IncomeCard = ({ monthlyIncome, onSetIncome }: IncomeCardProps) => {
               variant="ghost"
               size="icon"
               onClick={() => {
-                setInputValue(monthlyIncome.toString());
-                setIsEditing(true);
+                setIncomeValue(monthlyIncome.toString());
+                setIsEditingIncome(true);
               }}
               className="text-muted-foreground hover:text-foreground"
             >
@@ -73,7 +84,55 @@ export const IncomeCard = ({ monthlyIncome, onSetIncome }: IncomeCardProps) => {
             </Button>
           </div>
         )}
-        <p className="text-sm text-muted-foreground mt-2">Recurrente cada mes</p>
+        <p className="text-sm text-muted-foreground">Recurrente cada mes</p>
+
+        {/* Savings Goal Section */}
+        <div className="pt-4 border-t border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 rounded-lg bg-recurring-light">
+              <PiggyBank className="h-4 w-4 text-recurring" />
+            </div>
+            <span className="text-sm font-medium">Objetivo de Ahorro Mensual</span>
+          </div>
+          
+          {isEditingSavings ? (
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
+                <Input
+                  type="number"
+                  value={savingsValue}
+                  onChange={(e) => setSavingsValue(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 'savings')}
+                  className="pl-8 font-semibold"
+                  placeholder="0.00"
+                  autoFocus
+                />
+              </div>
+              <Button onClick={handleSaveSavings} className="bg-recurring hover:bg-recurring/90">
+                <Check className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-bold text-recurring">
+                €{savingsGoal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setSavingsValue(savingsGoal.toString());
+                  setIsEditingSavings(true);
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground mt-1">Se reserva automáticamente del saldo</p>
+        </div>
       </CardContent>
     </Card>
   );
