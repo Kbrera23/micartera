@@ -34,13 +34,13 @@ export const PurchaseGoalsSection = ({
 
   if (goals.length === 0) {
     return (
-      <Card className="glass-card animate-fade-in">
+      <Card className="glass-card animate-fade-in rounded-2xl">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg font-medium">
-            <div className="p-2 rounded-lg bg-goal-light">
+            <div className="p-2 rounded-xl bg-goal-light">
               <Gift className="h-5 w-5 text-goal" />
             </div>
-            Objetivos de Compra
+            Mis Caprichos
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -54,19 +54,19 @@ export const PurchaseGoalsSection = ({
 
   return (
     <div className="space-y-4">
-      <Card className="glass-card animate-fade-in">
+      <Card className="glass-card animate-fade-in rounded-2xl">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg font-medium">
-            <div className="p-2 rounded-lg bg-goal-light">
+            <div className="p-2 rounded-xl bg-goal-light">
               <Gift className="h-5 w-5 text-goal" />
             </div>
-            Objetivos de Compra
+            Mis Caprichos
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Insufficient Funds Warning */}
           {hasInsufficientFunds && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30">
               <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-destructive">
@@ -80,15 +80,15 @@ export const PurchaseGoalsSection = ({
           )}
 
           {/* Summary */}
-          <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+          <div className="flex justify-between items-center p-3 rounded-xl bg-muted/50">
             <span className="text-sm text-muted-foreground">Total Cuotas Mensuales</span>
             <span className="font-bold text-goal">
               {formatCurrency(totalQuotas)}
             </span>
           </div>
 
-          <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-            <span className="text-sm text-muted-foreground">Disponible para Hobbies</span>
+          <div className="flex justify-between items-center p-3 rounded-xl bg-muted/50">
+            <span className="text-sm text-muted-foreground">Disponible para Ocio</span>
             <span className={`font-bold ${hasInsufficientFunds ? 'text-expense' : 'text-income'}`}>
               {hasInsufficientFunds ? '-' : ''}{formatCurrency(availableForHobbies)}
             </span>

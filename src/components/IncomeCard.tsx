@@ -17,6 +17,10 @@ export const IncomeCard = ({ monthlyIncome, savingsGoal, onSetIncome, onSetSavin
   const [incomeValue, setIncomeValue] = useState(monthlyIncome.toString());
   const [savingsValue, setSavingsValue] = useState(savingsGoal.toString());
 
+  const formatCurrency = (amount: number) => {
+    return `€${amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
+  };
+
   const handleSaveIncome = () => {
     const amount = parseFloat(incomeValue) || 0;
     onSetIncome(amount);
@@ -36,11 +40,11 @@ export const IncomeCard = ({ monthlyIncome, savingsGoal, onSetIncome, onSetSavin
   };
 
   return (
-    <Card className="glass-card overflow-hidden animate-fade-in">
+    <Card className="glass-card overflow-hidden animate-fade-in rounded-2xl">
       <div className="gradient-income h-2" />
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg font-medium">
-          <div className="p-2 rounded-lg bg-income-light">
+          <div className="p-2 rounded-xl bg-income-light">
             <Wallet className="h-5 w-5 text-income" />
           </div>
           Ingreso Mensual
@@ -57,19 +61,19 @@ export const IncomeCard = ({ monthlyIncome, savingsGoal, onSetIncome, onSetSavin
                 value={incomeValue}
                 onChange={(e) => setIncomeValue(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 'income')}
-                className="pl-8 text-xl font-semibold"
+                className="pl-8 text-xl font-semibold rounded-xl"
                 placeholder="0.00"
                 autoFocus
               />
             </div>
-            <Button onClick={handleSaveIncome} className="bg-income hover:bg-income/90">
+            <Button onClick={handleSaveIncome} className="bg-income hover:bg-income/90 rounded-xl">
               <Check className="h-5 w-5" />
             </Button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <span className="text-3xl font-bold text-income">
-              €{monthlyIncome.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+              {formatCurrency(monthlyIncome)}
             </span>
             <Button
               variant="ghost"
@@ -78,7 +82,7 @@ export const IncomeCard = ({ monthlyIncome, savingsGoal, onSetIncome, onSetSavin
                 setIncomeValue(monthlyIncome.toString());
                 setIsEditingIncome(true);
               }}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground rounded-xl"
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -89,7 +93,7 @@ export const IncomeCard = ({ monthlyIncome, savingsGoal, onSetIncome, onSetSavin
         {/* Savings Goal Section */}
         <div className="pt-4 border-t border-border">
           <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-recurring-light">
+            <div className="p-1.5 rounded-xl bg-recurring-light">
               <PiggyBank className="h-4 w-4 text-recurring" />
             </div>
             <span className="text-sm font-medium">Objetivo de Ahorro Mensual</span>
@@ -104,19 +108,19 @@ export const IncomeCard = ({ monthlyIncome, savingsGoal, onSetIncome, onSetSavin
                   value={savingsValue}
                   onChange={(e) => setSavingsValue(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, 'savings')}
-                  className="pl-8 font-semibold"
+                  className="pl-8 font-semibold rounded-xl"
                   placeholder="0.00"
                   autoFocus
                 />
               </div>
-              <Button onClick={handleSaveSavings} className="bg-recurring hover:bg-recurring/90">
+              <Button onClick={handleSaveSavings} className="bg-recurring hover:bg-recurring/90 rounded-xl">
                 <Check className="h-4 w-4" />
               </Button>
             </div>
           ) : (
             <div className="flex items-center justify-between">
               <span className="text-xl font-bold text-recurring">
-                €{savingsGoal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                {formatCurrency(savingsGoal)}
               </span>
               <Button
                 variant="ghost"
@@ -125,7 +129,7 @@ export const IncomeCard = ({ monthlyIncome, savingsGoal, onSetIncome, onSetSavin
                   setSavingsValue(savingsGoal.toString());
                   setIsEditingSavings(true);
                 }}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground rounded-xl"
               >
                 <Pencil className="h-4 w-4" />
               </Button>

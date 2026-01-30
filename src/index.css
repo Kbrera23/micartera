@@ -4,8 +4,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Purchase Goals Colors */
-
 @layer base {
   :root {
     --background: 210 20% 98%;
@@ -47,6 +45,12 @@
     --goal: 280 65% 55%;
     --goal-foreground: 0 0% 100%;
     --goal-light: 280 50% 96%;
+
+    /* Bank colors */
+    --santander: 0 75% 45%;
+    --lacaixa: 210 80% 50%;
+    --ing: 30 95% 55%;
+    --revolut: 220 10% 30%;
 
     --border: 220 15% 90%;
     --input: 220 15% 90%;
@@ -105,6 +109,12 @@
     --goal-foreground: 0 0% 100%;
     --goal-light: 280 40% 18%;
 
+    /* Bank colors dark */
+    --santander: 0 70% 40%;
+    --lacaixa: 210 75% 45%;
+    --ing: 30 90% 50%;
+    --revolut: 220 10% 40%;
+
     --border: 220 15% 20%;
     --input: 220 15% 20%;
     --ring: 160 60% 45%;
@@ -144,6 +154,10 @@
     background: linear-gradient(135deg, hsl(var(--recurring)) 0%, hsl(250 70% 50%) 100%);
   }
 
+  .gradient-goal {
+    background: linear-gradient(135deg, hsl(var(--goal)) 0%, hsl(300 60% 50%) 100%);
+  }
+
   .glass-card {
     @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-lg;
   }
@@ -154,6 +168,10 @@
 
   .animate-slide-up {
     animation: slideUp 0.3s ease-out;
+  }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   @keyframes fadeIn {
