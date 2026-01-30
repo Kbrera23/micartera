@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Expense, PurchaseGoal, FinanceState } from '@/types/expense';
+import { useState, useEffect, useMemo } from 'react';
+import { Expense, PurchaseGoal, FinanceState, ExpenseFrequency } from '@/types/expense';
 
 const STORAGE_KEY = 'finance-tracker-data';
 
@@ -17,6 +17,7 @@ const getInitialState = (): FinanceState => {
         savingsGoal: parsed.savingsGoal || 0,
         expenses: parsed.expenses?.map((e: Expense) => ({
           ...e,
+          frequency: e.frequency || 'monthly',
           createdAt: new Date(e.createdAt)
         })) || [],
         purchaseGoals: parsed.purchaseGoals?.map((g: PurchaseGoal) => ({
@@ -37,7 +38,7 @@ const calculateMonthsRemaining = (targetDate: Date): number => {
   const now = new Date();
   const target = new Date(targetDate);
   const months = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
-  return Math.max(1, months); // Minimum 1 month
+  return Math.max(1, months);
 };
 
 // Calculate monthly quota for a purchase goal
@@ -45,6 +46,18 @@ const calculateMonthlyQuota = (goal: PurchaseGoal): number => {
   const remaining = goal.targetPrice - goal.savedAmount;
   const months = calculateMonthsRemaining(goal.targetDate);
   return remaining > 0 ? remaining / months : 0;
+};
+
+// Calculate monthly provision based on frequency
+const calculateMonthlyProvision = (amount: number, frequency: ExpenseFrequency): number => {
+  switch (frequency) {
+    case 'quarterly':
+      return amount / 3;
+    case 'annual':
+      return amount / 12;
+    default:
+      return 0; // Monthly expenses don't need provisioning
+  }
 };
 
 export const useFinances = () => {
@@ -62,12 +75,20 @@ export const useFinances = () => {
     setState(prev => ({ ...prev, savingsGoal: amount }));
   };
 
-  const addExpense = (name: string, amount: number, isRecurring: boolean) => {
+  const addExpense = (
+    name: string,
+    amount: number,
+    isRecurring: boolean,
+    frequency: ExpenseFrequency = 'monthly',
+    category?: string
+  ) => {
     const newExpense: Expense = {
       id: crypto.randomUUID(),
       name,
       amount,
       isRecurring,
+      frequency,
+      category,
       createdAt: new Date()
     };
     setState(prev => ({
@@ -88,6 +109,15 @@ export const useFinances = () => {
       ...prev,
       expenses: prev.expenses.map(e =>
         e.id === id ? { ...e, isRecurring: !e.isRecurring } : e
+      )
+    }));
+  };
+
+  const updateExpenseFrequency = (id: string, frequency: ExpenseFrequency) => {
+    setState(prev => ({
+      ...prev,
+      expenses: prev.expenses.map(e =>
+        e.id === id ? { ...e, frequency } : e
       )
     }));
   };
@@ -124,51 +154,93 @@ export const useFinances = () => {
     }));
   };
 
-  // Calculations
-  const recurringExpenses = state.expenses.filter(e => e.isRecurring);
-  const oneTimeExpenses = state.expenses.filter(e => !e.isRecurring);
-  const totalRecurring = recurringExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalOneTime = oneTimeExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalExpenses = totalRecurring + totalOneTime;
-  const freeMoneyAfterFixed = state.monthlyIncome - totalRecurring;
-  
-  // Purchase goals calculations
-  const purchaseGoalsWithQuotas = state.purchaseGoals.map(goal => ({
-    ...goal,
-    monthlyQuota: calculateMonthlyQuota(goal),
-    monthsRemaining: calculateMonthsRemaining(goal.targetDate),
-    progressPercent: goal.targetPrice > 0 ? (goal.savedAmount / goal.targetPrice) * 100 : 0
-  }));
-  
-  const totalPurchaseGoalQuotas = purchaseGoalsWithQuotas.reduce((sum, g) => sum + g.monthlyQuota, 0);
-  
-  // Available for hobbies = Free money after fixed - savings goal - purchase goal quotas
-  const availableForHobbies = freeMoneyAfterFixed - state.savingsGoal - totalPurchaseGoalQuotas;
-  const hasInsufficientFunds = availableForHobbies < 0;
-  
-  const balance = state.monthlyIncome - totalExpenses - state.savingsGoal;
+  // Calculations with memoization
+  const calculations = useMemo(() => {
+    const recurringExpenses = state.expenses.filter(e => e.isRecurring);
+    const oneTimeExpenses = state.expenses.filter(e => !e.isRecurring);
+    
+    // Monthly recurring (only those with 'monthly' frequency)
+    const monthlyRecurring = recurringExpenses.filter(e => e.frequency === 'monthly');
+    const totalMonthlyRecurring = monthlyRecurring.reduce((sum, e) => sum + e.amount, 0);
+    
+    // Non-monthly recurring for reserve fund
+    const nonMonthlyRecurring = recurringExpenses.filter(e => e.frequency !== 'monthly');
+    
+    // Calculate reserve fund (provisioning for quarterly and annual expenses)
+    const reserveFund = nonMonthlyRecurring.reduce((sum, e) => {
+      return sum + calculateMonthlyProvision(e.amount, e.frequency);
+    }, 0);
+    
+    const totalRecurring = totalMonthlyRecurring + reserveFund;
+    const totalOneTime = oneTimeExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalExpenses = totalRecurring + totalOneTime;
+    
+    // Free money after fixed expenses
+    const freeMoneyAfterFixed = state.monthlyIncome - totalMonthlyRecurring;
+    
+    // Purchase goals calculations
+    const purchaseGoalsWithQuotas = state.purchaseGoals.map(goal => ({
+      ...goal,
+      monthlyQuota: calculateMonthlyQuota(goal),
+      monthsRemaining: calculateMonthsRemaining(goal.targetDate),
+      progressPercent: goal.targetPrice > 0 ? (goal.savedAmount / goal.targetPrice) * 100 : 0
+    }));
+    
+    const totalPurchaseGoalQuotas = purchaseGoalsWithQuotas.reduce((sum, g) => sum + g.monthlyQuota, 0);
+    
+    // Subscriptions (for ING - digital subscriptions)
+    const subscriptionKeywords = ['netflix', 'spotify', 'hbo', 'disney', 'amazon', 'internet', 'gym', 'gimnasio', 'movil', 'telefono'];
+    const subscriptions = recurringExpenses.filter(e => 
+      e.frequency === 'monthly' && 
+      subscriptionKeywords.some(keyword => e.name.toLowerCase().includes(keyword))
+    );
+    const totalSubscriptions = subscriptions.reduce((sum, e) => sum + e.amount, 0);
+    
+    // Rent detection
+    const rentKeywords = ['alquiler', 'hipoteca', 'rent'];
+    const rent = recurringExpenses
+      .filter(e => rentKeywords.some(keyword => e.name.toLowerCase().includes(keyword)))
+      .reduce((sum, e) => sum + e.amount, 0);
+    
+    // Available for hobbies = Free money after fixed - savings goal - purchase goal quotas - reserve fund
+    const availableForHobbies = freeMoneyAfterFixed - state.savingsGoal - totalPurchaseGoalQuotas - reserveFund;
+    const hasInsufficientFunds = availableForHobbies < 0;
+    
+    const balance = state.monthlyIncome - totalExpenses - state.savingsGoal;
+
+    return {
+      recurringExpenses,
+      oneTimeExpenses,
+      monthlyRecurring,
+      nonMonthlyRecurring,
+      totalRecurring,
+      totalMonthlyRecurring,
+      totalOneTime,
+      totalExpenses,
+      freeMoneyAfterFixed,
+      reserveFund,
+      purchaseGoalsWithQuotas,
+      totalPurchaseGoalQuotas,
+      totalSubscriptions,
+      rent,
+      availableForHobbies,
+      hasInsufficientFunds,
+      balance
+    };
+  }, [state]);
 
   return {
     monthlyIncome: state.monthlyIncome,
     savingsGoal: state.savingsGoal,
     expenses: state.expenses,
     purchaseGoals: state.purchaseGoals,
-    purchaseGoalsWithQuotas,
-    recurringExpenses,
-    oneTimeExpenses,
-    totalRecurring,
-    totalOneTime,
-    totalExpenses,
-    freeMoneyAfterFixed,
-    totalPurchaseGoalQuotas,
-    availableForHobbies,
-    hasInsufficientFunds,
-    balance,
+    ...calculations,
     setMonthlyIncome,
     setSavingsGoal,
     addExpense,
     removeExpense,
     toggleRecurring,
+    updateExpenseFrequency,
     addPurchaseGoal,
     removePurchaseGoal,
     updatePurchaseGoalSaved

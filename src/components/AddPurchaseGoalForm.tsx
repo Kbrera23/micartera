@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Plus, Gift } from 'lucide-react';
 
 interface AddPurchaseGoalFormProps {
@@ -12,30 +13,30 @@ interface AddPurchaseGoalFormProps {
 export const AddPurchaseGoalForm = ({ onAddGoal }: AddPurchaseGoalFormProps) => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
-  const [targetDate, setTargetDate] = useState('');
+  const [targetDate, setTargetDate] = useState<Date | undefined>();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !price || !targetDate) return;
 
-    onAddGoal(name.trim(), parseFloat(price), new Date(targetDate));
+    onAddGoal(name.trim(), parseFloat(price), targetDate);
     setName('');
     setPrice('');
-    setTargetDate('');
+    setTargetDate(undefined);
   };
 
   // Get minimum date (next month)
   const getMinDate = () => {
     const date = new Date();
     date.setMonth(date.getMonth() + 1);
-    return date.toISOString().split('T')[0];
+    return date;
   };
 
   return (
-    <Card className="glass-card animate-fade-in">
+    <Card className="glass-card animate-fade-in rounded-2xl">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg font-medium">
-          <div className="p-2 rounded-lg bg-goal-light">
+          <div className="p-2 rounded-xl bg-goal-light">
             <Gift className="h-5 w-5 text-goal" />
           </div>
           Nuevo Objetivo
@@ -49,8 +50,8 @@ export const AddPurchaseGoalForm = ({ onAddGoal }: AddPurchaseGoalFormProps) => 
               id="goal-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ej: Nueva Moto, iPhone, Viaje..."
-              className="bg-background"
+              placeholder="Ej: AirPods, Moto, iPhone..."
+              className="bg-background rounded-xl"
             />
           </div>
           <div className="space-y-2">
@@ -64,24 +65,22 @@ export const AddPurchaseGoalForm = ({ onAddGoal }: AddPurchaseGoalFormProps) => 
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="0.00"
-                className="pl-8 bg-background"
+                className="pl-8 bg-background rounded-xl"
               />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="goal-date">Fecha Objetivo</Label>
-            <Input
-              id="goal-date"
-              type="date"
-              value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
-              min={getMinDate()}
-              className="bg-background"
+            <Label>Fecha Objetivo</Label>
+            <DatePicker
+              date={targetDate}
+              onDateChange={setTargetDate}
+              minDate={getMinDate()}
+              placeholder="¿Cuándo lo quieres?"
             />
           </div>
           <Button
             type="submit"
-            className="w-full bg-goal hover:bg-goal/90"
+            className="w-full bg-goal hover:bg-goal/90 rounded-xl"
             disabled={!name.trim() || !price || !targetDate}
           >
             <Plus className="h-4 w-4 mr-2" />

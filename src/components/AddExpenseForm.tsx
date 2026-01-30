@@ -4,32 +4,42 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Plus, Receipt } from 'lucide-react';
+import { ExpenseFrequency } from '@/types/expense';
 
 interface AddExpenseFormProps {
-  onAddExpense: (name: string, amount: number, isRecurring: boolean) => void;
+  onAddExpense: (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency) => void;
 }
 
 export const AddExpenseForm = ({ onAddExpense }: AddExpenseFormProps) => {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<ExpenseFrequency>('monthly');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !amount) return;
 
-    onAddExpense(name.trim(), parseFloat(amount), isRecurring);
+    onAddExpense(name.trim(), parseFloat(amount), isRecurring, frequency);
     setName('');
     setAmount('');
     setIsRecurring(false);
+    setFrequency('monthly');
   };
 
   return (
-    <Card className="glass-card animate-fade-in">
+    <Card className="glass-card animate-fade-in rounded-2xl">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg font-medium">
-          <div className="p-2 rounded-lg bg-expense-light">
+          <div className="p-2 rounded-xl bg-expense-light">
             <Receipt className="h-5 w-5 text-expense" />
           </div>
           Añadir Gasto
@@ -44,7 +54,7 @@ export const AddExpenseForm = ({ onAddExpense }: AddExpenseFormProps) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ej: Netflix, Alquiler, Cena..."
-              className="bg-background"
+              className="bg-background rounded-xl"
             />
           </div>
           <div className="space-y-2">
@@ -58,14 +68,15 @@ export const AddExpenseForm = ({ onAddExpense }: AddExpenseFormProps) => {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="pl-8 bg-background"
+                className="pl-8 bg-background rounded-xl"
               />
             </div>
           </div>
+          
           <div className="flex items-center justify-between py-2">
             <div className="space-y-0.5">
               <Label htmlFor="recurring">Gasto recurrente</Label>
-              <p className="text-xs text-muted-foreground">Se repite cada mes</p>
+              <p className="text-xs text-muted-foreground">Se repite periódicamente</p>
             </div>
             <Switch
               id="recurring"
@@ -73,9 +84,36 @@ export const AddExpenseForm = ({ onAddExpense }: AddExpenseFormProps) => {
               onCheckedChange={setIsRecurring}
             />
           </div>
+
+          {isRecurring && (
+            <div className="space-y-2 animate-fade-in">
+              <Label>Frecuencia</Label>
+              <Select value={frequency} onValueChange={(v) => setFrequency(v as ExpenseFrequency)}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue placeholder="Selecciona frecuencia" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">📅 Mensual</SelectItem>
+                  <SelectItem value="quarterly">📆 Trimestral</SelectItem>
+                  <SelectItem value="annual">🗓️ Anual</SelectItem>
+                </SelectContent>
+              </Select>
+              {frequency === 'quarterly' && (
+                <p className="text-xs text-muted-foreground">
+                  Se provisionará €{amount ? (parseFloat(amount) / 3).toFixed(2) : '0.00'}/mes
+                </p>
+              )}
+              {frequency === 'annual' && (
+                <p className="text-xs text-muted-foreground">
+                  Se provisionará €{amount ? (parseFloat(amount) / 12).toFixed(2) : '0.00'}/mes
+                </p>
+              )}
+            </div>
+          )}
+
           <Button
             type="submit"
-            className="w-full bg-expense hover:bg-expense/90"
+            className="w-full bg-expense hover:bg-expense/90 rounded-xl"
             disabled={!name.trim() || !amount}
           >
             <Plus className="h-4 w-4 mr-2" />

@@ -1,25 +1,31 @@
+import { useState } from 'react';
 import { useFinances } from '@/hooks/useFinances';
-import { IncomeCard } from '@/components/IncomeCard';
-import { BalanceCard } from '@/components/BalanceCard';
-import { AddExpenseForm } from '@/components/AddExpenseForm';
-import { ExpenseList } from '@/components/ExpenseList';
-import { AddPurchaseGoalForm } from '@/components/AddPurchaseGoalForm';
-import { PurchaseGoalsSection } from '@/components/PurchaseGoalsSection';
-import { Wallet } from 'lucide-react';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { DashboardSection } from '@/components/sections/DashboardSection';
+import { ExpensesSection } from '@/components/sections/ExpensesSection';
+import { GoalsSection } from '@/components/sections/GoalsSection';
+import { ProfileSection } from '@/components/sections/ProfileSection';
 
 const Index = () => {
+  const [currentSection, setCurrentSection] = useState('dashboard');
+  
   const {
     monthlyIncome,
     savingsGoal,
     recurringExpenses,
     oneTimeExpenses,
+    nonMonthlyRecurring,
     totalRecurring,
+    totalMonthlyRecurring,
     totalOneTime,
     totalExpenses,
     freeMoneyAfterFixed,
+    reserveFund,
     balance,
     purchaseGoalsWithQuotas,
     totalPurchaseGoalQuotas,
+    totalSubscriptions,
+    rent,
     availableForHobbies,
     hasInsufficientFunds,
     setMonthlyIncome,
@@ -31,84 +37,68 @@ const Index = () => {
     removePurchaseGoal
   } = useFinances();
 
+  const renderSection = () => {
+    switch (currentSection) {
+      case 'dashboard':
+        return (
+          <DashboardSection
+            monthlyIncome={monthlyIncome}
+            savingsGoal={savingsGoal}
+            balance={balance}
+            totalExpenses={totalExpenses}
+            totalRecurring={totalRecurring}
+            totalMonthlyRecurring={totalMonthlyRecurring}
+            totalOneTime={totalOneTime}
+            freeMoneyAfterFixed={freeMoneyAfterFixed}
+            reserveFund={reserveFund}
+            totalSubscriptions={totalSubscriptions}
+            rent={rent}
+            totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
+            availableForHobbies={availableForHobbies}
+            nonMonthlyRecurring={nonMonthlyRecurring}
+          />
+        );
+      case 'gastos':
+        return (
+          <ExpensesSection
+            recurringExpenses={recurringExpenses}
+            oneTimeExpenses={oneTimeExpenses}
+            totalRecurring={totalRecurring}
+            totalOneTime={totalOneTime}
+            onAddExpense={addExpense}
+            onRemoveExpense={removeExpense}
+            onToggleRecurring={toggleRecurring}
+          />
+        );
+      case 'objetivos':
+        return (
+          <GoalsSection
+            purchaseGoalsWithQuotas={purchaseGoalsWithQuotas}
+            totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
+            availableForHobbies={availableForHobbies}
+            hasInsufficientFunds={hasInsufficientFunds}
+            onAddGoal={addPurchaseGoal}
+            onRemoveGoal={removePurchaseGoal}
+          />
+        );
+      case 'perfil':
+        return (
+          <ProfileSection
+            monthlyIncome={monthlyIncome}
+            savingsGoal={savingsGoal}
+            onSetIncome={setMonthlyIncome}
+            onSetSavingsGoal={setSavingsGoal}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-5xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl gradient-income">
-              <Wallet className="h-6 w-6 text-income-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Control de Gastos</h1>
-              <p className="text-sm text-muted-foreground">Gestiona tu dinero de forma inteligente</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container max-w-5xl mx-auto px-4 py-6">
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left Column - Income & Forms */}
-          <div className="space-y-6">
-            <IncomeCard
-              monthlyIncome={monthlyIncome}
-              savingsGoal={savingsGoal}
-              onSetIncome={setMonthlyIncome}
-              onSetSavingsGoal={setSavingsGoal}
-            />
-            <AddExpenseForm onAddExpense={addExpense} />
-            <AddPurchaseGoalForm onAddGoal={addPurchaseGoal} />
-          </div>
-
-          {/* Middle Column - Balance & Lists */}
-          <div className="lg:col-span-2 space-y-6">
-            <BalanceCard
-              balance={balance}
-              totalExpenses={totalExpenses}
-              monthlyIncome={monthlyIncome}
-              totalRecurring={totalRecurring}
-              totalOneTime={totalOneTime}
-              freeMoneyAfterFixed={freeMoneyAfterFixed}
-              savingsGoal={savingsGoal}
-              totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
-              availableForHobbies={availableForHobbies}
-            />
-
-            {/* Purchase Goals Section */}
-            <PurchaseGoalsSection
-              goals={purchaseGoalsWithQuotas}
-              totalQuotas={totalPurchaseGoalQuotas}
-              availableForHobbies={availableForHobbies}
-              hasInsufficientFunds={hasInsufficientFunds}
-              onRemove={removePurchaseGoal}
-            />
-
-            {/* Expense Lists */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <ExpenseList
-                title="Gastos Recurrentes"
-                expenses={recurringExpenses}
-                total={totalRecurring}
-                isRecurring={true}
-                onRemove={removeExpense}
-                onToggleRecurring={toggleRecurring}
-              />
-              <ExpenseList
-                title="Gastos Únicos"
-                expenses={oneTimeExpenses}
-                total={totalOneTime}
-                isRecurring={false}
-                onRemove={removeExpense}
-                onToggleRecurring={toggleRecurring}
-              />
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+    <AppLayout currentSection={currentSection} onSectionChange={setCurrentSection}>
+      {renderSection()}
+    </AppLayout>
   );
 };
 

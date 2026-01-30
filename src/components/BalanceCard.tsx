@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { TrendingUp, TrendingDown, PiggyBank, Wallet, Target, Gift } from 'lucide-react';
 
 interface BalanceCardProps {
@@ -35,12 +34,16 @@ export const BalanceCard = ({
   const goalsPercent = monthlyIncome > 0 ? (totalPurchaseGoalQuotas / monthlyIncome) * 100 : 0;
   const totalUsedPercent = Math.min(fixedExpensesPercent + variableExpensesPercent + savingsPercent + goalsPercent, 100);
 
+  const formatCurrency = (amount: number) => {
+    return `€${Math.abs(amount).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
+  };
+
   return (
-    <Card className="glass-card overflow-hidden animate-fade-in">
+    <Card className="glass-card overflow-hidden animate-fade-in rounded-2xl">
       <div className={`h-2 ${isPositive ? 'gradient-income' : 'gradient-expense'}`} />
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg font-medium">
-          <div className={`p-2 rounded-lg ${isPositive ? 'bg-income-light' : 'bg-expense-light'}`}>
+          <div className={`p-2 rounded-xl ${isPositive ? 'bg-income-light' : 'bg-expense-light'}`}>
             <PiggyBank className={`h-5 w-5 ${isPositive ? 'text-income' : 'text-expense'}`} />
           </div>
           Balance Disponible
@@ -54,31 +57,31 @@ export const BalanceCard = ({
             <TrendingDown className="h-6 w-6 text-expense" />
           )}
           <span className={`text-3xl font-bold ${isPositive ? 'text-income' : 'text-expense'}`}>
-            €{Math.abs(balance).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+            {formatCurrency(balance)}
           </span>
         </div>
 
         {/* Free Money After Fixed Expenses */}
-        <div className="p-3 rounded-lg bg-recurring-light/50 border border-recurring/20">
+        <div className="p-3 rounded-xl bg-recurring-light/50 border border-recurring/20">
           <div className="flex items-center gap-2 mb-1">
             <Wallet className="h-4 w-4 text-recurring" />
             <span className="text-sm font-medium text-recurring">Dinero Libre tras Gastos Fijos</span>
           </div>
           <span className="text-2xl font-bold text-recurring">
-            €{freeMoneyAfterFixed.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+            {formatCurrency(freeMoneyAfterFixed)}
           </span>
           <p className="text-xs text-muted-foreground mt-1">Disponible para ocio antes de tocar ahorros</p>
         </div>
 
         {/* Available for Hobbies after Goals */}
         {totalPurchaseGoalQuotas > 0 && (
-          <div className="p-3 rounded-lg bg-goal-light/50 border border-goal/20">
+          <div className="p-3 rounded-xl bg-goal-light/50 border border-goal/20">
             <div className="flex items-center gap-2 mb-1">
               <Gift className="h-4 w-4 text-goal" />
               <span className="text-sm font-medium text-goal">Disponible para Hobbies</span>
             </div>
             <span className={`text-2xl font-bold ${availableForHobbies >= 0 ? 'text-goal' : 'text-expense'}`}>
-              €{availableForHobbies.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+              {formatCurrency(availableForHobbies)}
             </span>
             <p className="text-xs text-muted-foreground mt-1">Después de reservar cuotas de objetivos</p>
           </div>
@@ -150,13 +153,13 @@ export const BalanceCard = ({
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Gastos fijos</span>
             <span className="font-medium text-expense">
-              -€{totalRecurring.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+              -{formatCurrency(totalRecurring)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Gastos variables</span>
             <span className="font-medium text-recurring">
-              -€{totalOneTime.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+              -{formatCurrency(totalOneTime)}
             </span>
           </div>
           {savingsGoal > 0 && (
@@ -165,7 +168,7 @@ export const BalanceCard = ({
                 <Target className="h-3 w-3" /> Ahorro reservado
               </span>
               <span className="font-medium text-income">
-                -€{savingsGoal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                -{formatCurrency(savingsGoal)}
               </span>
             </div>
           )}
@@ -175,7 +178,7 @@ export const BalanceCard = ({
                 <Gift className="h-3 w-3" /> Cuotas objetivos
               </span>
               <span className="font-medium text-goal">
-                -€{totalPurchaseGoalQuotas.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                -{formatCurrency(totalPurchaseGoalQuotas)}
               </span>
             </div>
           )}

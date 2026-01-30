@@ -2,6 +2,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Trash2, Calendar, TrendingUp } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface PurchaseGoalWithQuota {
   id: string;
@@ -21,10 +23,7 @@ interface PurchaseGoalCardProps {
 
 export const PurchaseGoalCard = ({ goal, onRemove }: PurchaseGoalCardProps) => {
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('es-ES', { 
-      month: 'short', 
-      year: 'numeric' 
-    });
+    return format(new Date(date), 'MMM yyyy', { locale: es });
   };
 
   const formatCurrency = (amount: number) => {
@@ -32,15 +31,15 @@ export const PurchaseGoalCard = ({ goal, onRemove }: PurchaseGoalCardProps) => {
   };
 
   return (
-    <Card className="glass-card animate-fade-in overflow-hidden">
-      <div className="h-1 bg-gradient-to-r from-goal to-goal/70" />
+    <Card className="glass-card animate-fade-in overflow-hidden rounded-2xl">
+      <div className="h-1.5 bg-gradient-to-r from-goal to-goal/70" />
       <CardContent className="pt-4 space-y-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <h4 className="font-semibold text-foreground">{goal.name}</h4>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
               <Calendar className="h-3 w-3" />
-              <span>{formatDate(goal.targetDate)}</span>
+              <span className="capitalize">{formatDate(goal.targetDate)}</span>
               <span className="text-goal">• {goal.monthsRemaining} meses</span>
             </div>
           </div>
@@ -48,7 +47,7 @@ export const PurchaseGoalCard = ({ goal, onRemove }: PurchaseGoalCardProps) => {
             variant="ghost"
             size="icon"
             onClick={() => onRemove(goal.id)}
-            className="h-8 w-8 text-muted-foreground hover:text-expense hover:bg-expense-light"
+            className="h-8 w-8 text-muted-foreground hover:text-expense hover:bg-expense-light rounded-xl"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -62,7 +61,7 @@ export const PurchaseGoalCard = ({ goal, onRemove }: PurchaseGoalCardProps) => {
           </div>
           <Progress 
             value={goal.progressPercent} 
-            className="h-2"
+            className="h-2.5 rounded-full"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{formatCurrency(goal.savedAmount)}</span>
@@ -71,7 +70,7 @@ export const PurchaseGoalCard = ({ goal, onRemove }: PurchaseGoalCardProps) => {
         </div>
 
         {/* Monthly Quota */}
-        <div className="flex items-center justify-between p-2 rounded-lg bg-goal-light border border-goal/20">
+        <div className="flex items-center justify-between p-2.5 rounded-xl bg-goal-light border border-goal/20">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-goal" />
             <span className="text-sm text-goal">Cuota Mensual</span>

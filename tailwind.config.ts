@@ -67,6 +67,18 @@ export default {
           foreground: "hsl(var(--goal-foreground))",
           light: "hsl(var(--goal-light))",
         },
+        santander: {
+          DEFAULT: "hsl(var(--santander))",
+        },
+        lacaixa: {
+          DEFAULT: "hsl(var(--lacaixa))",
+        },
+        ing: {
+          DEFAULT: "hsl(var(--ing))",
+        },
+        revolut: {
+          DEFAULT: "hsl(var(--revolut))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
