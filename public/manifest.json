@@ -1,0 +1,20 @@
+{
+  "name": "FinanceTracker",
+  "short_name": "FinTrack",
+  "description": "Gestiona tus finanzas de forma inteligente",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["finance", "utilities"],
+  "lang": "es",
+  "dir": "ltr"
+}

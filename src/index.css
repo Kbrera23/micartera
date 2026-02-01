@@ -46,11 +46,12 @@
     --goal-foreground: 0 0% 100%;
     --goal-light: 280 50% 96%;
 
-    /* Bank colors */
-    --santander: 0 75% 45%;
-    --lacaixa: 210 80% 50%;
-    --ing: 30 95% 55%;
-    --revolut: 220 10% 30%;
+    /* Bank colors - Official */
+    --santander: 0 100% 46%;
+    --lacaixa: 189 100% 41%;
+    --ing: 25 100% 50%;
+    --revolut: 210 14% 11%;
+    --bbva: 211 100% 27%;
 
     --border: 220 15% 90%;
     --input: 220 15% 90%;
@@ -109,11 +110,12 @@
     --goal-foreground: 0 0% 100%;
     --goal-light: 280 40% 18%;
 
-    /* Bank colors dark */
-    --santander: 0 70% 40%;
-    --lacaixa: 210 75% 45%;
-    --ing: 30 90% 50%;
-    --revolut: 220 10% 40%;
+    /* Bank colors dark - Official */
+    --santander: 0 100% 46%;
+    --lacaixa: 189 100% 41%;
+    --ing: 25 100% 50%;
+    --revolut: 210 14% 11%;
+    --bbva: 211 100% 27%;
 
     --border: 220 15% 20%;
     --input: 220 15% 20%;

@@ -79,6 +79,9 @@ export default {
         revolut: {
           DEFAULT: "hsl(var(--revolut))",
         },
+        bbva: {
+          DEFAULT: "hsl(var(--bbva))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
