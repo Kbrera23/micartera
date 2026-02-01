@@ -13,6 +13,14 @@ const navItems = [
   { id: 'perfil', label: 'Perfil', icon: User },
 ];
 
+const BANK_COLORS = {
+  santander: '#EC0000',
+  lacaixa: '#00ABD1',
+  ing: '#FF6200',
+  revolut: '#191C1F',
+  bbva: '#004481',
+};
+
 export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
   return (
     <aside className="w-64 min-h-screen bg-card border-r border-border flex flex-col">
@@ -23,8 +31,8 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
             <Wallet className="h-6 w-6 text-income-foreground" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">FinanzApp</h1>
-            <p className="text-xs text-muted-foreground">Control de Gastos</p>
+            <h1 className="text-lg font-bold">FinanceTracker</h1>
+            <p className="text-xs text-muted-foreground">Gestión Financiera</p>
           </div>
         </div>
       </div>

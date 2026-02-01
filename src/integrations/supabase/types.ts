@@ -14,7 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      expenses: {
+        Row: {
+          amount: number
+          bank: Database["public"]["Enums"]["bank_type"] | null
+          created_at: string
+          frequency: string | null
+          id: string
+          is_recurring: boolean
+          name: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bank?: Database["public"]["Enums"]["bank_type"] | null
+          created_at?: string
+          frequency?: string | null
+          id?: string
+          is_recurring?: boolean
+          name: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bank?: Database["public"]["Enums"]["bank_type"] | null
+          created_at?: string
+          frequency?: string | null
+          id?: string
+          is_recurring?: boolean
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_income: number
+          rent: number
+          savings_goal: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_income?: number
+          rent?: number
+          savings_goal?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_income?: number
+          rent?: number
+          savings_goal?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      purchase_goals: {
+        Row: {
+          created_at: string
+          current_amount: number
+          id: string
+          name: string
+          target_amount: number
+          target_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_amount?: number
+          id?: string
+          name: string
+          target_amount: number
+          target_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_amount?: number
+          id?: string
+          name?: string
+          target_amount?: number
+          target_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_banks: {
+        Row: {
+          bank: Database["public"]["Enums"]["bank_type"]
+          created_at: string
+          id: string
+          is_active: boolean
+          user_id: string
+        }
+        Insert: {
+          bank: Database["public"]["Enums"]["bank_type"]
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          user_id: string
+        }
+        Update: {
+          bank?: Database["public"]["Enums"]["bank_type"]
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +139,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      bank_type: "santander" | "lacaixa" | "ing" | "revolut" | "bbva"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +266,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      bank_type: ["santander", "lacaixa", "ing", "revolut", "bbva"],
+    },
   },
 } as const

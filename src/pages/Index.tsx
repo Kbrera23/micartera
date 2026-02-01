@@ -1,61 +1,85 @@
-import { useState } from 'react';
-import { useFinances } from '@/hooks/useFinances';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSupabaseFinances, ExpenseFrequency, BankType } from '@/hooks/useSupabaseFinances';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { DashboardSection } from '@/components/sections/DashboardSection';
-import { ExpensesSection } from '@/components/sections/ExpensesSection';
-import { GoalsSection } from '@/components/sections/GoalsSection';
-import { ProfileSection } from '@/components/sections/ProfileSection';
+import { MinimalDashboard } from '@/components/sections/MinimalDashboard';
+import { ExpensesSection } from '@/components/sections/ExpensesSectionNew';
+import { GoalsSection } from '@/components/sections/GoalsSectionNew';
+import { MinimalProfileSection } from '@/components/sections/MinimalProfileSection';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState('dashboard');
+  const navigate = useNavigate();
   
   const {
+    loading,
+    hasProfile,
     monthlyIncome,
     savingsGoal,
-    recurringExpenses,
-    oneTimeExpenses,
-    nonMonthlyRecurring,
-    totalRecurring,
-    totalMonthlyRecurring,
-    totalOneTime,
-    totalExpenses,
-    freeMoneyAfterFixed,
-    reserveFund,
-    balance,
-    purchaseGoalsWithQuotas,
-    totalPurchaseGoalQuotas,
-    totalSubscriptions,
     rent,
-    availableForHobbies,
+    totalFixedExpenses,
+    reserveFund,
+    dineroLibre,
+    totalSubscriptions,
+    expenses,
+    recurringExpenses,
+    purchaseGoals,
+    goalsWithQuotas,
+    totalPurchaseGoalQuotas,
     hasInsufficientFunds,
-    setMonthlyIncome,
-    setSavingsGoal,
+    userBanks,
     addExpense,
     removeExpense,
-    toggleRecurring,
     addPurchaseGoal,
-    removePurchaseGoal
-  } = useFinances();
+    removePurchaseGoal,
+    updateProfile,
+    toggleBank
+  } = useSupabaseFinances();
+
+  useEffect(() => {
+    if (!loading && hasProfile === false) {
+      navigate('/onboarding');
+    }
+  }, [loading, hasProfile, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (hasProfile === false) {
+    return null;
+  }
+
+  const oneTimeExpenses = expenses.filter(e => !e.is_recurring);
+  const totalOneTime = oneTimeExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalRecurring = recurringExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+  const handleAddExpense = (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency, bank?: BankType) => {
+    addExpense(name, amount, isRecurring, frequency, bank || null);
+  };
+
+  const handleAddGoal = (name: string, targetAmount: number, targetDate: Date) => {
+    addPurchaseGoal(name, targetAmount, targetDate);
+  };
 
   const renderSection = () => {
     switch (currentSection) {
       case 'dashboard':
         return (
-          <DashboardSection
+          <MinimalDashboard
+            userBanks={userBanks}
             monthlyIncome={monthlyIncome}
             savingsGoal={savingsGoal}
-            balance={balance}
-            totalExpenses={totalExpenses}
-            totalRecurring={totalRecurring}
-            totalMonthlyRecurring={totalMonthlyRecurring}
-            totalOneTime={totalOneTime}
-            freeMoneyAfterFixed={freeMoneyAfterFixed}
+            totalFixedExpenses={totalFixedExpenses}
             reserveFund={reserveFund}
+            dineroLibre={dineroLibre}
             totalSubscriptions={totalSubscriptions}
             rent={rent}
-            totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
-            availableForHobbies={availableForHobbies}
-            nonMonthlyRecurring={nonMonthlyRecurring}
           />
         );
       case 'gastos':
@@ -65,29 +89,30 @@ const Index = () => {
             oneTimeExpenses={oneTimeExpenses}
             totalRecurring={totalRecurring}
             totalOneTime={totalOneTime}
-            onAddExpense={addExpense}
+            onAddExpense={handleAddExpense}
             onRemoveExpense={removeExpense}
-            onToggleRecurring={toggleRecurring}
           />
         );
       case 'objetivos':
         return (
           <GoalsSection
-            purchaseGoalsWithQuotas={purchaseGoalsWithQuotas}
+            goalsWithQuotas={goalsWithQuotas}
             totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
-            availableForHobbies={availableForHobbies}
+            dineroLibre={dineroLibre}
             hasInsufficientFunds={hasInsufficientFunds}
-            onAddGoal={addPurchaseGoal}
+            onAddGoal={handleAddGoal}
             onRemoveGoal={removePurchaseGoal}
           />
         );
       case 'perfil':
         return (
-          <ProfileSection
+          <MinimalProfileSection
             monthlyIncome={monthlyIncome}
             savingsGoal={savingsGoal}
-            onSetIncome={setMonthlyIncome}
-            onSetSavingsGoal={setSavingsGoal}
+            rent={rent}
+            userBanks={userBanks}
+            onUpdateProfile={updateProfile}
+            onToggleBank={toggleBank}
           />
         );
       default:
