@@ -29,14 +29,18 @@ export const GoalsSection = ({
   onAddGoal,
   onRemoveGoal
 }: GoalsSectionProps) => {
+  // Pasar dineroLibre al formulario para validación
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Objetivos de Compra</h1>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Add Goal Form */}
+        {/* Add Goal Form con dineroLibre para validación */}
         <div className="lg:col-span-1">
-          <AddPurchaseGoalFormNew onAddGoal={onAddGoal} />
+          <AddPurchaseGoalFormNew 
+            onAddGoal={onAddGoal} 
+            dineroLibre={dineroLibre}
+          />
         </div>
 
         {/* Goals List */}
