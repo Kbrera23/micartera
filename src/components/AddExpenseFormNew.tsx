@@ -58,6 +58,7 @@ export const AddExpenseForm = ({ onAddExpense }: AddExpenseFormProps) => {
               onChange={(e) => setName(e.target.value)}
               placeholder="Ej: Netflix, Alquiler, Cena..."
               className="bg-background rounded-xl h-12 text-base"
+              inputMode="text"
             />
           </div>
           <div className="space-y-2">

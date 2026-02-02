@@ -280,10 +280,10 @@ export const useSupabaseFinances = () => {
     );
     const totalSubscriptions = subscriptions.reduce((sum, e) => sum + e.amount, 0);
 
-    // Dinero Libre = Nómina - Gastos Fijos - Provisión Ahorro
-    const dineroLibre = monthlyIncome - totalFixedExpenses - savingsGoal - reserveFund;
+    // Dinero Libre = Nómina - Gastos Fijos - Provisión Ahorro - Cuotas Objetivos
+    const dineroLibre = monthlyIncome - totalFixedExpenses - savingsGoal - reserveFund - totalPurchaseGoalQuotas;
 
-    // Has insufficient funds
+    // Has insufficient funds (dinero libre negativo después de todas las provisiones)
     const hasInsufficientFunds = dineroLibre < 0;
 
     return {
