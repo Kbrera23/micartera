@@ -8,13 +8,15 @@ interface KPICardsProps {
   totalFixedExpenses: number;
   reserveFund: number;
   dineroLibre: number;
+  totalPurchaseGoalQuotas?: number;
 }
 
 export const KPICards = ({
   monthlyIncome,
   totalFixedExpenses,
   reserveFund,
-  dineroLibre
+  dineroLibre,
+  totalPurchaseGoalQuotas = 0
 }: KPICardsProps) => {
   const kpis = [
     {

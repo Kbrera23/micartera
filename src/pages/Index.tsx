@@ -80,6 +80,8 @@ const Index = () => {
             dineroLibre={dineroLibre}
             totalSubscriptions={totalSubscriptions}
             rent={rent}
+            totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
+            activeGoalsCount={goalsWithQuotas.length}
           />
         );
       case 'gastos':
