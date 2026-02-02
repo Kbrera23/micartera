@@ -1,23 +1,35 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
-import { Wallet, Receipt, PiggyBank, Sparkles } from 'lucide-react';
+import { Wallet, Receipt, PiggyBank, Sparkles, Home } from 'lucide-react';
 
 interface KPICardsProps {
   monthlyIncome: number;
   totalFixedExpenses: number;
+  rent: number;
+  savingsGoal: number;
   reserveFund: number;
   dineroLibre: number;
-  totalPurchaseGoalQuotas?: number;
+  totalPurchaseGoalQuotas: number;
+  activeGoalsCount: number;
 }
 
 export const KPICards = ({
   monthlyIncome,
   totalFixedExpenses,
+  rent,
+  savingsGoal,
   reserveFund,
   dineroLibre,
-  totalPurchaseGoalQuotas = 0
+  totalPurchaseGoalQuotas,
+  activeGoalsCount
 }: KPICardsProps) => {
+  // Gastos fijos totales = Alquiler + Gastos recurrentes mensuales
+  const totalGastosFijos = rent + totalFixedExpenses;
+  
+  // Provisión total = Ahorro mensual + Fondo de reserva + Cuotas de objetivos
+  const totalProvision = savingsGoal + reserveFund + totalPurchaseGoalQuotas;
+
   const kpis = [
     {
       label: 'Nómina',
@@ -25,23 +37,30 @@ export const KPICards = ({
       icon: Wallet,
       bgClass: 'bg-income-light',
       iconClass: 'bg-income text-income-foreground',
-      valueClass: 'text-income'
+      valueClass: 'text-income',
+      subtitle: null
     },
     {
       label: 'Gastos Fijos',
-      value: totalFixedExpenses,
+      value: totalGastosFijos,
       icon: Receipt,
       bgClass: 'bg-expense-light',
       iconClass: 'bg-expense text-expense-foreground',
-      valueClass: 'text-expense'
+      valueClass: 'text-expense',
+      subtitle: rent > 0 ? `Incluye alquiler: ${formatCurrencyCompact(rent)}` : null
     },
     {
       label: 'Provisión Ahorro',
-      value: reserveFund,
+      value: totalProvision,
       icon: PiggyBank,
       bgClass: 'bg-recurring-light',
       iconClass: 'bg-recurring text-recurring-foreground',
-      valueClass: 'text-recurring'
+      valueClass: 'text-recurring',
+      subtitle: activeGoalsCount > 0 
+        ? `Incluye ${activeGoalsCount} ${activeGoalsCount === 1 ? 'objetivo' : 'objetivos'}: ${formatCurrencyCompact(totalPurchaseGoalQuotas)}`
+        : reserveFund > 0 
+          ? `Fondo reserva: ${formatCurrencyCompact(reserveFund)}`
+          : null
     },
     {
       label: 'DINERO LIBRE',
@@ -50,7 +69,8 @@ export const KPICards = ({
       bgClass: 'bg-primary/10',
       iconClass: 'bg-primary text-primary-foreground',
       valueClass: dineroLibre >= 0 ? 'text-primary' : 'text-destructive',
-      highlight: true
+      highlight: true,
+      subtitle: null
     }
   ];
 
@@ -86,6 +106,11 @@ export const KPICards = ({
               )}>
                 {kpi.label}
               </p>
+              {kpi.subtitle && (
+                <p className="text-[10px] text-muted-foreground/70 mt-1 leading-tight">
+                  {kpi.subtitle}
+                </p>
+              )}
             </CardContent>
           </Card>
         );
