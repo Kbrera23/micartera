@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
-import { Wallet, Receipt, PiggyBank, Sparkles, Home } from 'lucide-react';
+import { Wallet, Receipt, PiggyBank, Sparkles, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
 
 interface KPICardsProps {
   monthlyIncome: number;
@@ -12,6 +12,8 @@ interface KPICardsProps {
   dineroLibre: number;
   totalPurchaseGoalQuotas: number;
   activeGoalsCount: number;
+  trafficLightStatus: 'green' | 'yellow' | 'red';
+  trafficLightMessage: string;
 }
 
 export const KPICards = ({
@@ -22,7 +24,9 @@ export const KPICards = ({
   reserveFund,
   dineroLibre,
   totalPurchaseGoalQuotas,
-  activeGoalsCount
+  activeGoalsCount,
+  trafficLightStatus,
+  trafficLightMessage
 }: KPICardsProps) => {
   // Gastos fijos totales = Alquiler + Gastos recurrentes mensuales
   const totalGastosFijos = rent + totalFixedExpenses;
@@ -30,12 +34,42 @@ export const KPICards = ({
   // Provisión total = Ahorro mensual + Fondo de reserva + Cuotas de objetivos
   const totalProvision = savingsGoal + reserveFund + totalPurchaseGoalQuotas;
 
+  // Traffic light colors
+  const getTrafficLightColors = () => {
+    switch (trafficLightStatus) {
+      case 'green':
+        return {
+          bgClass: 'bg-income/10 dark:bg-income/20',
+          iconClass: 'bg-income text-income-foreground',
+          valueClass: 'text-income',
+          icon: CheckCircle
+        };
+      case 'yellow':
+        return {
+          bgClass: 'bg-yellow-100 dark:bg-yellow-900/30',
+          iconClass: 'bg-yellow-500 text-white',
+          valueClass: 'text-yellow-600 dark:text-yellow-400',
+          icon: TrendingUp
+        };
+      case 'red':
+        return {
+          bgClass: 'bg-destructive/10 dark:bg-destructive/20',
+          iconClass: 'bg-destructive text-destructive-foreground',
+          valueClass: 'text-destructive',
+          icon: AlertTriangle
+        };
+    }
+  };
+
+  const trafficColors = getTrafficLightColors();
+  const TrafficIcon = trafficColors.icon;
+
   const kpis = [
     {
       label: 'Nómina',
       value: monthlyIncome,
       icon: Wallet,
-      bgClass: 'bg-income-light',
+      bgClass: 'bg-income-light dark:bg-income/15',
       iconClass: 'bg-income text-income-foreground',
       valueClass: 'text-income',
       subtitle: null
@@ -44,7 +78,7 @@ export const KPICards = ({
       label: 'Gastos Fijos',
       value: totalGastosFijos,
       icon: Receipt,
-      bgClass: 'bg-expense-light',
+      bgClass: 'bg-expense-light dark:bg-expense/15',
       iconClass: 'bg-expense text-expense-foreground',
       valueClass: 'text-expense',
       subtitle: rent > 0 ? `Incluye alquiler: ${formatCurrencyCompact(rent)}` : null
@@ -53,7 +87,7 @@ export const KPICards = ({
       label: 'Provisión Ahorro',
       value: totalProvision,
       icon: PiggyBank,
-      bgClass: 'bg-recurring-light',
+      bgClass: 'bg-recurring-light dark:bg-recurring/15',
       iconClass: 'bg-recurring text-recurring-foreground',
       valueClass: 'text-recurring',
       subtitle: activeGoalsCount > 0 
@@ -65,12 +99,12 @@ export const KPICards = ({
     {
       label: 'DINERO LIBRE',
       value: dineroLibre,
-      icon: Sparkles,
-      bgClass: 'bg-primary/10',
-      iconClass: 'bg-primary text-primary-foreground',
-      valueClass: dineroLibre >= 0 ? 'text-primary' : 'text-destructive',
+      icon: TrafficIcon,
+      bgClass: trafficColors.bgClass,
+      iconClass: trafficColors.iconClass,
+      valueClass: trafficColors.valueClass,
       highlight: true,
-      subtitle: null
+      subtitle: trafficLightMessage
     }
   ];
 
@@ -84,7 +118,10 @@ export const KPICards = ({
             className={cn(
               'border-none shadow-md rounded-2xl transition-all',
               kpi.bgClass,
-              kpi.highlight && 'ring-2 ring-primary/30 shadow-lg'
+              kpi.highlight && 'ring-2 ring-offset-2 ring-offset-background shadow-lg',
+              kpi.highlight && trafficLightStatus === 'green' && 'ring-income/50',
+              kpi.highlight && trafficLightStatus === 'yellow' && 'ring-yellow-500/50',
+              kpi.highlight && trafficLightStatus === 'red' && 'ring-destructive/50'
             )}
           >
             <CardContent className="p-4">
@@ -107,7 +144,10 @@ export const KPICards = ({
                 {kpi.label}
               </p>
               {kpi.subtitle && (
-                <p className="text-[10px] text-muted-foreground/70 mt-1 leading-tight">
+                <p className={cn(
+                  'text-[10px] mt-1 leading-tight',
+                  kpi.highlight ? 'text-muted-foreground font-medium' : 'text-muted-foreground/70'
+                )}>
                   {kpi.subtitle}
                 </p>
               )}

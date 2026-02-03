@@ -46,7 +46,7 @@
     --goal-foreground: 0 0% 100%;
     --goal-light: 280 50% 96%;
 
-    /* Bank colors - Official */
+    /* Bank colors - Official HSL */
     --santander: 0 100% 46%;
     --lacaixa: 189 100% 41%;
     --ing: 25 100% 50%;
@@ -69,26 +69,27 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  /* Premium Dark Mode - OLED Black */
   .dark {
-    --background: 220 20% 8%;
-    --foreground: 210 20% 98%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
 
-    --card: 220 20% 12%;
-    --card-foreground: 210 20% 98%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 220 20% 12%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 95%;
 
     --primary: 160 60% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 160 40% 20%;
+    --accent: 160 40% 15%;
     --accent-foreground: 160 50% 80%;
 
     --destructive: 0 60% 45%;
@@ -96,39 +97,39 @@
 
     --income: 160 55% 45%;
     --income-foreground: 0 0% 100%;
-    --income-light: 160 40% 15%;
+    --income-light: 160 40% 10%;
 
     --expense: 12 70% 50%;
     --expense-foreground: 0 0% 100%;
-    --expense-light: 12 50% 15%;
+    --expense-light: 12 50% 10%;
 
     --recurring: 230 60% 55%;
     --recurring-foreground: 0 0% 100%;
-    --recurring-light: 230 40% 18%;
+    --recurring-light: 230 40% 12%;
 
     --goal: 280 55% 55%;
     --goal-foreground: 0 0% 100%;
-    --goal-light: 280 40% 18%;
+    --goal-light: 280 40% 12%;
 
-    /* Bank colors dark - Official */
+    /* Bank colors dark - Keep vibrant */
     --santander: 0 100% 46%;
     --lacaixa: 189 100% 41%;
     --ing: 25 100% 50%;
-    --revolut: 210 14% 11%;
-    --bbva: 211 100% 27%;
+    --revolut: 0 0% 12%;
+    --bbva: 211 100% 35%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
     --ring: 160 60% 45%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 160 60% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 160 60% 45%;
   }
 }
 
@@ -207,6 +208,15 @@
 
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   @keyframes fadeIn {

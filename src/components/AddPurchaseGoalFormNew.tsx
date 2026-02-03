@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Gift, CalendarDays, Calculator, AlertTriangle } from 'lucide-react';
+import { Plus, Gift, CalendarDays, Calculator, AlertTriangle, TrendingDown } from 'lucide-react';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 
@@ -50,6 +50,9 @@ export const AddPurchaseGoalFormNew = ({ onAddGoal, dineroLibre = 0 }: AddPurcha
 
   // Check if quota exceeds dinero libre
   const exceedsFunds = calculations.monthlyQuota > dineroLibre && calculations.monthlyQuota > 0;
+
+  // Simulator: What would dinero libre be after accepting this goal?
+  const simulatedDineroLibre = dineroLibre - calculations.monthlyQuota;
 
   function getTargetDate(monthsAhead: number): Date {
     const date = new Date();
@@ -190,6 +193,40 @@ export const AddPurchaseGoalFormNew = ({ onAddGoal, dineroLibre = 0 }: AddPurcha
               )}
             </TabsContent>
           </Tabs>
+
+          {/* Simulator: Show impact on Dinero Libre */}
+          {calculations.monthlyQuota > 0 && (
+            <div className={cn(
+              "p-4 rounded-xl border-2 transition-all",
+              exceedsFunds 
+                ? "bg-destructive/10 border-destructive/30" 
+                : "bg-primary/5 border-primary/20"
+            )}>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingDown className={cn(
+                  "w-4 h-4",
+                  exceedsFunds ? "text-destructive" : "text-primary"
+                )} />
+                <p className="text-sm font-medium">Simulación de Dinero Libre</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Actual</p>
+                  <p className="text-lg font-semibold">{formatCurrencyCompact(dineroLibre)}</p>
+                </div>
+                <div className="text-2xl text-muted-foreground">→</div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Con este objetivo</p>
+                  <p className={cn(
+                    "text-lg font-bold",
+                    simulatedDineroLibre < 0 ? "text-destructive" : "text-primary"
+                  )}>
+                    {formatCurrencyCompact(simulatedDineroLibre)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Warning if exceeds funds */}
           {exceedsFunds && (
