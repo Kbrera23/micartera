@@ -29,12 +29,16 @@ const Index = () => {
     totalPurchaseGoalQuotas,
     hasInsufficientFunds,
     userBanks,
+    trafficLightStatus,
+    trafficLightMessage,
+    quarterlyProvision,
     addExpense,
     removeExpense,
     addPurchaseGoal,
     removePurchaseGoal,
     updateProfile,
-    toggleBank
+    toggleBank,
+    updateBankBalance
   } = useSupabaseFinances();
 
   useEffect(() => {
@@ -82,6 +86,9 @@ const Index = () => {
             rent={rent}
             totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
             activeGoalsCount={goalsWithQuotas.length}
+            trafficLightStatus={trafficLightStatus}
+            trafficLightMessage={trafficLightMessage}
+            quarterlyProvision={quarterlyProvision}
           />
         );
       case 'gastos':
@@ -115,6 +122,7 @@ const Index = () => {
             userBanks={userBanks}
             onUpdateProfile={updateProfile}
             onToggleBank={toggleBank}
+            onUpdateBankBalance={updateBankBalance}
           />
         );
       default:

@@ -14,17 +14,18 @@ interface MinimalProfileSectionProps {
   monthlyIncome: number;
   savingsGoal: number;
   rent: number;
-  userBanks: { bank: BankType }[];
+  userBanks: { bank: BankType; initial_balance: number }[];
   onUpdateProfile: (data: { monthly_income?: number; savings_goal?: number; rent?: number }) => void;
   onToggleBank: (bankId: BankType) => void;
+  onUpdateBankBalance: (bankId: BankType, balance: number) => void;
 }
 
-const BANKS: { id: BankType; name: string; color: string; icon: typeof Building2 }[] = [
-  { id: 'santander', name: 'Santander', color: 'bg-[#EC0000]', icon: Flame },
-  { id: 'lacaixa', name: 'La Caixa', color: 'bg-[#00ABD1]', icon: Star },
-  { id: 'ing', name: 'ING', color: 'bg-[#FF6200]', icon: Zap },
-  { id: 'revolut', name: 'Revolut', color: 'bg-[#191C1F]', icon: CreditCard },
-  { id: 'bbva', name: 'BBVA', color: 'bg-[#004481]', icon: Building2 },
+const BANKS: { id: BankType; name: string; color: string; icon: typeof Building2; description: string }[] = [
+  { id: 'santander', name: 'Santander', color: 'bg-santander', icon: Flame, description: 'Cuenta principal' },
+  { id: 'lacaixa', name: 'La Caixa', color: 'bg-lacaixa', icon: Star, description: 'Ahorros' },
+  { id: 'ing', name: 'ING', color: 'bg-ing', icon: Zap, description: 'Suscripciones' },
+  { id: 'revolut', name: 'Revolut', color: 'bg-revolut', icon: CreditCard, description: 'Provisiones trim.' },
+  { id: 'bbva', name: 'BBVA', color: 'bg-bbva', icon: Building2, description: 'Otros' },
 ];
 
 export const MinimalProfileSection = ({
@@ -33,18 +34,42 @@ export const MinimalProfileSection = ({
   rent,
   userBanks,
   onUpdateProfile,
-  onToggleBank
+  onToggleBank,
+  onUpdateBankBalance
 }: MinimalProfileSectionProps) => {
   const { signOut, user } = useAuth();
   const [income, setIncome] = useState('');
   const [savings, setSavings] = useState('');
   const [rentValue, setRentValue] = useState('');
+  const [bankBalances, setBankBalances] = useState<Record<BankType, string>>({
+    santander: '',
+    lacaixa: '',
+    ing: '',
+    revolut: '',
+    bbva: ''
+  });
 
   useEffect(() => {
     setIncome(monthlyIncome > 0 ? formatInputCurrency(monthlyIncome.toString()) : '');
     setSavings(savingsGoal > 0 ? formatInputCurrency(savingsGoal.toString()) : '');
     setRentValue(rent > 0 ? formatInputCurrency(rent.toString()) : '');
   }, [monthlyIncome, savingsGoal, rent]);
+
+  useEffect(() => {
+    const newBalances: Record<BankType, string> = {
+      santander: '',
+      lacaixa: '',
+      ing: '',
+      revolut: '',
+      bbva: ''
+    };
+    userBanks.forEach(b => {
+      if (b.initial_balance > 0) {
+        newBalances[b.bank] = formatInputCurrency(b.initial_balance.toString());
+      }
+    });
+    setBankBalances(newBalances);
+  }, [userBanks]);
 
   const parseValue = (value: string) => Number(value.replace(/[^\d]/g, '')) || 0;
 
@@ -58,6 +83,10 @@ export const MinimalProfileSection = ({
 
   const handleSaveRent = () => {
     onUpdateProfile({ rent: parseValue(rentValue) });
+  };
+
+  const handleSaveBankBalance = (bankId: BankType) => {
+    onUpdateBankBalance(bankId, parseValue(bankBalances[bankId]));
   };
 
   const handleSignOut = async () => {
@@ -93,7 +122,7 @@ export const MinimalProfileSection = ({
             <div className="flex gap-2">
               <Input
                 type="text"
-                inputMode="numeric"
+                inputMode="decimal"
                 value={income}
                 onChange={(e) => setIncome(formatInputCurrency(e.target.value))}
                 className="rounded-xl h-12 text-lg font-semibold"
@@ -120,7 +149,7 @@ export const MinimalProfileSection = ({
             <div className="flex gap-2">
               <Input
                 type="text"
-                inputMode="numeric"
+                inputMode="decimal"
                 value={savings}
                 onChange={(e) => setSavings(formatInputCurrency(e.target.value))}
                 className="rounded-xl h-12 text-lg font-semibold"
@@ -138,7 +167,7 @@ export const MinimalProfileSection = ({
             <div className="flex gap-2">
               <Input
                 type="text"
-                inputMode="numeric"
+                inputMode="decimal"
                 value={rentValue}
                 onChange={(e) => setRentValue(formatInputCurrency(e.target.value))}
                 className="rounded-xl h-12 text-lg font-semibold"
@@ -156,7 +185,7 @@ export const MinimalProfileSection = ({
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Mis Bancos</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {BANKS.map((bank) => {
               const Icon = bank.icon;
@@ -180,6 +209,48 @@ export const MinimalProfileSection = ({
               );
             })}
           </div>
+
+          {/* Initial Balances for Active Banks */}
+          {activeBankIds.length > 0 && (
+            <div className="pt-4 border-t border-border space-y-4">
+              <p className="text-sm font-medium text-muted-foreground">
+                Saldos Iniciales (El Colchón)
+              </p>
+              {BANKS.filter(b => activeBankIds.includes(b.id)).map((bank) => {
+                const Icon = bank.icon;
+                return (
+                  <div key={bank.id} className="space-y-2">
+                    <Label className="flex items-center gap-2 text-sm">
+                      <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center', bank.color)}>
+                        <Icon className="w-3 h-3 text-white" />
+                      </div>
+                      {bank.name} - {bank.description}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0"
+                        value={bankBalances[bank.id]}
+                        onChange={(e) => setBankBalances(prev => ({
+                          ...prev,
+                          [bank.id]: formatInputCurrency(e.target.value)
+                        }))}
+                        className="rounded-xl h-10 text-sm font-medium"
+                      />
+                      <Button 
+                        onClick={() => handleSaveBankBalance(bank.id)} 
+                        variant="outline"
+                        className="rounded-xl h-10 px-4"
+                      >
+                        Guardar
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -112,6 +112,7 @@ export type Database = {
           bank: Database["public"]["Enums"]["bank_type"]
           created_at: string
           id: string
+          initial_balance: number
           is_active: boolean
           user_id: string
         }
@@ -119,6 +120,7 @@ export type Database = {
           bank: Database["public"]["Enums"]["bank_type"]
           created_at?: string
           id?: string
+          initial_balance?: number
           is_active?: boolean
           user_id: string
         }
@@ -126,6 +128,7 @@ export type Database = {
           bank?: Database["public"]["Enums"]["bank_type"]
           created_at?: string
           id?: string
+          initial_balance?: number
           is_active?: boolean
           user_id?: string
         }
