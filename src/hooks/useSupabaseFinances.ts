@@ -66,6 +66,7 @@ export const useSupabaseFinances = () => {
   const [userBanks, setUserBanks] = useState<UserBank[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   // Fetch all data
   const fetchData = useCallback(async () => {
@@ -98,13 +99,13 @@ export const useSupabaseFinances = () => {
         ...b,
         initial_balance: b.initial_balance || 0
       })));
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err instanceof Error ? err : new Error('Error al cargar datos'));
     } finally {
       setLoading(false);
     }
   }, [user]);
-
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -370,6 +371,7 @@ export const useSupabaseFinances = () => {
     purchaseGoals,
     userBanks,
     loading,
+    error,
     hasProfile,
     ...calculations,
     updateProfile,
