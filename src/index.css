@@ -136,44 +136,66 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
+  /* Fix altura completa iOS */
   html {
-    /* Prevent iOS bounce scroll */
+    height: 100%;
+    height: -webkit-fill-available;
     overscroll-behavior: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  html, body {
-    /* Prevent iOS bounce and ensure full viewport */
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  #root {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Safe areas iOS */
+  @supports (padding: env(safe-area-inset-top)) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+
+  #root {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Prevent auto-zoom on inputs for iOS */
+  input,
   input[type="text"],
   input[type="number"],
   input[type="email"],
   input[type="password"],
   input[type="tel"],
   textarea,
-  select {
+  select,
+  button {
     font-size: 16px !important;
+  }
+
+  /* Scrolling suave iOS */
+  .overflow-auto, .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
