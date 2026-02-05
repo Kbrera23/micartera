@@ -1,6 +1,7 @@
 import { AddExpenseForm } from '@/components/AddExpenseFormNew';
 import { ExpenseListNew } from '@/components/ExpenseListNew';
 import { ExpenseFrequency, BankType, Expense } from '@/hooks/useSupabaseFinances';
+ import { BankCSVImporter } from '@/components/BankCSVImporter';
 
 interface ExpensesSectionProps {
   recurringExpenses: Expense[];
@@ -23,6 +24,11 @@ export const ExpensesSection = ({
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Gastos</h1>
 
+       {/* Importador de movimientos bancarios */}
+       <div className="mb-6">
+         <BankCSVImporter />
+       </div>
+ 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Add Expense Form */}
         <div className="lg:col-span-1">
