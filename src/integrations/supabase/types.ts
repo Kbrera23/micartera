@@ -83,6 +83,7 @@ export type Database = {
           current_amount: number
           id: string
           name: string
+          status: string | null
           target_amount: number
           target_date: string
           user_id: string
@@ -92,6 +93,7 @@ export type Database = {
           current_amount?: number
           id?: string
           name: string
+          status?: string | null
           target_amount: number
           target_date: string
           user_id: string
@@ -101,6 +103,7 @@ export type Database = {
           current_amount?: number
           id?: string
           name?: string
+          status?: string | null
           target_amount?: number
           target_date?: string
           user_id?: string
