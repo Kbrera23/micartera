@@ -32,6 +32,7 @@ export interface PurchaseGoal {
   target_amount: number;
   current_amount: number;
   target_date: string;
+  status: 'active' | 'pending';
   created_at: string;
 }
 
@@ -94,7 +95,10 @@ export const useSupabaseFinances = () => {
         ...e,
         frequency: (e.frequency as ExpenseFrequency) || 'monthly'
       })));
-      setPurchaseGoals(goalsRes.data || []);
+      setPurchaseGoals((goalsRes.data || []).map(g => ({
+        ...g,
+        status: (g.status as 'active' | 'pending') || 'active'
+      })));
       setUserBanks((banksRes.data || []).map(b => ({
         ...b,
         initial_balance: b.initial_balance || 0
@@ -177,7 +181,8 @@ export const useSupabaseFinances = () => {
         user_id: user.id,
         name,
         target_amount: targetAmount,
-        target_date: targetDate.toISOString().split('T')[0]
+        target_date: targetDate.toISOString().split('T')[0],
+        status: 'pending'
       })
       .select()
       .single();
@@ -185,7 +190,10 @@ export const useSupabaseFinances = () => {
     if (error) {
       toast.error('Error al añadir objetivo');
     } else {
-      setPurchaseGoals(prev => [data, ...prev]);
+      setPurchaseGoals(prev => [{
+        ...data,
+        status: (data.status as 'active' | 'pending') || 'pending'
+      }, ...prev]);
       toast.success('Objetivo añadido');
     }
   };
@@ -213,6 +221,25 @@ export const useSupabaseFinances = () => {
       toast.error('Error al actualizar objetivo');
     } else {
       setPurchaseGoals(prev => prev.map(g => g.id === id ? { ...g, current_amount: newAmount } : g));
+    }
+  };
+
+  const toggleGoalStatus = async (goalId: string, newStatus: 'active' | 'pending') => {
+    try {
+      const { error } = await supabase
+        .from('purchase_goals')
+        .update({ status: newStatus })
+        .eq('id', goalId);
+
+      if (error) throw error;
+      
+      setPurchaseGoals(prev => prev.map(g => 
+        g.id === goalId ? { ...g, status: newStatus } : g
+      ));
+      toast.success(newStatus === 'active' ? 'Objetivo activado' : 'Objetivo pausado');
+    } catch (error) {
+      console.error('Error updating goal status:', error);
+      toast.error('Error al actualizar estado del objetivo');
     }
   };
 
@@ -293,7 +320,9 @@ export const useSupabaseFinances = () => {
     const revolutBalance = userBanks.find(b => b.bank === 'revolut')?.initial_balance || 0;
 
     // Purchase goals quotas
-    const goalsWithQuotas = purchaseGoals.map(goal => {
+    const goalsWithQuotas = purchaseGoals
+      .filter(goal => goal.status === 'active')
+      .map(goal => {
       const remaining = goal.target_amount - goal.current_amount;
       const months = calculateMonthsRemaining(goal.target_date);
       const monthlyQuota = remaining > 0 ? remaining / months : 0;
@@ -380,6 +409,7 @@ export const useSupabaseFinances = () => {
     addPurchaseGoal,
     removePurchaseGoal,
     updatePurchaseGoalSaved,
+    toggleGoalStatus,
     toggleBank,
     updateBankBalance,
     refetch: fetchData

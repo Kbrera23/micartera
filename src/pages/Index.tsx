@@ -40,6 +40,7 @@ const Index = () => {
     removeExpense,
     addPurchaseGoal,
     removePurchaseGoal,
+    toggleGoalStatus,
     updateProfile,
     toggleBank,
     updateBankBalance
@@ -198,19 +199,21 @@ const Index = () => {
   ]);
 
   const goalsProps = useMemo(() => ({
-    goalsWithQuotas,
-    totalPurchaseGoalQuotas,
+    goals: purchaseGoals,
+    totalActiveQuotas: totalPurchaseGoalQuotas,
     dineroLibre,
     hasInsufficientFunds,
     onAddGoal: handleAddGoal,
-    onRemoveGoal: removePurchaseGoal
+    onRemoveGoal: removePurchaseGoal,
+    onToggleGoalStatus: toggleGoalStatus
   }), [
-    goalsWithQuotas,
+    purchaseGoals,
     totalPurchaseGoalQuotas,
     dineroLibre,
     hasInsufficientFunds,
     handleAddGoal,
-    removePurchaseGoal
+    removePurchaseGoal,
+    toggleGoalStatus
   ]);
 
   const profileProps = useMemo(() => ({
