@@ -1,15 +1,13 @@
- import { useState, useMemo } from 'react';
- import { Plus, Target, Play, Pause, Trash2, Calendar, Coins, TrendingUp } from 'lucide-react';
- import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
- import { Button } from '@/components/ui/button';
- import { Input } from '@/components/ui/input';
- import { Label } from '@/components/ui/label';
- import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
- import { formatCurrencyCompact } from '@/lib/currency';
- import { cn } from '@/lib/utils';
- import { format } from 'date-fns';
- import { es } from 'date-fns/locale';
- import { PurchaseGoal } from '@/hooks/useSupabaseFinances';
+import { useState, useMemo } from 'react';
+import { Plus, Target, Play, Pause, Trash2, Calendar } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { formatCurrencyCompact } from '@/lib/currency';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { PurchaseGoal } from '@/hooks/useSupabaseFinances';
+import { GoalCreationModal } from '@/components/GoalCreationModal';
  
  interface GoalsSectionProps {
    goals: PurchaseGoal[];
@@ -28,43 +26,24 @@
    return Math.max(1, months);
  };
  
- export const GoalsSection = ({
-   goals,
-   totalActiveQuotas,
-   dineroLibre,
-   hasInsufficientFunds,
-   onAddGoal,
-   onRemoveGoal,
-   onToggleGoalStatus
- }: GoalsSectionProps) => {
-   const [showAddModal, setShowAddModal] = useState(false);
-   const [newGoal, setNewGoal] = useState({
-     name: '',
-     targetAmount: '',
-     targetDate: ''
-   });
- 
-   // Separate active and pending goals
-   const activeGoals = useMemo(() => goals.filter(g => g.status === 'active'), [goals]);
-   const pendingGoals = useMemo(() => goals.filter(g => g.status === 'pending'), [goals]);
- 
-   // Calculate totals
-   const totalActiveAmount = activeGoals.reduce((sum, g) => sum + g.target_amount, 0);
-   const totalPendingAmount = pendingGoals.reduce((sum, g) => sum + g.target_amount, 0);
- 
-   const handleAddGoal = () => {
-     if (!newGoal.name || !newGoal.targetAmount || !newGoal.targetDate) return;
- 
-     const amount = parseFloat(newGoal.targetAmount);
-     if (amount <= 0) return;
- 
-     const date = new Date(newGoal.targetDate);
-     if (date <= new Date()) return;
- 
-     onAddGoal(newGoal.name, amount, date);
-     setNewGoal({ name: '', targetAmount: '', targetDate: '' });
-     setShowAddModal(false);
-   };
+export const GoalsSection = ({
+  goals,
+  totalActiveQuotas,
+  dineroLibre,
+  hasInsufficientFunds,
+  onAddGoal,
+  onRemoveGoal,
+  onToggleGoalStatus
+}: GoalsSectionProps) => {
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // Separate active and pending goals
+  const activeGoals = useMemo(() => goals.filter(g => g.status === 'active'), [goals]);
+  const pendingGoals = useMemo(() => goals.filter(g => g.status === 'pending'), [goals]);
+
+  // Calculate totals
+  const totalActiveAmount = activeGoals.reduce((sum, g) => sum + g.target_amount, 0);
+  const totalPendingAmount = pendingGoals.reduce((sum, g) => sum + g.target_amount, 0);
  
    const getMonthlyQuota = (goal: PurchaseGoal) => {
      const remaining = goal.target_amount - goal.current_amount;
@@ -205,87 +184,21 @@
      );
    };
  
-   const previewQuota = useMemo(() => {
-     if (!newGoal.targetAmount || !newGoal.targetDate) return 0;
-     const amount = parseFloat(newGoal.targetAmount);
-     const months = calculateMonthsRemaining(newGoal.targetDate);
-     return amount / months;
-   }, [newGoal.targetAmount, newGoal.targetDate]);
- 
-   return (
-     <div className="space-y-6">
-       {/* Header Summary */}
-       <Card className="glass-card rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20">
-         <CardContent className="p-5">
-           <div className="flex items-center justify-between mb-4">
-             <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-               <Target className="w-6 h-6 text-primary" />
-               Mis Objetivos
-             </h2>
-             <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-               <DialogTrigger asChild>
-                 <Button size="sm" className="rounded-xl">
-                   <Plus className="w-4 h-4 mr-1.5" />
-                   Nuevo
-                 </Button>
-               </DialogTrigger>
-               <DialogContent className="sm:max-w-md">
-                 <DialogHeader>
-                   <DialogTitle>Nuevo Objetivo</DialogTitle>
-                 </DialogHeader>
-                 <div className="space-y-4 pt-2">
-                   <div>
-                     <Label>¿Qué quieres conseguir?</Label>
-                     <Input
-                       value={newGoal.name}
-                       onChange={(e) => setNewGoal({ ...newGoal, name: e.target.value })}
-                       placeholder="Ej: Viaje a Japón, MacBook Pro..."
-                       className="mt-1.5"
-                     />
-                   </div>
-                   <div>
-                     <Label>¿Cuánto necesitas?</Label>
-                     <div className="relative mt-1.5">
-                       <Input
-                         type="number"
-                         value={newGoal.targetAmount}
-                         onChange={(e) => setNewGoal({ ...newGoal, targetAmount: e.target.value })}
-                         placeholder="0"
-                         className="pr-8"
-                       />
-                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
-                     </div>
-                   </div>
-                   <div>
-                     <Label>¿Para cuándo lo necesitas?</Label>
-                     <Input
-                       type="date"
-                       value={newGoal.targetDate}
-                       onChange={(e) => setNewGoal({ ...newGoal, targetDate: e.target.value })}
-                       min={new Date().toISOString().split('T')[0]}
-                       className="mt-1.5"
-                     />
-                   </div>
-                   {previewQuota > 0 && (
-                     <div className="bg-primary/10 rounded-xl p-3">
-                       <div className="text-sm text-muted-foreground">Cuota mensual estimada:</div>
-                       <div className="text-xl font-bold text-primary">
-                         {formatCurrencyCompact(previewQuota)}/mes
-                       </div>
-                     </div>
-                   )}
-                   <div className="flex gap-2 pt-2">
-                     <Button variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>
-                       Cancelar
-                     </Button>
-                     <Button className="flex-1" onClick={handleAddGoal}>
-                       Crear Objetivo
-                     </Button>
-                   </div>
-                 </div>
-               </DialogContent>
-             </Dialog>
-           </div>
+  return (
+    <div className="space-y-6">
+      {/* Header Summary */}
+      <Card className="glass-card rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Target className="w-6 h-6 text-primary" />
+              Mis Objetivos
+            </h2>
+            <Button size="sm" className="rounded-xl" onClick={() => setShowAddModal(true)}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              Nuevo
+            </Button>
+          </div>
  
            <div className="grid grid-cols-3 gap-3">
              <div className="bg-card/50 rounded-xl p-3 text-center">
@@ -337,24 +250,32 @@
          </div>
        )}
  
-       {/* Empty state */}
-       {goals.length === 0 && (
-         <Card className="glass-card rounded-2xl">
-           <CardContent className="py-12 text-center">
-             <Target className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-             <h3 className="text-lg font-semibold text-foreground mb-1">
-               No tienes objetivos aún
-             </h3>
-             <p className="text-muted-foreground text-sm mb-4">
-               Crea tu primer objetivo y empieza a ahorrar
-             </p>
-             <Button onClick={() => setShowAddModal(true)}>
-               <Plus className="w-4 h-4 mr-1.5" />
-               Crear Objetivo
-             </Button>
-           </CardContent>
-         </Card>
-       )}
-     </div>
-   );
- };
+      {/* Empty state */}
+      {goals.length === 0 && (
+        <Card className="glass-card rounded-2xl">
+          <CardContent className="py-12 text-center">
+            <Target className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-foreground mb-1">
+              No tienes objetivos aún
+            </h3>
+            <p className="text-muted-foreground text-sm mb-4">
+              Crea tu primer objetivo y empieza a ahorrar
+            </p>
+            <Button onClick={() => setShowAddModal(true)}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              Crear Objetivo
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Modal de creación mejorado */}
+      <GoalCreationModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        onSubmit={onAddGoal}
+        dineroLibre={dineroLibre}
+      />
+    </div>
+  );
+};
