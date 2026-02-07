@@ -1,18 +1,13 @@
 // GoalCreationModal.tsx
-// Modal mejorado para crear objetivos con opción fecha/cuota
+// Modal mejorado para crear objetivos con opción fecha/cuota y calendario moderno
 
 import { useState } from 'react';
 import { X, Calendar, Euro, TrendingUp, DollarSign } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import { formatCurrencyCompact } from '@/lib/currency';
+import { ModernCalendar } from './ModernCalendar';
 
 interface GoalCreationModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  show: boolean;
+  onClose: () => void;
   onSubmit: (name: string, targetAmount: number, targetDate: Date) => void;
   dineroLibre: number;
 }
@@ -20,8 +15,8 @@ interface GoalCreationModalProps {
 type CalculationMode = 'date' | 'quota';
 
 export const GoalCreationModal = ({ 
-  open, 
-  onOpenChange, 
+  show, 
+  onClose, 
   onSubmit,
   dineroLibre 
 }: GoalCreationModalProps) => {
@@ -29,18 +24,19 @@ export const GoalCreationModal = ({
   const [targetAmount, setTargetAmount] = useState('');
   const [calculationMode, setCalculationMode] = useState<CalculationMode>('date');
   
-  // Para modo fecha
-  const [targetDate, setTargetDate] = useState('');
+  // Para modo fecha (ahora es Date | null)
+  const [targetDate, setTargetDate] = useState<Date | null>(null);
   
   // Para modo cuota
   const [monthlyQuota, setMonthlyQuota] = useState('');
 
+  if (!show) return null;
+
   // Calcular meses basado en fecha seleccionada
-  const getMonthsFromDate = (date: string): number => {
+  const getMonthsFromDate = (date: Date | null): number => {
     if (!date) return 0;
-    const target = new Date(date);
     const now = new Date();
-    const months = Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    const months = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30));
     return Math.max(1, months);
   };
 
@@ -61,7 +57,7 @@ export const GoalCreationModal = ({
   // Fecha calculada
   const calculatedDate = calculationMode === 'quota' && targetAmount && monthlyQuota
     ? getDateFromQuota(parseFloat(targetAmount), parseFloat(monthlyQuota))
-    : targetDate ? new Date(targetDate) : null;
+    : targetDate;
 
   // Meses calculados
   const monthsNeeded = calculationMode === 'date'
@@ -70,36 +66,47 @@ export const GoalCreationModal = ({
       ? Math.ceil(parseFloat(targetAmount) / parseFloat(monthlyQuota))
       : 0;
 
-  const resetForm = () => {
-    setName('');
-    setTargetAmount('');
-    setTargetDate('');
-    setMonthlyQuota('');
-    setCalculationMode('date');
-  };
-
   const handleSubmit = () => {
     if (!name?.trim() || !targetAmount) {
+      alert('⚠️ Por favor completa el nombre y monto');
       return;
     }
 
     const amount = parseFloat(targetAmount);
-    if (amount <= 0) return;
+    if (amount <= 0) {
+      alert('⚠️ El monto debe ser mayor a 0');
+      return;
+    }
 
     let finalDate: Date;
 
     if (calculationMode === 'date') {
-      if (!targetDate) return;
-      finalDate = new Date(targetDate);
-      if (finalDate <= new Date()) return;
+      if (!targetDate) {
+        alert('⚠️ Por favor selecciona una fecha');
+        return;
+      }
+      finalDate = targetDate;
+      if (finalDate <= new Date()) {
+        alert('⚠️ La fecha debe ser futura');
+        return;
+      }
     } else {
-      if (!monthlyQuota || parseFloat(monthlyQuota) <= 0) return;
+      if (!monthlyQuota || parseFloat(monthlyQuota) <= 0) {
+        alert('⚠️ La cuota mensual debe ser mayor a 0');
+        return;
+      }
       finalDate = getDateFromQuota(amount, parseFloat(monthlyQuota));
     }
 
     onSubmit(name, amount, finalDate);
-    resetForm();
-    onOpenChange(false);
+    
+    // Reset
+    setName('');
+    setTargetAmount('');
+    setTargetDate(null);
+    setMonthlyQuota('');
+    setCalculationMode('date');
+    onClose();
   };
 
   const formatDate = (date: Date) => {
@@ -117,51 +124,57 @@ export const GoalCreationModal = ({
     return tomorrow.toISOString().split('T')[0];
   };
 
-  const isValid = name?.trim() && targetAmount && parseFloat(targetAmount) > 0 &&
-    ((calculationMode === 'date' && targetDate) || 
-     (calculationMode === 'quota' && monthlyQuota && parseFloat(monthlyQuota) > 0));
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-xl">
-              <TrendingUp className="w-5 h-5 text-primary" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full animate-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-blue-600" />
             </div>
-            Nuevo Objetivo
-          </DialogTitle>
-        </DialogHeader>
+            <h3 className="text-xl font-bold text-gray-900">
+              Nuevo Objetivo
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
 
-        <div className="space-y-5 pt-2">
+        {/* Body */}
+        <div className="p-6 space-y-5">
           {/* Nombre del objetivo */}
           <div>
-            <Label className="text-sm font-semibold">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               ¿Qué quieres conseguir?
-            </Label>
-            <Input
+            </label>
+            <input
+              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ej: Viaje a Japón, MacBook Pro..."
-              className="mt-1.5"
+              placeholder="Ej: Viaje a Japón, MacBook Pro, Coche..."
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
             />
           </div>
 
           {/* Monto objetivo */}
           <div>
-            <Label className="text-sm font-semibold">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               ¿Cuánto necesitas?
-            </Label>
-            <div className="relative mt-1.5">
-              <Input
+            </label>
+            <div className="relative">
+              <input
                 type="number"
-                inputMode="decimal"
                 value={targetAmount}
                 onChange={(e) => setTargetAmount(e.target.value)}
                 placeholder="0"
-                className="pr-8"
+                className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                 €
               </span>
             </div>
@@ -169,34 +182,30 @@ export const GoalCreationModal = ({
 
           {/* Toggle: Fecha vs Cuota */}
           <div>
-            <Label className="text-sm font-semibold mb-3 block">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
               ¿Cómo quieres calcularlo?
-            </Label>
-            <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-xl">
+            </label>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
               <button
-                type="button"
                 onClick={() => setCalculationMode('date')}
-                className={cn(
-                  "px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2",
+                className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
                   calculationMode === 'date'
-                    ? 'bg-card text-primary shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-4 h-4 inline mr-2" />
                 Por fecha
               </button>
               <button
-                type="button"
                 onClick={() => setCalculationMode('quota')}
-                className={cn(
-                  "px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2",
+                className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
                   calculationMode === 'quota'
-                    ? 'bg-card text-primary shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                <Euro className="w-4 h-4" />
+                <Euro className="w-4 h-4 inline mr-2" />
                 Por cuota
               </button>
             </div>
@@ -205,15 +214,13 @@ export const GoalCreationModal = ({
           {/* Modo FECHA */}
           {calculationMode === 'date' && (
             <div>
-              <Label className="text-sm font-semibold">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
                 ¿Para cuándo lo necesitas?
-              </Label>
-              <Input
-                type="date"
-                value={targetDate}
-                onChange={(e) => setTargetDate(e.target.value)}
-                min={getMinDate()}
-                className="mt-1.5"
+              </label>
+              <ModernCalendar
+                selectedDate={targetDate}
+                onSelectDate={setTargetDate}
+                minDate={new Date()}
               />
             </div>
           )}
@@ -221,96 +228,93 @@ export const GoalCreationModal = ({
           {/* Modo CUOTA */}
           {calculationMode === 'quota' && (
             <div>
-              <Label className="text-sm font-semibold">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 ¿Cuánto puedes ahorrar al mes?
-              </Label>
-              <div className="relative mt-1.5">
-                <Input
+              </label>
+              <div className="relative">
+                <input
                   type="number"
-                  inputMode="decimal"
                   value={monthlyQuota}
                   onChange={(e) => setMonthlyQuota(e.target.value)}
                   placeholder="0"
-                  className="pr-16"
+                  max={dineroLibre}
+                  className="w-full px-4 py-3 pr-16 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                  €/mes
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                  € / mes
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Tienes {formatCurrencyCompact(dineroLibre)} disponibles al mes
+              <p className="text-xs text-gray-500 mt-2">
+                Tienes {dineroLibre.toFixed(0)}€ disponibles al mes
               </p>
             </div>
           )}
 
           {/* Preview de cálculos */}
           {targetAmount && ((calculationMode === 'date' && targetDate) || (calculationMode === 'quota' && monthlyQuota)) && (
-            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-xl p-5 border border-primary/20">
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-5 border-2 border-blue-100">
               <div className="flex items-center gap-2 mb-3">
-                <DollarSign className="w-5 h-5 text-primary" />
-                <h4 className="font-semibold text-foreground">Resumen del objetivo</h4>
+                <DollarSign className="w-5 h-5 text-blue-600" />
+                <h4 className="font-semibold text-gray-900">Resumen del objetivo</h4>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-card/50 rounded-xl p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Cuota mensual</div>
-                  <div className="text-xl font-bold text-primary">
-                    {formatCurrencyCompact(calculatedQuota)}
+                <div>
+                  <div className="text-xs text-gray-600 mb-1">Cuota mensual</div>
+                  <div className="text-xl font-bold text-blue-600">
+                    {calculatedQuota.toFixed(0)}€
                   </div>
-                  <div className="text-xs text-muted-foreground">por mes</div>
+                  <div className="text-xs text-gray-500">por mes</div>
                 </div>
                 
-                <div className="bg-card/50 rounded-xl p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Duración</div>
-                  <div className="text-xl font-bold text-foreground">
+                <div>
+                  <div className="text-xs text-gray-600 mb-1">Duración</div>
+                  <div className="text-xl font-bold text-purple-600">
                     {monthsNeeded}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-gray-500">
                     {monthsNeeded === 1 ? 'mes' : 'meses'}
                   </div>
                 </div>
               </div>
 
               {calculatedDate && (
-                <div className="mt-4 pt-4 border-t border-border/50">
-                  <div className="text-xs text-muted-foreground mb-1">Fecha estimada</div>
-                  <div className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-primary" />
-                    {formatDate(calculatedDate)}
+                <div className="mt-4 pt-4 border-t border-blue-200">
+                  <div className="text-xs text-gray-600 mb-1">Fecha estimada</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    📅 {formatDate(calculatedDate)}
                   </div>
                 </div>
               )}
 
               {/* Advertencia si excede dinero libre */}
               {calculatedQuota > dineroLibre && (
-                <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                    ⚠️ La cuota ({formatCurrencyCompact(calculatedQuota)}) excede tu dinero libre ({formatCurrencyCompact(dineroLibre)})
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-xs text-yellow-800">
+                    ⚠️ La cuota ({calculatedQuota.toFixed(0)}€) excede tu dinero libre ({dineroLibre.toFixed(0)}€)
                   </p>
                 </div>
               )}
             </div>
           )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <Button 
-              variant="outline" 
-              className="flex-1" 
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              className="flex-1" 
-              onClick={handleSubmit}
-              disabled={!isValid}
-            >
-              Crear Objetivo
-            </Button>
-          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        {/* Footer */}
+        <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-semibold transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/30"
+          >
+            Crear Objetivo
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
