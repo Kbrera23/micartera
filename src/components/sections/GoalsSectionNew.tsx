@@ -271,8 +271,8 @@ export const GoalsSection = ({
 
       {/* Modal de creación mejorado */}
       <GoalCreationModal
-        open={showAddModal}
-        onOpenChange={setShowAddModal}
+        show={showAddModal}
+        onClose={() => setShowAddModal(false)}
         onSubmit={onAddGoal}
         dineroLibre={dineroLibre}
       />
