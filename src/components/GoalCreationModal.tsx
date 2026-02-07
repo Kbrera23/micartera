@@ -126,9 +126,9 @@ export const GoalCreationModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -145,8 +145,8 @@ export const GoalCreationModal = ({
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-5">
+        {/* Body - Con scroll */}
+        <div className="p-6 space-y-4 overflow-y-auto flex-1">
           {/* Nombre del objetivo */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -252,16 +252,16 @@ export const GoalCreationModal = ({
 
           {/* Preview de cálculos */}
           {targetAmount && ((calculationMode === 'date' && targetDate) || (calculationMode === 'quota' && monthlyQuota)) && (
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-5 border-2 border-blue-100">
-              <div className="flex items-center gap-2 mb-3">
-                <DollarSign className="w-5 h-5 text-blue-600" />
-                <h4 className="font-semibold text-gray-900">Resumen del objetivo</h4>
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4 border-2 border-blue-100">
+              <div className="flex items-center gap-2 mb-2">
+                <DollarSign className="w-4 h-4 text-blue-600" />
+                <h4 className="font-semibold text-gray-900 text-sm">Resumen</h4>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-xs text-gray-600 mb-1">Cuota mensual</div>
-                  <div className="text-xl font-bold text-blue-600">
+                  <div className="text-lg font-bold text-blue-600">
                     {calculatedQuota.toFixed(0)}€
                   </div>
                   <div className="text-xs text-gray-500">por mes</div>
@@ -269,7 +269,7 @@ export const GoalCreationModal = ({
                 
                 <div>
                   <div className="text-xs text-gray-600 mb-1">Duración</div>
-                  <div className="text-xl font-bold text-purple-600">
+                  <div className="text-lg font-bold text-purple-600">
                     {monthsNeeded}
                   </div>
                   <div className="text-xs text-gray-500">
@@ -279,7 +279,7 @@ export const GoalCreationModal = ({
               </div>
 
               {calculatedDate && (
-                <div className="mt-4 pt-4 border-t border-blue-200">
+                <div className="mt-3 pt-3 border-t border-blue-200">
                   <div className="text-xs text-gray-600 mb-1">Fecha estimada</div>
                   <div className="text-sm font-semibold text-gray-900">
                     📅 {formatDate(calculatedDate)}
@@ -289,9 +289,9 @@ export const GoalCreationModal = ({
 
               {/* Advertencia si excede dinero libre */}
               {calculatedQuota > dineroLibre && (
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="text-xs text-yellow-800">
-                    ⚠️ La cuota ({calculatedQuota.toFixed(0)}€) excede tu dinero libre ({dineroLibre.toFixed(0)}€)
+                    ⚠️ La cuota excede tu dinero libre
                   </p>
                 </div>
               )}
@@ -299,8 +299,8 @@ export const GoalCreationModal = ({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+        {/* Footer - Fijo abajo */}
+        <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-3 bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-semibold transition-colors"
