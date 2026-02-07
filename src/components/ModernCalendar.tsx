@@ -87,39 +87,39 @@ export const ModernCalendar = ({ selectedDate, onSelectDate, minDate }: ModernCa
   };
 
   return (
-    <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
+    <div className="bg-white rounded-xl border-2 border-gray-200 p-3">
       {/* Header con mes y año */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <button
           onClick={previousMonth}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
         >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
         </button>
         
         <div className="text-center">
-          <div className="font-bold text-gray-900 text-lg">
+          <div className="font-bold text-gray-900 text-base">
             {monthNames[currentMonth.getMonth()]}
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-xs text-gray-500">
             {currentMonth.getFullYear()}
           </div>
         </div>
         
         <button
           onClick={nextMonth}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
         >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
+          <ChevronRight className="w-4 h-4 text-gray-600" />
         </button>
       </div>
 
       {/* Nombres de días */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {dayNames.map((day, idx) => (
           <div
             key={idx}
-            className="text-center text-xs font-semibold text-gray-600 py-2"
+            className="text-center text-xs font-semibold text-gray-600 py-1"
           >
             {day}
           </div>
@@ -139,7 +139,7 @@ export const ModernCalendar = ({ selectedDate, onSelectDate, minDate }: ModernCa
               onClick={() => handleDateClick(day)}
               disabled={!day || past}
               className={`
-                aspect-square rounded-lg text-sm font-medium transition-all
+                aspect-square rounded-lg text-xs font-medium transition-all
                 ${!day ? 'invisible' : ''}
                 ${past ? 'text-gray-300 cursor-not-allowed' : ''}
                 ${!past && !selected && day ? 'hover:bg-blue-50 text-gray-700' : ''}
@@ -153,15 +153,15 @@ export const ModernCalendar = ({ selectedDate, onSelectDate, minDate }: ModernCa
         })}
       </div>
 
-      {/* Leyenda */}
-      <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-gray-200">
-        <div className="flex items-center gap-2 text-xs">
-          <div className="w-3 h-3 border-2 border-blue-400 rounded"></div>
+      {/* Leyenda compacta */}
+      <div className="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-gray-200">
+        <div className="flex items-center gap-1 text-xs">
+          <div className="w-2.5 h-2.5 border-2 border-blue-400 rounded"></div>
           <span className="text-gray-600">Hoy</span>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <div className="w-3 h-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded"></div>
-          <span className="text-gray-600">Seleccionado</span>
+        <div className="flex items-center gap-1 text-xs">
+          <div className="w-2.5 h-2.5 bg-gradient-to-br from-blue-600 to-purple-600 rounded"></div>
+          <span className="text-gray-600">Elegido</span>
         </div>
       </div>
     </div>
