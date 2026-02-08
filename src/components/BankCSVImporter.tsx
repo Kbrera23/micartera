@@ -121,22 +121,45 @@ export const BankCSVImporter = () => {
         case 'GENERIC':
           // Intentar detectar columnas automáticamente
           const keys = Object.keys(row);
-          const dateKey = keys.find(k => k.toLowerCase().includes('fecha') || k.toLowerCase().includes('date'));
-          const descKey = keys.find(k => 
-            k.toLowerCase().includes('concepto') || 
-            k.toLowerCase().includes('descripcion') ||
-            k.toLowerCase().includes('description') ||
-            k.toLowerCase().includes('payee')
-          );
-          const amountKey = keys.find(k => 
-            k.toLowerCase().includes('importe') || 
-            k.toLowerCase().includes('amount') ||
-            k.toLowerCase().includes('cantidad')
-          );
+          console.log('Keys disponibles en GENERIC:', keys);
+          console.log('Valores de la fila:', Object.values(row));
+          
+          const dateKey = keys.find(k => {
+            const lower = k.toLowerCase();
+            return lower.includes('fecha') || lower.includes('date') || lower === 'f. operación' || k.includes('FECHA');
+          });
+          
+          const descKey = keys.find(k => {
+            const lower = k.toLowerCase();
+            return lower.includes('concepto') || 
+                   lower.includes('descripcion') ||
+                   lower.includes('description') ||
+                   lower.includes('payee') ||
+                   k.includes('CONCEPTO');
+          });
+          
+          const amountKey = keys.find(k => {
+            const lower = k.toLowerCase();
+            return lower.includes('importe') || 
+                   lower.includes('amount') ||
+                   lower.includes('cantidad') ||
+                   k.includes('IMPORTE');
+          });
+          
+          console.log('Columnas detectadas:', { dateKey, descKey, amountKey });
           
           if (dateKey) date = row[dateKey];
           if (descKey) description = row[descKey];
-          if (amountKey) amount = parseFloat(String(row[amountKey] || '0').replace(',', '.'));
+          if (amountKey) {
+            const amountStr = String(row[amountKey] || '0')
+              .replace(',', '.')
+              .replace(' EUR', '')
+              .replace('€', '')
+              .trim();
+            amount = parseFloat(amountStr);
+          }
+          
+          console.log('Valores extraídos:', { date, description, amount });
           break;
       }
 
@@ -329,12 +352,15 @@ export const BankCSVImporter = () => {
       throw new Error('No se encontraron datos válidos en el archivo');
     }
 
-    const format = detectBankFormat(headers);
-    
-    console.log('Formato detectado:', format);
+    console.log('===== DEBUG IMPORTADOR =====');
     console.log('Headers encontrados:', headers);
+    console.log('Headers (lowercase):', headers.map(h => String(h || '').toLowerCase()));
     console.log('Fila de headers:', headerRowIndex);
     console.log('Filas de datos:', jsonData.length);
+    console.log('Primera fila de datos:', jsonData[0]);
+    
+    const format = detectBankFormat(headers);
+    console.log('Formato detectado:', format);
 
     const transactions: Transaction[] = [];
     for (const row of jsonData) {
