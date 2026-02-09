@@ -1,5 +1,5 @@
-// BankCSVImporter.tsx
-// Componente para importar movimientos bancarios desde CSV/Excel
+// BankCSVImporter.tsx - VERSIÓN CORREGIDA PARA SANTANDER
+// Maneja archivos XLS con columnas: FECHA OPERACIÓN, FECHA VALOR, CONCEPTO, IMPORTE EUR, SALDO
 
 import { useState, useCallback } from 'react';
 import { Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
@@ -29,69 +29,74 @@ export const BankCSVImporter = () => {
 
   // Detectar formato del banco basado en headers
   const detectBankFormat = (headers: string[]) => {
-    const headersLower = headers.map(h => String(h || '').toLowerCase().trim());
+    const headersStr = headers.map(h => String(h || '').toUpperCase().trim()).join('|');
     
-    // BBVA
-    if (headersLower.some(h => h.includes('fecha operación') || h === 'fecha operacion') && 
-        headersLower.some(h => h.includes('importe'))) {
-      return 'BBVA';
-    }
+    console.log('Detectando formato con headers:', headersStr);
     
-    // Santander (puede tener "FECHA OPERACIÓN", "CONCEPTO", "IMPORTE EUR")
-    if (headersLower.some(h => h.includes('fecha operación') || h.includes('fecha operacion')) && 
-        headersLower.some(h => h.includes('concepto')) &&
-        headersLower.some(h => h.includes('importe'))) {
+    // Santander tiene estas columnas exactas
+    if (headersStr.includes('FECHA OPERACIÓN') || headersStr.includes('FECHA OPERACION')) {
+      console.log('→ Formato SANTANDER detectado');
       return 'SANTANDER';
     }
     
+    // BBVA
+    if (headersStr.includes('FECHA') && headersStr.includes('IMPORTE') && !headersStr.includes('CONCEPTO')) {
+      console.log('→ Formato BBVA detectado');
+      return 'BBVA';
+    }
+    
     // CaixaBank
-    if (headersLower.some(h => h.includes('data')) && 
-        headersLower.some(h => h.includes('import'))) {
+    if (headersStr.includes('DATA') && headersStr.includes('IMPORT')) {
+      console.log('→ Formato CAIXABANK detectado');
       return 'CAIXABANK';
     }
     
     // ING
-    if (headersLower.some(h => h.includes('fecha') || h === 'date') && 
-        headersLower.some(h => h.includes('nombre / descripción') || h.includes('description'))) {
+    if (headersStr.includes('NOMBRE / DESCRIPCIÓN') || headersStr.includes('DESCRIPTION')) {
+      console.log('→ Formato ING detectado');
       return 'ING';
     }
     
     // Revolut
-    if (headersLower.some(h => h === 'completed date') && 
-        headersLower.some(h => h === 'description') &&
-        headersLower.some(h => h === 'amount')) {
+    if (headersStr.includes('COMPLETED DATE')) {
+      console.log('→ Formato REVOLUT detectado');
       return 'REVOLUT';
     }
     
     // N26
-    if (headersLower.some(h => h === 'date') && 
-        headersLower.some(h => h === 'payee') &&
-        headersLower.some(h => h === 'amount (eur)')) {
+    if (headersStr.includes('PAYEE') && headersStr.includes('AMOUNT (EUR)')) {
+      console.log('→ Formato N26 detectado');
       return 'N26';
     }
     
+    console.log('→ Formato GENERIC (intentará auto-detectar)');
     return 'GENERIC';
   };
 
   // Parsear transacción según formato del banco
-  const parseTransaction = (row: any, format: string): Transaction | null => {
+  const parseTransaction = (row: any, format: string, rowIndex: number): Transaction | null => {
     try {
       let date = '';
       let description = '';
       let amount = 0;
 
+      console.log(`\n--- Parseando fila ${rowIndex} (formato: ${format}) ---`);
+      console.log('Datos de la fila:', row);
+
       switch (format) {
-        case 'BBVA':
-          date = row['Fecha operación'] || row['Fecha operacion'] || '';
-          description = row['Concepto'] || '';
-          amount = parseFloat(String(row['Importe'] || '0').replace(',', '.'));
+        case 'SANTANDER':
+          // Santander tiene: FECHA OPERACIÓN, FECHA VALOR, CONCEPTO, IMPORTE EUR, SALDO
+          date = row['FECHA OPERACIÓN'] || row['FECHA OPERACION'] || row['F. OPERACIÓN'] || '';
+          description = row['CONCEPTO'] || '';
+          const santanderImporte = row['IMPORTE EUR'] || row['IMPORTE'] || '0';
+          amount = parseFloat(String(santanderImporte).replace('.', '').replace(',', '.').replace(' EUR', '').replace('€', '').trim());
+          console.log('Santander extraído:', { date, description, amount });
           break;
 
-        case 'SANTANDER':
-          date = row['FECHA OPERACIÓN'] || row['Fecha Operación'] || row['FECHA OPERACION'] || row['Fecha'] || '';
-          description = row['CONCEPTO'] || row['Concepto'] || row['Descripción'] || '';
-          const importeStr = row['IMPORTE EUR'] || row['Importe EUR'] || row['IMPORTE'] || row['Importe'] || row['Cargo'] || row['Abono'] || '0';
-          amount = parseFloat(String(importeStr).replace(',', '.').replace(' EUR', '').trim());
+        case 'BBVA':
+          date = row['Fecha operación'] || row['Fecha operacion'] || row['Fecha'] || '';
+          description = row['Concepto'] || '';
+          amount = parseFloat(String(row['Importe'] || '0').replace(',', '.'));
           break;
 
         case 'CAIXABANK':
@@ -119,61 +124,69 @@ export const BankCSVImporter = () => {
           break;
 
         case 'GENERIC':
-          // Intentar detectar columnas automáticamente
           const keys = Object.keys(row);
-          console.log('Keys disponibles en GENERIC:', keys);
-          console.log('Valores de la fila:', Object.values(row));
+          console.log('Keys disponibles:', keys);
           
+          // Buscar fecha
           const dateKey = keys.find(k => {
-            const lower = k.toLowerCase();
-            return lower.includes('fecha') || lower.includes('date') || lower === 'f. operación' || k.includes('FECHA');
-          });
+            const lower = String(k).toLowerCase();
+            return lower.includes('fecha') || lower.includes('date') || lower === 'f.';
+          }) || keys[0]; // Primera columna si no encuentra
           
+          // Buscar descripción/concepto
           const descKey = keys.find(k => {
-            const lower = k.toLowerCase();
+            const lower = String(k).toLowerCase();
             return lower.includes('concepto') || 
                    lower.includes('descripcion') ||
                    lower.includes('description') ||
                    lower.includes('payee') ||
-                   k.includes('CONCEPTO');
-          });
+                   lower.includes('detalle');
+          }) || keys[1]; // Segunda columna si no encuentra
           
+          // Buscar importe
           const amountKey = keys.find(k => {
-            const lower = k.toLowerCase();
+            const lower = String(k).toLowerCase();
             return lower.includes('importe') || 
                    lower.includes('amount') ||
                    lower.includes('cantidad') ||
-                   k.includes('IMPORTE');
-          });
+                   lower.includes('monto');
+          }) || keys[keys.length - 2]; // Penúltima columna (antes del saldo) si no encuentra
           
-          console.log('Columnas detectadas:', { dateKey, descKey, amountKey });
+          console.log('Columnas auto-detectadas:', { dateKey, descKey, amountKey });
           
           if (dateKey) date = row[dateKey];
           if (descKey) description = row[descKey];
           if (amountKey) {
             const amountStr = String(row[amountKey] || '0')
-              .replace(',', '.')
+              .replace('.', '')  // Quitar puntos de miles
+              .replace(',', '.')  // Coma decimal a punto
               .replace(' EUR', '')
               .replace('€', '')
               .trim();
             amount = parseFloat(amountStr);
           }
           
-          console.log('Valores extraídos:', { date, description, amount });
+          console.log('Valores auto-detectados:', { date, description, amount });
           break;
       }
 
       // Validar que tengamos datos mínimos
-      if (!date || !description || amount === 0) {
+      if (!date || !description || isNaN(amount) || amount === 0) {
+        console.log('❌ Fila inválida (falta fecha, descripción o importe)');
         return null;
       }
 
       // Normalizar fecha
       const normalizedDate = normalizeDate(date);
-      if (!normalizedDate) return null;
+      if (!normalizedDate) {
+        console.log('❌ Fecha inválida:', date);
+        return null;
+      }
 
-      // Solo gastos (negativos) o hacerlos todos positivos
+      // Solo gastos (convertir todo a positivo)
       const finalAmount = Math.abs(amount);
+
+      console.log('✅ Transacción válida:', { normalizedDate, description, finalAmount });
 
       return {
         date: normalizedDate,
@@ -182,14 +195,24 @@ export const BankCSVImporter = () => {
         category: categorizeTransaction(description)
       };
     } catch (err) {
-      console.error('Error parsing transaction:', err);
+      console.error('❌ Error parseando transacción:', err);
       return null;
     }
   };
 
   // Normalizar fecha a formato YYYY-MM-DD
-  const normalizeDate = (dateStr: string): string | null => {
+  const normalizeDate = (dateStr: any): string | null => {
     try {
+      // Si es un número de Excel (serial date)
+      if (typeof dateStr === 'number') {
+        const excelEpoch = new Date(1899, 11, 30);
+        const date = new Date(excelEpoch.getTime() + dateStr * 24 * 60 * 60 * 1000);
+        return date.toISOString().split('T')[0];
+      }
+
+      // Si es string
+      const str = String(dateStr);
+      
       // Formatos comunes: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, DD.MM.YYYY
       const formats = [
         /(\d{2})[\/\-\.](\d{2})[\/\-\.](\d{4})/, // DD/MM/YYYY
@@ -197,9 +220,9 @@ export const BankCSVImporter = () => {
       ];
 
       for (const format of formats) {
-        const match = dateStr.match(format);
+        const match = str.match(format);
         if (match) {
-          if (dateStr.startsWith('20') || dateStr.startsWith('19')) {
+          if (str.startsWith('20') || str.startsWith('19')) {
             // YYYY-MM-DD
             return `${match[1]}-${match[2]}-${match[3]}`;
           } else {
@@ -219,42 +242,27 @@ export const BankCSVImporter = () => {
   const categorizeTransaction = (description: string): string => {
     const lower = description.toLowerCase();
 
-    // Alimentación
     if (lower.match(/mercadona|carrefour|lidl|aldi|dia|supermercado|alcampo|eroski/)) {
       return 'alimentación';
     }
-
-    // Restaurantes
     if (lower.match(/restaurante|burger|mcdonalds|kfc|pizz|cafeteria|bar |cafe /)) {
       return 'restaurantes';
     }
-
-    // Transporte
     if (lower.match(/gasolina|repsol|cepsa|shell|renfe|uber|cabify|taxi|parkia|parking/)) {
       return 'transporte';
     }
-
-    // Suscripciones
     if (lower.match(/netflix|spotify|amazon prime|disney|hbo|apple|google|youtube premium/)) {
       return 'suscripciones';
     }
-
-    // Hogar
     if (lower.match(/ikea|leroy|bricomart|electricidad|gas|agua|alquiler|hipoteca/)) {
       return 'hogar';
     }
-
-    // Salud
     if (lower.match(/farmacia|medico|hospital|seguro.*salud|dental/)) {
       return 'salud';
     }
-
-    // Ocio
     if (lower.match(/cine|teatro|concierto|entradas|steam|playstation|nintendo/)) {
       return 'ocio';
     }
-
-    // Ropa
     if (lower.match(/zara|h&m|mango|pull&bear|bershka|decathlon|nike|adidas/)) {
       return 'ropa';
     }
@@ -276,13 +284,10 @@ export const BankCSVImporter = () => {
 
           const headers = Object.keys(results.data[0] || {});
           const format = detectBankFormat(headers);
-          
-          console.log('Formato detectado:', format);
-          console.log('Headers:', headers);
 
           const transactions: Transaction[] = [];
-          for (const row of results.data) {
-            const transaction = parseTransaction(row, format);
+          for (let i = 0; i < results.data.length; i++) {
+            const transaction = parseTransaction(results.data[i], format, i);
             if (transaction) {
               transactions.push(transaction);
             }
@@ -304,39 +309,41 @@ export const BankCSVImporter = () => {
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
     
     // Convertir a JSON sin headers para analizar
-    const rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
+    const rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' }) as any[][];
     
+    console.log('\n========== ANÁLISIS DEL ARCHIVO EXCEL ==========');
+    console.log('Total de filas en archivo:', rawData.length);
+    console.log('Primeras 10 filas:', rawData.slice(0, 10));
+
     if (rawData.length === 0) {
       throw new Error('El archivo Excel está vacío');
     }
 
-    // Buscar la fila de encabezados (puede no estar en la primera fila)
+    // Buscar la fila de encabezados
     let headerRowIndex = -1;
     let headers: string[] = [];
     
     for (let i = 0; i < Math.min(20, rawData.length); i++) {
       const row = rawData[i];
-      const potentialHeaders = row.map(cell => String(cell || '').toLowerCase());
+      const potentialHeaders = row.map(cell => String(cell || '').toUpperCase());
       
-      // Buscar indicadores de fila de encabezados
-      if (potentialHeaders.some(h => 
-        h.includes('fecha') || 
-        h.includes('concepto') || 
-        h.includes('importe') ||
-        h.includes('date') ||
-        h.includes('amount')
-      )) {
+      console.log(`Fila ${i}:`, potentialHeaders);
+      
+      // Buscar fila con "FECHA" y ("CONCEPTO" o "IMPORTE")
+      if (potentialHeaders.some(h => h.includes('FECHA')) && 
+          (potentialHeaders.some(h => h.includes('CONCEPTO')) || potentialHeaders.some(h => h.includes('IMPORTE')))) {
         headerRowIndex = i;
         headers = row.map(cell => String(cell || ''));
+        console.log(`✅ HEADERS ENCONTRADOS en fila ${i}:`, headers);
         break;
       }
     }
 
     if (headerRowIndex === -1) {
-      throw new Error('No se encontraron encabezados válidos en el archivo');
+      throw new Error('No se encontraron encabezados válidos. Asegúrate de que el archivo tiene columnas como FECHA, CONCEPTO e IMPORTE.');
     }
 
-    // Convertir las filas de datos (después de los headers) a objetos
+    // Convertir las filas de datos a objetos
     const dataRows = rawData.slice(headerRowIndex + 1);
     const jsonData = dataRows
       .filter(row => row && row.length > 0 && row.some(cell => cell !== null && cell !== undefined && cell !== ''))
@@ -348,27 +355,21 @@ export const BankCSVImporter = () => {
         return obj;
       });
 
-    if (jsonData.length === 0) {
-      throw new Error('No se encontraron datos válidos en el archivo');
-    }
+    console.log('\n========== PROCESANDO TRANSACCIONES ==========');
+    console.log('Total de filas de datos:', jsonData.length);
 
-    console.log('===== DEBUG IMPORTADOR =====');
-    console.log('Headers encontrados:', headers);
-    console.log('Headers (lowercase):', headers.map(h => String(h || '').toLowerCase()));
-    console.log('Fila de headers:', headerRowIndex);
-    console.log('Filas de datos:', jsonData.length);
-    console.log('Primera fila de datos:', jsonData[0]);
-    
     const format = detectBankFormat(headers);
-    console.log('Formato detectado:', format);
 
     const transactions: Transaction[] = [];
-    for (const row of jsonData) {
-      const transaction = parseTransaction(row, format);
+    for (let i = 0; i < jsonData.length; i++) {
+      const transaction = parseTransaction(jsonData[i], format, i);
       if (transaction) {
         transactions.push(transaction);
       }
     }
+
+    console.log('\n========== RESULTADO ==========');
+    console.log('Transacciones válidas encontradas:', transactions.length);
 
     return transactions;
   };
@@ -406,13 +407,13 @@ export const BankCSVImporter = () => {
           await addExpense(
             transaction.description,
             transaction.amount,
-            false, // No recurrente
-            'once' as any, // Frecuencia única
-            null // Sin banco específico
+            false,
+            'once' as any,
+            null
           );
           success++;
         } catch (err) {
-          console.error('Error saving transaction:', err);
+          console.error('Error guardando transacción:', err);
           failed++;
         }
       }
@@ -428,7 +429,6 @@ export const BankCSVImporter = () => {
       setError(err.message || 'Error al procesar el archivo');
     } finally {
       setImporting(false);
-      // Limpiar input para permitir subir el mismo archivo de nuevo
       event.target.value = '';
     }
   }, [addExpense]);
