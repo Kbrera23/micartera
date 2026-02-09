@@ -6,6 +6,14 @@ import { Expense, ExpenseFrequency } from '@/hooks/useSupabaseFinances';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 
+const getMonthlyAmount = (amount: number, frequency: ExpenseFrequency): number => {
+  switch (frequency) {
+    case 'quarterly': return amount / 3;
+    case 'annual': return amount / 12;
+    default: return amount;
+  }
+};
+
 interface ExpenseListProps {
   title: string;
   expenses: Expense[];
@@ -85,7 +93,10 @@ export const ExpenseListNew = ({
                 </div>
                 <div className="flex items-center gap-2 ml-2">
                   <span className="font-semibold whitespace-nowrap">
-                    {formatCurrencyCompact(expense.amount)}
+                    {formatCurrencyCompact(isRecurring ? getMonthlyAmount(expense.amount, expense.frequency) : expense.amount)}
+                    {isRecurring && expense.frequency !== 'monthly' && (
+                      <span className="text-[10px] text-muted-foreground ml-1">/mes</span>
+                    )}
                   </span>
                   <Button
                     variant="ghost"
