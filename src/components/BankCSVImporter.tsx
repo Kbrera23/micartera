@@ -240,138 +240,143 @@ export const BankCSVImporter = () => {
 
   // Categorizar transacción automáticamente
   const categorizeTransaction = (description: string): string => {
-    const lower = description.toLowerCase();
-
-    if (lower.match(/mercadona|carrefour|lidl|aldi|dia|supermercado|alcampo|eroski/)) {
-      return 'alimentación';
-    }
-    if (lower.match(/restaurante|burger|mcdonalds|kfc|pizz|cafeteria|bar |cafe /)) {
-      return 'restaurantes';
-    }
-    if (lower.match(/gasolina|repsol|cepsa|shell|renfe|uber|cabify|taxi|parkia|parking/)) {
-      return 'transporte';
-    }
-    if (lower.match(/netflix|spotify|amazon prime|disney|hbo|apple|google|youtube premium/)) {
-      return 'suscripciones';
-    }
-    if (lower.match(/ikea|leroy|bricomart|electricidad|gas|agua|alquiler|hipoteca/)) {
-      return 'hogar';
-    }
-    if (lower.match(/farmacia|medico|hospital|seguro.*salud|dental/)) {
-      return 'salud';
-    }
-    if (lower.match(/cine|teatro|concierto|entradas|steam|playstation|nintendo/)) {
-      return 'ocio';
-    }
-    if (lower.match(/zara|h&m|mango|pull&bear|bershka|decathlon|nike|adidas/)) {
-      return 'ropa';
-    }
-
-    return 'otros';
+    const desc = description.toLowerCase();
+    
+    if (desc.includes('netflix') || desc.includes('spotify') || desc.includes('amazon prime')) return 'Subscripciones';
+    if (desc.includes('mercadona') || desc.includes('carrefour') || desc.includes('lidl') || desc.includes('supermercado')) return 'Alimentación';
+    if (desc.includes('restaurante') || desc.includes('cafe') || desc.includes('bar')) return 'Restaurantes';
+    if (desc.includes('gasolina') || desc.includes('repsol') || desc.includes('cepsa')) return 'Transporte';
+    if (desc.includes('farmacia')) return 'Salud';
+    if (desc.includes('zara') || desc.includes('h&m') || desc.includes('mango')) return 'Ropa';
+    if (desc.includes('amazon') || desc.includes('fnac')) return 'Compras';
+    if (desc.includes('alquiler') || desc.includes('rent')) return 'Vivienda';
+    
+    return 'Otros';
   };
 
-  // Procesar archivo CSV
-  const processCSV = async (file: File) => {
-    return new Promise<Transaction[]>((resolve, reject) => {
+  // Procesar CSV
+  const processCSV = (file: File): Promise<Transaction[]> => {
+    return new Promise((resolve, reject) => {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          if (results.errors.length > 0) {
-            reject(new Error('Error al parsear CSV'));
-            return;
-          }
+          try {
+            console.log('\n========== PROCESANDO CSV ==========');
+            console.log('Headers detectados:', results.meta.fields);
+            console.log('Total de filas:', results.data.length);
 
-          const headers = Object.keys(results.data[0] || {});
-          const format = detectBankFormat(headers);
+            const format = detectBankFormat(results.meta.fields || []);
+            const transactions: Transaction[] = [];
 
-          const transactions: Transaction[] = [];
-          for (let i = 0; i < results.data.length; i++) {
-            const transaction = parseTransaction(results.data[i], format, i);
-            if (transaction) {
-              transactions.push(transaction);
+            for (let i = 0; i < results.data.length; i++) {
+              const transaction = parseTransaction(results.data[i], format, i);
+              if (transaction) {
+                transactions.push(transaction);
+              }
             }
-          }
 
-          resolve(transactions);
+            console.log('\n========== RESULTADO ==========');
+            console.log('Transacciones válidas encontradas:', transactions.length);
+            resolve(transactions);
+          } catch (error: any) {
+            reject(new Error('Error procesando CSV: ' + error.message));
+          }
         },
         error: (error) => {
-          reject(error);
+          reject(new Error('Error leyendo CSV: ' + error.message));
         }
       });
     });
   };
 
-  // Procesar archivo Excel
-  const processExcel = async (file: File): Promise<Transaction[]> => {
-    const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data, { type: 'array' });
-    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    
-    // Convertir a JSON sin headers para analizar
-    const rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' }) as any[][];
-    
-    console.log('\n========== ANÁLISIS DEL ARCHIVO EXCEL ==========');
-    console.log('Total de filas en archivo:', rawData.length);
-    console.log('Primeras 10 filas:', rawData.slice(0, 10));
-
-    if (rawData.length === 0) {
-      throw new Error('El archivo Excel está vacío');
-    }
-
-    // Buscar la fila de encabezados
-    let headerRowIndex = -1;
-    let headers: string[] = [];
-    
-    for (let i = 0; i < Math.min(20, rawData.length); i++) {
-      const row = rawData[i];
-      const potentialHeaders = row.map(cell => String(cell || '').toUpperCase());
+  // Procesar Excel
+  const processExcel = (file: File): Promise<Transaction[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
       
-      console.log(`Fila ${i}:`, potentialHeaders);
-      
-      // Buscar fila con "FECHA" y ("CONCEPTO" o "IMPORTE")
-      if (potentialHeaders.some(h => h.includes('FECHA')) && 
-          (potentialHeaders.some(h => h.includes('CONCEPTO')) || potentialHeaders.some(h => h.includes('IMPORTE')))) {
-        headerRowIndex = i;
-        headers = row.map(cell => String(cell || ''));
-        console.log(`✅ HEADERS ENCONTRADOS en fila ${i}:`, headers);
-        break;
-      }
-    }
+      reader.onload = (e) => {
+        try {
+          console.log('\n========== PROCESANDO EXCEL ==========');
+          
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          
+          // Convertir a array de arrays (raw data)
+          const rawData: any[][] = XLSX.utils.sheet_to_json(firstSheet, { 
+            header: 1,
+            defval: null,
+            raw: false  // Importante: convertir todo a strings
+          });
 
-    if (headerRowIndex === -1) {
-      throw new Error('No se encontraron encabezados válidos. Asegúrate de que el archivo tiene columnas como FECHA, CONCEPTO e IMPORTE.');
-    }
+          console.log('Total de filas en el archivo:', rawData.length);
+          console.log('Primeras 10 filas:', rawData.slice(0, 10));
 
-    // Convertir las filas de datos a objetos
-    const dataRows = rawData.slice(headerRowIndex + 1);
-    const jsonData = dataRows
-      .filter(row => row && row.length > 0 && row.some(cell => cell !== null && cell !== undefined && cell !== ''))
-      .map(row => {
-        const obj: any = {};
-        headers.forEach((header, index) => {
-          obj[header] = row[index];
-        });
-        return obj;
-      });
+          // Buscar la fila de headers (debe contener FECHA, CONCEPTO, IMPORTE, etc.)
+          let headerRowIndex = -1;
+          let headers: string[] = [];
 
-    console.log('\n========== PROCESANDO TRANSACCIONES ==========');
-    console.log('Total de filas de datos:', jsonData.length);
+          for (let i = 0; i < Math.min(15, rawData.length); i++) {
+            const row = rawData[i];
+            if (!row || row.length === 0) continue;
 
-    const format = detectBankFormat(headers);
+            const potentialHeaders = row.map(cell => String(cell || '').toUpperCase().trim());
+            
+            // Verificar si esta fila contiene headers típicos
+            if (potentialHeaders.some(h => h.includes('FECHA')) && 
+                (potentialHeaders.some(h => h.includes('CONCEPTO')) || potentialHeaders.some(h => h.includes('IMPORTE')))) {
+              headerRowIndex = i;
+              headers = row.map(cell => String(cell || ''));
+              console.log(`✅ HEADERS ENCONTRADOS en fila ${i}:`, headers);
+              break;
+            }
+          }
 
-    const transactions: Transaction[] = [];
-    for (let i = 0; i < jsonData.length; i++) {
-      const transaction = parseTransaction(jsonData[i], format, i);
-      if (transaction) {
-        transactions.push(transaction);
-      }
-    }
+          if (headerRowIndex === -1) {
+            throw new Error('No se encontraron encabezados válidos. Asegúrate de que el archivo tiene columnas como FECHA, CONCEPTO e IMPORTE.');
+          }
 
-    console.log('\n========== RESULTADO ==========');
-    console.log('Transacciones válidas encontradas:', transactions.length);
+          // Convertir las filas de datos a objetos
+          const dataRows = rawData.slice(headerRowIndex + 1);
+          const jsonData = dataRows
+            .filter(row => row && row.length > 0 && row.some(cell => cell !== null && cell !== undefined && cell !== ''))
+            .map(row => {
+              const obj: any = {};
+              headers.forEach((header, index) => {
+                obj[header] = row[index];
+              });
+              return obj;
+            });
 
-    return transactions;
+          console.log('\n========== PROCESANDO TRANSACCIONES ==========');
+          console.log('Total de filas de datos:', jsonData.length);
+
+          const format = detectBankFormat(headers);
+
+          const transactions: Transaction[] = [];
+          for (let i = 0; i < jsonData.length; i++) {
+            const transaction = parseTransaction(jsonData[i], format, i);
+            if (transaction) {
+              transactions.push(transaction);
+            }
+          }
+
+          console.log('\n========== RESULTADO ==========');
+          console.log('Transacciones válidas encontradas:', transactions.length);
+
+          resolve(transactions);
+        } catch (error: any) {
+          reject(new Error('Error procesando Excel: ' + error.message));
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Error leyendo el archivo'));
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
   };
 
   // Manejar subida de archivo
@@ -404,11 +409,12 @@ export const BankCSVImporter = () => {
 
       for (const transaction of transactions) {
         try {
+          // ✅ CORRECCIÓN: Usar 'monthly' en lugar de 'once' as any
           await addExpense(
             transaction.description,
             transaction.amount,
-            false,
-            'once' as any,
+            false,  // isRecurring = false (gasto único)
+            'monthly',  // Valor válido del enum ExpenseFrequency
             null
           );
           success++;
