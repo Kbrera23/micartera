@@ -89,7 +89,9 @@ export const BankCSVImporter = () => {
           date = row['FECHA OPERACIÓN'] || row['FECHA OPERACION'] || row['F. OPERACIÓN'] || '';
           description = row['CONCEPTO'] || '';
           const santanderImporte = row['IMPORTE EUR'] || row['IMPORTE'] || '0';
-          amount = parseFloat(String(santanderImporte).replace('.', '').replace(',', '.').replace(' EUR', '').replace('€', '').trim());
+          const importeStr = String(santanderImporte).replace(' EUR', '').replace('€', '').trim();
+          const hasDotAndComma = importeStr.includes('.') && importeStr.includes(',');
+          amount = parseFloat(hasDotAndComma ? importeStr.replace(/\./g, '').replace(',', '.') : importeStr.replace(',', '.'));
           console.log('Santander extraído:', { date, description, amount });
           break;
 
