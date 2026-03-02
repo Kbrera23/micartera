@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Repeat, Calendar } from 'lucide-react';
+import { Trash2, Repeat, Calendar, Pencil } from 'lucide-react';
 import { Expense, ExpenseFrequency } from '@/hooks/useSupabaseFinances';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ interface ExpenseListProps {
   total: number;
   isRecurring: boolean;
   onRemove: (id: string) => void;
+  onEdit?: (expense: Expense) => void;
   showFrequency?: boolean;
 }
 
@@ -45,6 +46,7 @@ export const ExpenseListNew = ({
   total,
   isRecurring,
   onRemove,
+  onEdit,
   showFrequency = false
 }: ExpenseListProps) => {
   return (
@@ -98,6 +100,16 @@ export const ExpenseListNew = ({
                       <span className="text-[10px] text-muted-foreground ml-1">/mes</span>
                     )}
                   </span>
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                      onClick={() => onEdit(expense)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"

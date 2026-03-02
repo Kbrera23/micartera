@@ -38,6 +38,7 @@ const Index = () => {
     quarterlyProvision,
     addExpense,
     removeExpense,
+    updateExpense,
     addPurchaseGoal,
     removePurchaseGoal,
     toggleGoalStatus,
@@ -196,14 +197,16 @@ const Index = () => {
     totalRecurring,
     totalOneTime,
     onAddExpense: handleAddExpense,
-    onRemoveExpense: removeExpense
+    onRemoveExpense: removeExpense,
+    onUpdateExpense: updateExpense
   }), [
     recurringExpenses,
     oneTimeExpenses,
     totalRecurring,
     totalOneTime,
     handleAddExpense,
-    removeExpense
+    removeExpense,
+    updateExpense
   ]);
 
   const goalsProps = useMemo(() => ({

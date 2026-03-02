@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { AddExpenseForm } from '@/components/AddExpenseFormNew';
 import { ExpenseListNew } from '@/components/ExpenseListNew';
 import { ExpenseFrequency, BankType, Expense } from '@/hooks/useSupabaseFinances';
- import { BankCSVImporter } from '@/components/BankCSVImporter';
+import { BankCSVImporter } from '@/components/BankCSVImporter';
+import { EditExpenseModal } from '@/components/EditExpenseModal';
 
 interface ExpensesSectionProps {
   recurringExpenses: Expense[];
@@ -10,6 +12,7 @@ interface ExpensesSectionProps {
   totalOneTime: number;
   onAddExpense: (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency, bank?: BankType) => void;
   onRemoveExpense: (id: string) => void;
+  onUpdateExpense: (id: string, updates: Partial<Expense>) => Promise<void>;
 }
 
 export const ExpensesSection = ({
@@ -18,17 +21,20 @@ export const ExpensesSection = ({
   totalRecurring,
   totalOneTime,
   onAddExpense,
-  onRemoveExpense
+  onRemoveExpense,
+  onUpdateExpense
 }: ExpensesSectionProps) => {
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Gastos</h1>
 
-       {/* Importador de movimientos bancarios */}
-       <div className="mb-6">
-         <BankCSVImporter />
-       </div>
- 
+      {/* Importador de movimientos bancarios */}
+      <div className="mb-6">
+        <BankCSVImporter />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Add Expense Form */}
         <div className="lg:col-span-1">
@@ -43,6 +49,7 @@ export const ExpensesSection = ({
             total={totalRecurring}
             isRecurring={true}
             onRemove={onRemoveExpense}
+            onEdit={setEditingExpense}
             showFrequency={true}
           />
           <ExpenseListNew
@@ -51,10 +58,20 @@ export const ExpensesSection = ({
             total={totalOneTime}
             isRecurring={false}
             onRemove={onRemoveExpense}
+            onEdit={setEditingExpense}
             showFrequency={false}
           />
         </div>
       </div>
+
+      {editingExpense && (
+        <EditExpenseModal
+          expense={editingExpense}
+          isOpen={!!editingExpense}
+          onClose={() => setEditingExpense(null)}
+          onSave={onUpdateExpense}
+        />
+      )}
     </div>
   );
 };
