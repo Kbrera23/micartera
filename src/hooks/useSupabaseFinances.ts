@@ -163,6 +163,30 @@ export const useSupabaseFinances = () => {
     }
   };
 
+  const updateExpense = async (
+    id: string,
+    updates: Partial<Pick<Expense, 'name' | 'amount' | 'is_recurring' | 'frequency' | 'bank'>>
+  ) => {
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setExpenses(prev => prev.map(e =>
+        e.id === id ? { ...e, ...updates } : e
+      ));
+
+      toast.success('Gasto actualizado');
+    } catch (error) {
+      console.error('Error updating expense:', error);
+      toast.error('Error al actualizar gasto');
+      throw error;
+    }
+  };
+
   const removeExpense = async (id: string) => {
     const { error } = await supabase.from('expenses').delete().eq('id', id);
     if (error) {
@@ -407,6 +431,7 @@ export const useSupabaseFinances = () => {
     updateProfile,
     addExpense,
     removeExpense,
+    updateExpense,
     addPurchaseGoal,
     removePurchaseGoal,
     updatePurchaseGoalSaved,
