@@ -169,7 +169,9 @@ const Index = () => {
     activeGoalsCount: goalsWithQuotas.length,
     trafficLightStatus,
     trafficLightMessage,
-    quarterlyProvision
+    quarterlyProvision,
+    recurringExpenses,
+    oneTimeExpenses
   }), [
     userBanks,
     monthlyIncome,
@@ -183,7 +185,9 @@ const Index = () => {
     goalsWithQuotas.length,
     trafficLightStatus,
     trafficLightMessage,
-    quarterlyProvision
+    quarterlyProvision,
+    recurringExpenses,
+    oneTimeExpenses
   ]);
 
   const expensesProps = useMemo(() => ({

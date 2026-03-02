@@ -1,7 +1,9 @@
 import { MinimalBankCards } from '@/components/dashboard/MinimalBankCards';
 import { KPICards } from '@/components/dashboard/KPICards';
+import { UpcomingLargePayments } from '@/components/dashboard/UpcomingLargePayments';
+import { RecentExpenses } from '@/components/dashboard/RecentExpenses';
 import { Card, CardContent } from '@/components/ui/card';
-import { BankType } from '@/hooks/useSupabaseFinances';
+import { BankType, Expense } from '@/hooks/useSupabaseFinances';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { ArrowRight, CreditCard } from 'lucide-react';
 
@@ -19,6 +21,8 @@ interface MinimalDashboardProps {
   trafficLightStatus: 'green' | 'yellow' | 'red';
   trafficLightMessage: string;
   quarterlyProvision: number;
+  recurringExpenses: Expense[];
+  oneTimeExpenses: Expense[];
 }
 
 export const MinimalDashboard = ({
@@ -34,7 +38,9 @@ export const MinimalDashboard = ({
   activeGoalsCount,
   trafficLightStatus,
   trafficLightMessage,
-  quarterlyProvision
+  quarterlyProvision,
+  recurringExpenses,
+  oneTimeExpenses
 }: MinimalDashboardProps) => {
   const hasRevolut = userBanks.some(b => b.bank === 'revolut');
   const showRevolutReminder = hasRevolut && quarterlyProvision > 0;
@@ -71,6 +77,12 @@ export const MinimalDashboard = ({
           </CardContent>
         </Card>
       )}
+
+      {/* Upcoming large payments */}
+      <UpcomingLargePayments recurringExpenses={recurringExpenses} />
+
+      {/* Recent one-time expenses */}
+      <RecentExpenses expenses={oneTimeExpenses} />
 
       {/* 4 KPI Pillars */}
       <KPICards

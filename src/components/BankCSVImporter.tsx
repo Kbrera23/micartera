@@ -6,6 +6,8 @@ import { Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { useSupabaseFinances } from '@/hooks/useSupabaseFinances';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Transaction {
   date: string;
@@ -25,7 +27,9 @@ export const BankCSVImporter = () => {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { addExpense } = useSupabaseFinances();
+  const [dateFilter, setDateFilter] = useState<'all' | '7days' | '30days'>('30days');
+  const { addExpense, refetch } = useSupabaseFinances();
+  const { user } = useAuth();
 
   // Detectar formato del banco basado en headers
   const detectBankFormat = (headers: string[]) => {
@@ -381,6 +385,16 @@ export const BankCSVImporter = () => {
     });
   };
 
+  // Filtrar por fecha
+  const filterByDate = useCallback((transactions: Transaction[]) => {
+    if (dateFilter === 'all') return transactions;
+    const now = new Date();
+    const cutoff = new Date();
+    if (dateFilter === '7days') cutoff.setDate(now.getDate() - 7);
+    if (dateFilter === '30days') cutoff.setDate(now.getDate() - 30);
+    return transactions.filter(t => new Date(t.date) >= cutoff);
+  }, [dateFilter]);
+
   // Manejar subida de archivo
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -401,22 +415,45 @@ export const BankCSVImporter = () => {
         throw new Error('Formato de archivo no soportado. Use CSV o Excel (.xlsx, .xls)');
       }
 
+      // Aplicar filtro de fechas
+      transactions = filterByDate(transactions);
+
       if (transactions.length === 0) {
         throw new Error('No se encontraron transacciones válidas en el archivo');
       }
 
+      // Obtener gastos recientes para detectar duplicados
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      const { data: existingExpenses } = await supabase
+        .from('expenses')
+        .select('name, amount, created_at')
+        .eq('user_id', user?.id)
+        .gte('created_at', oneMonthAgo.toISOString());
+
+      const isDuplicate = (transaction: Transaction) => {
+        return existingExpenses?.some(e =>
+          e.name.toLowerCase().includes(transaction.description.toLowerCase().substring(0, 20)) &&
+          Math.abs(e.amount - transaction.amount) < 0.01
+        );
+      };
+
       // Guardar en Supabase
       let success = 0;
       let failed = 0;
+      let duplicates = 0;
 
       for (const transaction of transactions) {
+        if (isDuplicate(transaction)) {
+          duplicates++;
+          continue;
+        }
         try {
-          // ✅ CORRECCIÓN: Usar 'monthly' en lugar de 'once' as any
           await addExpense(
             transaction.description,
             transaction.amount,
-            false,  // isRecurring = false (gasto único)
-            'monthly',  // Valor válido del enum ExpenseFrequency
+            false,
+            'monthly',
             null
           );
           success++;
@@ -426,12 +463,9 @@ export const BankCSVImporter = () => {
         }
       }
 
-      setResult({
-        success,
-        failed,
-        duplicates: 0,
-        transactions
-      });
+      setResult({ success, failed, duplicates, transactions });
+      // Refrescar datos para mostrar gastos importados
+      await refetch();
 
     } catch (err: any) {
       setError(err.message || 'Error al procesar el archivo');
@@ -439,7 +473,7 @@ export const BankCSVImporter = () => {
       setImporting(false);
       event.target.value = '';
     }
-  }, [addExpense]);
+  }, [addExpense, refetch, filterByDate, user]);
 
   // Drag and drop
   const [isDragging, setIsDragging] = useState(false);
@@ -469,6 +503,23 @@ export const BankCSVImporter = () => {
 
   return (
     <div className="space-y-4">
+      {/* Filtro de fechas */}
+      <div className="flex gap-2">
+        {(['all', '7days', '30days'] as const).map(f => (
+          <button
+            key={f}
+            onClick={() => setDateFilter(f)}
+            className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+              dateFilter === f
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+            }`}
+          >
+            {f === 'all' ? 'Todas las fechas' : f === '7days' ? 'Últimos 7 días' : 'Últimos 30 días'}
+          </button>
+        ))}
+      </div>
+
       {/* Drag & Drop Area */}
       <div
         onDragOver={handleDragOver}
@@ -540,6 +591,7 @@ export const BankCSVImporter = () => {
               <div className="text-sm text-green-700 space-y-1">
                 <p>✅ {result.success} transacciones importadas correctamente</p>
                 {result.failed > 0 && <p>❌ {result.failed} transacciones fallidas</p>}
+                {result.duplicates > 0 && <p>⚠️ {result.duplicates} transacciones duplicadas omitidas</p>}
               </div>
             </div>
           </div>

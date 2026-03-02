@@ -23,6 +23,7 @@ export interface Expense {
   frequency: ExpenseFrequency;
   bank: BankType | null;
   created_at: string;
+  next_payment_date?: string;
 }
 
 export interface PurchaseGoal {
