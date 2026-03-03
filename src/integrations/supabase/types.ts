@@ -14,10 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          budget_limit: number
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          is_default: boolean
+          name: string
+          user_id: string
+        }
+        Insert: {
+          budget_limit?: number
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          user_id: string
+        }
+        Update: {
+          budget_limit?: number
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
           bank: Database["public"]["Enums"]["bank_type"] | null
+          category_id: string | null
           created_at: string
           frequency: string | null
           id: string
@@ -28,6 +62,7 @@ export type Database = {
         Insert: {
           amount: number
           bank?: Database["public"]["Enums"]["bank_type"] | null
+          category_id?: string | null
           created_at?: string
           frequency?: string | null
           id?: string
@@ -38,6 +73,7 @@ export type Database = {
         Update: {
           amount?: number
           bank?: Database["public"]["Enums"]["bank_type"] | null
+          category_id?: string | null
           created_at?: string
           frequency?: string | null
           id?: string
@@ -45,7 +81,15 @@ export type Database = {
           name?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

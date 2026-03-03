@@ -1,4 +1,4 @@
-import { LayoutDashboard, Receipt, Gift, User } from 'lucide-react';
+import { LayoutDashboard, Receipt, Gift, User, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BottomNavProps {
@@ -7,9 +7,10 @@ interface BottomNavProps {
 }
 
 const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'dashboard', label: 'Inicio', icon: LayoutDashboard },
   { id: 'gastos', label: 'Gastos', icon: Receipt },
   { id: 'objetivos', label: 'Objetivos', icon: Gift },
+  { id: 'categorias', label: 'Categorías', icon: Tag },
   { id: 'perfil', label: 'Perfil', icon: User },
 ];
 

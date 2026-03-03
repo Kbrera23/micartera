@@ -1,4 +1,4 @@
-import { LayoutDashboard, Receipt, Gift, User, Wallet } from 'lucide-react';
+import { LayoutDashboard, Receipt, Gift, User, Wallet, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
@@ -10,6 +10,7 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'gastos', label: 'Gastos', icon: Receipt },
   { id: 'objetivos', label: 'Objetivos', icon: Gift },
+  { id: 'categorias', label: 'Categorías', icon: Tag },
   { id: 'perfil', label: 'Perfil', icon: User },
 ];
 

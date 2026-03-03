@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AddExpenseForm } from '@/components/AddExpenseFormNew';
 import { ExpenseListNew } from '@/components/ExpenseListNew';
-import { ExpenseFrequency, BankType, Expense } from '@/hooks/useSupabaseFinances';
+import { ExpenseFrequency, BankType, Expense, Category } from '@/hooks/useSupabaseFinances';
 import { BankCSVImporter } from '@/components/BankCSVImporter';
 import { EditExpenseModal } from '@/components/EditExpenseModal';
 import { ExpenseFilters } from '@/components/ExpenseFilters';
@@ -15,6 +15,7 @@ interface ExpensesSectionProps {
   onAddExpense: (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency, bank?: BankType) => void;
   onRemoveExpense: (id: string) => void;
   onUpdateExpense: (id: string, updates: Partial<Expense>) => Promise<void>;
+  categories?: Category[];
 }
 
 export const ExpensesSection = ({
@@ -24,7 +25,8 @@ export const ExpensesSection = ({
   totalOneTime,
   onAddExpense,
   onRemoveExpense,
-  onUpdateExpense
+  onUpdateExpense,
+  categories = [],
 }: ExpensesSectionProps) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
@@ -113,6 +115,7 @@ export const ExpensesSection = ({
           isOpen={!!editingExpense}
           onClose={() => setEditingExpense(null)}
           onSave={onUpdateExpense}
+          categories={categories}
         />
       )}
     </div>
