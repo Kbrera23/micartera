@@ -1,9 +1,6 @@
-// EditExpenseModal.tsx
-// Modal para editar gastos existentes
-
 import { useState, useEffect } from 'react';
-import { X, Save, DollarSign, Calendar, Repeat } from 'lucide-react';
-import { ExpenseFrequency, BankType } from '@/hooks/useSupabaseFinances';
+import { X, Save, DollarSign, Repeat } from 'lucide-react';
+import { ExpenseFrequency, BankType, Category } from '@/hooks/useSupabaseFinances';
 
 interface Expense {
   id: string;
@@ -13,6 +10,7 @@ interface Expense {
   frequency: ExpenseFrequency;
   bank: BankType | null;
   created_at: string;
+  category_id?: string | null;
 }
 
 interface EditExpenseModalProps {
@@ -20,6 +18,7 @@ interface EditExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (id: string, updates: Partial<Expense>) => Promise<void>;
+  categories?: Category[];
 }
 
 const BANKS: { value: BankType; label: string }[] = [
@@ -36,38 +35,36 @@ const FREQUENCIES: { value: ExpenseFrequency; label: string }[] = [
   { value: 'annual', label: 'Anual' },
 ];
 
-export const EditExpenseModal = ({ expense, isOpen, onClose, onSave }: EditExpenseModalProps) => {
+export const EditExpenseModal = ({ expense, isOpen, onClose, onSave, categories = [] }: EditExpenseModalProps) => {
   const [name, setName] = useState(expense.name);
   const [amount, setAmount] = useState(expense.amount.toString());
   const [isRecurring, setIsRecurring] = useState(expense.is_recurring);
   const [frequency, setFrequency] = useState<ExpenseFrequency>(expense.frequency);
   const [bank, setBank] = useState<BankType | null>(expense.bank);
+  const [categoryId, setCategoryId] = useState<string | null>(expense.category_id ?? null);
   const [saving, setSaving] = useState(false);
 
-  // Reset form when expense changes
   useEffect(() => {
     setName(expense.name);
     setAmount(expense.amount.toString());
     setIsRecurring(expense.is_recurring);
     setFrequency(expense.frequency);
     setBank(expense.bank);
+    setCategoryId(expense.category_id ?? null);
   }, [expense]);
 
   if (!isOpen) return null;
 
   const handleSave = async () => {
-    // Validaciones
     if (!name.trim()) {
       alert('⚠️ El nombre es obligatorio');
       return;
     }
-
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       alert('⚠️ El monto debe ser mayor a 0');
       return;
     }
-
     setSaving(true);
     try {
       await onSave(expense.id, {
@@ -75,7 +72,8 @@ export const EditExpenseModal = ({ expense, isOpen, onClose, onSave }: EditExpen
         amount: parsedAmount,
         is_recurring: isRecurring,
         frequency: isRecurring ? frequency : 'monthly',
-        bank: bank
+        bank,
+        category_id: categoryId,
       });
       onClose();
     } catch (error) {
@@ -86,111 +84,99 @@ export const EditExpenseModal = ({ expense, isOpen, onClose, onSave }: EditExpen
     }
   };
 
-  const handleClose = () => {
-    if (saving) return;
-    onClose();
-  };
+  const inputClass = "w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-all";
+  const selectClass = "w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-all";
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
-        
+      <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-blue-600" />
+            <div className="p-2 bg-primary/10 rounded-xl">
+              <DollarSign className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900">
-              Editar Gasto
-            </h3>
+            <h3 className="text-xl font-bold text-foreground">Editar Gasto</h3>
           </div>
           <button
-            onClick={handleClose}
+            onClick={() => { if (!saving) onClose(); }}
             disabled={saving}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground disabled:opacity-50"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
         <div className="p-6 space-y-4 overflow-y-auto flex-1">
-          
-          {/* Nombre */}
+
+          {/* Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Descripción del gasto
-            </label>
+            <label className="block text-sm font-semibold text-foreground mb-2">Descripción del gasto</label>
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               placeholder="Ej: Netflix, Supermercado, Gasolina..."
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
+              className={inputClass}
               disabled={saving}
             />
           </div>
 
-          {/* Monto */}
+          {/* Amount */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Monto
-            </label>
+            <label className="block text-sm font-semibold text-foreground mb-2">Monto</label>
             <div className="relative">
               <input
                 type="number"
                 step="0.01"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={e => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900"
+                className={`${inputClass} pr-12`}
                 disabled={saving}
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
-                €
-              </span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">€</span>
             </div>
           </div>
 
-          {/* Gasto Recurrente */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+          {/* Recurring toggle */}
+          <div className="flex items-center justify-between p-4 bg-muted rounded-xl">
             <div className="flex items-center gap-3">
-              <Repeat className="w-5 h-5 text-gray-600" />
+              <Repeat className="w-5 h-5 text-muted-foreground" />
               <div>
-                <div className="font-medium text-gray-900">Gasto recurrente</div>
-                <div className="text-xs text-gray-600">Se repite periódicamente</div>
+                <div className="font-medium text-foreground">Gasto recurrente</div>
+                <div className="text-xs text-muted-foreground">Se repite periódicamente</div>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={isRecurring}
-                onChange={(e) => setIsRecurring(e.target.checked)}
+                onChange={e => setIsRecurring(e.target.checked)}
                 className="sr-only peer"
                 disabled={saving}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-muted-foreground/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
             </label>
           </div>
 
-          {/* Frecuencia (solo si es recurrente) */}
+          {/* Frequency */}
           {isRecurring && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Frecuencia
-              </label>
+              <label className="block text-sm font-semibold text-foreground mb-2">Frecuencia</label>
               <div className="grid grid-cols-3 gap-2">
-                {FREQUENCIES.map((freq) => (
+                {FREQUENCIES.map(freq => (
                   <button
                     key={freq.value}
                     onClick={() => setFrequency(freq.value)}
                     disabled={saving}
-                    className={`px-4 py-3 rounded-xl font-medium text-sm transition-all ${
+                    className={`px-4 py-3 rounded-xl font-medium text-sm transition-all disabled:opacity-50 ${
                       frequency === freq.value
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    } disabled:opacity-50`}
+                        ? 'bg-primary text-primary-foreground shadow-md'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
                   >
                     {freq.label}
                   </button>
@@ -199,49 +185,64 @@ export const EditExpenseModal = ({ expense, isOpen, onClose, onSave }: EditExpen
             </div>
           )}
 
-          {/* Banco */}
+          {/* Bank */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Banco (opcional)
-            </label>
+            <label className="block text-sm font-semibold text-foreground mb-2">Banco (opcional)</label>
             <select
               value={bank || ''}
-              onChange={(e) => setBank(e.target.value as BankType || null)}
+              onChange={e => setBank(e.target.value as BankType || null)}
               disabled={saving}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900 bg-white"
+              className={selectClass}
             >
               <option value="">Sin banco específico</option>
-              {BANKS.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label}
-                </option>
+              {BANKS.map(b => (
+                <option key={b.value} value={b.value}>{b.label}</option>
               ))}
             </select>
           </div>
 
-          {/* Info de cambios */}
-          <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-800">
+          {/* Category */}
+          {categories.length > 0 && (
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">Categoría (opcional)</label>
+              <select
+                value={categoryId || ''}
+                onChange={e => setCategoryId(e.target.value || null)}
+                disabled={saving}
+                className={selectClass}
+              >
+                <option value="">Sin categoría</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.icon} {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 text-xs text-primary">
             💡 Los cambios se guardarán inmediatamente y afectarán tus cálculos
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
+        <div className="flex gap-3 p-6 border-t border-border flex-shrink-0">
           <button
-            onClick={handleClose}
+            onClick={() => { if (!saving) onClose(); }}
             disabled={saving}
-            className="flex-1 px-4 py-3 bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-semibold transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-background border border-border hover:bg-muted text-foreground rounded-xl font-semibold transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {saving ? (
               <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                 Guardando...
               </>
             ) : (

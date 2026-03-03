@@ -6,6 +6,7 @@ import { MinimalDashboard } from '@/components/sections/MinimalDashboard';
 import { ExpensesSection } from '@/components/sections/ExpensesSectionNew';
 import { GoalsSection } from '@/components/sections/GoalsSectionNew';
 import { MinimalProfileSection } from '@/components/sections/MinimalProfileSection';
+import { CategoriesSection } from '@/components/sections/CategoriesSection';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 // ========== iOS OPTIMIZATIONS ==========
@@ -36,9 +37,14 @@ const Index = () => {
     trafficLightStatus,
     trafficLightMessage,
     quarterlyProvision,
+    categories,
+    expensesByCategory,
     addExpense,
     removeExpense,
     updateExpense,
+    addCategory,
+    updateCategory,
+    deleteCategory,
     addPurchaseGoal,
     removePurchaseGoal,
     toggleGoalStatus,
@@ -198,7 +204,8 @@ const Index = () => {
     totalOneTime,
     onAddExpense: handleAddExpense,
     onRemoveExpense: removeExpense,
-    onUpdateExpense: updateExpense
+    onUpdateExpense: updateExpense,
+    categories,
   }), [
     recurringExpenses,
     oneTimeExpenses,
@@ -206,7 +213,8 @@ const Index = () => {
     totalOneTime,
     handleAddExpense,
     removeExpense,
-    updateExpense
+    updateExpense,
+    categories,
   ]);
 
   const goalsProps = useMemo(() => ({
@@ -245,6 +253,13 @@ const Index = () => {
     updateBankBalance
   ]);
 
+  const categoriesProps = useMemo(() => ({
+    categories,
+    expensesByCategory,
+    onAddCategory: addCategory,
+    onDeleteCategory: deleteCategory,
+  }), [categories, expensesByCategory, addCategory, deleteCategory]);
+
   // ========== RENDER MEMOIZADO ==========
   const renderSection = useMemo(() => {
     switch (currentSection) {
@@ -254,6 +269,8 @@ const Index = () => {
         return <ExpensesSection {...expensesProps} />;
       case 'objetivos':
         return <GoalsSection {...goalsProps} />;
+      case 'categorias':
+        return <CategoriesSection {...categoriesProps} />;
       case 'perfil':
         return <MinimalProfileSection {...profileProps} />;
       default:
