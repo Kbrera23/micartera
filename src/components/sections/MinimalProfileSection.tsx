@@ -8,6 +8,7 @@ import { BankType } from '@/hooks/useSupabaseFinances';
 import { formatInputCurrency } from '@/lib/currency';
 import { toast } from 'sonner';
 import { LogOut, Wallet, PiggyBank, Home, Flame, Star, Zap, CreditCard, Building2 } from 'lucide-react';
+import { NotificationSettings } from '@/components/NotificationSettings';
 import { cn } from '@/lib/utils';
 
 interface MinimalProfileSectionProps {
@@ -253,6 +254,9 @@ export const MinimalProfileSection = ({
           )}
         </CardContent>
       </Card>
+
+      {/* Notifications */}
+      <NotificationSettings />
 
       {/* Sign Out */}
       <Button 
