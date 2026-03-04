@@ -91,6 +91,72 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          budget_alerts: boolean
+          budget_threshold: number
+          created_at: string
+          daily_reminder: boolean
+          daily_reminder_time: string
+          goal_reminders: boolean
+          id: string
+          recurring_alerts: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_alerts?: boolean
+          budget_threshold?: number
+          created_at?: string
+          daily_reminder?: boolean
+          daily_reminder_time?: string
+          goal_reminders?: boolean
+          id?: string
+          recurring_alerts?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_alerts?: boolean
+          budget_threshold?: number
+          created_at?: string
+          daily_reminder?: boolean
+          daily_reminder_time?: string
+          goal_reminders?: boolean
+          id?: string
+          recurring_alerts?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_tokens: {
+        Row: {
+          created_at: string
+          device_info: string | null
+          id: string
+          last_used_at: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: string | null
+          id?: string
+          last_used_at?: string | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: string | null
+          id?: string
+          last_used_at?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
