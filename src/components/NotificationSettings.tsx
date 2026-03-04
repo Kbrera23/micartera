@@ -24,6 +24,8 @@ const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 export const NotificationSettings = () => {
   const { permission, settings, loading, requestPermission, updateSettings } = useNotifications();
 
+  console.log('Render - permission:', permission);
+
   if (loading) {
     return (
       <Card className="border-none shadow-md rounded-2xl">

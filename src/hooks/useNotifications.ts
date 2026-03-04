@@ -163,6 +163,7 @@ export const useNotifications = () => {
 
   useEffect(() => {
     if (typeof Notification !== 'undefined') {
+      console.log('Permission on load:', Notification.permission);
       setPermission(Notification.permission);
     }
     loadSettings();
