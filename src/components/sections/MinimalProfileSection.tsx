@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,8 +53,8 @@ const FieldRow = ({
       onBlur={onSave}
       onKeyDown={(e) => e.key === 'Enter' && onSave()}
     />
-    <Button size="sm" onClick={onSave} className="rounded-xl h-9 px-4 shrink-0">
-      OK
+    <Button size="sm" onClick={onSave} className="rounded-xl h-9 w-9 p-0 shrink-0">
+      <Check className="w-4 h-4" />
     </Button>
   </div>
 );
@@ -219,8 +220,8 @@ export const MinimalProfileSection = ({
                     size="sm"
                     variant="outline"
                     onClick={() => onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}
-                    className="rounded-xl h-8 px-3 shrink-0"
-                  >OK</Button>
+                    className="rounded-xl h-8 w-8 p-0 shrink-0"
+                  ><Check className="w-3.5 h-3.5" /></Button>
                 </div>
               );
             })}
