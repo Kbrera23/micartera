@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +7,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BankType } from '@/hooks/useSupabaseFinances';
 import { formatInputCurrency } from '@/lib/currency';
 import { toast } from 'sonner';
-import { LogOut, Wallet, PiggyBank, Home, Flame, Star, Zap, CreditCard, Building2 } from 'lucide-react';
+import { LogOut, Wallet, PiggyBank, Home, Flame, Star, Zap, CreditCard, Building2, Camera, Loader2 } from 'lucide-react';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface MinimalProfileSectionProps {
   monthlyIncome: number;
@@ -42,6 +44,9 @@ export const MinimalProfileSection = ({
   const [income, setIncome] = useState('');
   const [savings, setSavings] = useState('');
   const [rentValue, setRentValue] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [bankBalances, setBankBalances] = useState<Record<BankType, string>>({
     santander: '',
     lacaixa: '',
@@ -72,7 +77,66 @@ export const MinimalProfileSection = ({
     setBankBalances(newBalances);
   }, [userBanks]);
 
+  // Load avatar from profile
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+      });
+  }, [user]);
+
   const parseValue = (value: string) => Number(value.replace(/[^\d]/g, '')) || 0;
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Solo se permiten imágenes JPG, PNG, WEBP o GIF');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen no puede superar 5MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path);
+
+      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
+
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: urlWithCacheBust })
+        .eq('user_id', user.id);
+
+      setAvatarUrl(urlWithCacheBust);
+      toast.success('Foto de perfil actualizada');
+    } catch {
+      toast.error('Error al subir la imagen');
+    } finally {
+      setUploadingAvatar(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSaveIncome = () => {
     onUpdateProfile({ monthly_income: parseValue(income) });
@@ -96,16 +160,50 @@ export const MinimalProfileSection = ({
   };
 
   const activeBankIds = userBanks.map(b => b.bank);
+  const userInitials = user?.email?.slice(0, 2).toUpperCase() ?? '??';
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Perfil</h1>
 
-      {/* User Info */}
+      {/* User Info + Avatar */}
       <Card className="border-none shadow-md rounded-2xl">
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Conectado como</p>
-          <p className="font-medium truncate">{user?.email}</p>
+        <CardContent className="p-4 flex items-center gap-4">
+          <div className="relative shrink-0">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={avatarUrl ?? undefined} alt="Foto de perfil" />
+              <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+            >
+              {uploadingAvatar
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <Camera className="w-3.5 h-3.5" />
+              }
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">Conectado como</p>
+            <p className="font-medium truncate">{user?.email}</p>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              className="text-xs text-primary hover:underline mt-0.5"
+            >
+              Cambiar foto
+            </button>
+          </div>
         </CardContent>
       </Card>
 
