@@ -400,6 +400,36 @@ export const BankCSVImporter = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate MIME type
+    const VALID_MIME_TYPES: Record<string, string> = {
+      'text/csv': 'csv',
+      'application/vnd.ms-excel': 'xls',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+      'application/csv': 'csv',
+      'text/plain': 'csv', // some browsers report CSV as text/plain
+    };
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const validExtensions = ['csv', 'xlsx', 'xls'];
+
+    if (!validExtensions.includes(ext || '')) {
+      setError('Extensión de archivo no válida. Solo se permiten CSV y Excel (.xlsx, .xls)');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.type && !VALID_MIME_TYPES[file.type] && file.type !== '') {
+      setError('Tipo de archivo no válido. Solo CSV y Excel permitidos.');
+      event.target.value = '';
+      return;
+    }
+
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      setError('Archivo demasiado grande. Máximo 10MB permitido.');
+      event.target.value = '';
+      return;
+    }
+
     setImporting(true);
     setError(null);
     setResult(null);
@@ -407,9 +437,9 @@ export const BankCSVImporter = () => {
     try {
       let transactions: Transaction[] = [];
 
-      if (file.name.endsWith('.csv')) {
+      if (ext === 'csv') {
         transactions = await processCSV(file);
-      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      } else if (ext === 'xlsx' || ext === 'xls') {
         transactions = await processExcel(file);
       } else {
         throw new Error('Formato de archivo no soportado. Use CSV o Excel (.xlsx, .xls)');
