@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Tag, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -217,101 +217,99 @@ export const CategoriesSection = ({
         </Card>
       )}
 
-      {/* Category grid */}
+      {/* Category grid - only show categories with spending */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {categories.map(cat => {
-          const stats = statsMap.get(cat.id);
-          const pct = stats?.percentage ?? 0;
-          const spent = stats?.total ?? 0;
-          const isOverBudget = stats?.isOverBudget ?? false;
-          const isWarning = pct >= 80 && !isOverBudget;
+        {(() => {
+          const withSpend = categories.filter(cat => {
+            const stats = statsMap.get(cat.id);
+            return (stats?.total ?? 0) > 0;
+          });
+          if (withSpend.length === 0) {
+            return (
+              <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <FolderOpen className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-1">No hay gastos categorizados</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Asigna categorías a tus gastos para ver el seguimiento aquí.
+                </p>
+              </div>
+            );
+          }
+          return withSpend.map(cat => {
+            const stats = statsMap.get(cat.id);
+            const pct = stats?.percentage ?? 0;
+            const spent = stats?.total ?? 0;
+            const isOverBudget = stats?.isOverBudget ?? false;
+            const isWarning = pct >= 80 && !isOverBudget;
 
-          const progressColor = isOverBudget
-            ? 'bg-destructive'
-            : isWarning
-            ? 'bg-yellow-500'
-            : 'bg-green-500';
+            const progressColor = isOverBudget
+              ? 'bg-destructive'
+              : isWarning
+              ? 'bg-yellow-500'
+              : 'bg-green-500';
 
-          return (
-            <Card
-              key={cat.id}
-              className="rounded-2xl border-border hover:shadow-md transition-shadow"
-            >
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                      style={{ backgroundColor: cat.color + '20' }}
-                    >
-                      {cat.icon}
+            return (
+              <Card key={cat.id} className="rounded-2xl border-border hover:shadow-md transition-shadow">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                        style={{ backgroundColor: cat.color + '20' }}
+                      >
+                        {cat.icon}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground leading-tight">{cat.name}</p>
+                        {cat.budget_limit > 0 && (
+                          <p className="text-xs text-muted-foreground">{formatCurrencyCompact(cat.budget_limit)}/mes</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-foreground leading-tight">{cat.name}</p>
-                      {cat.budget_limit > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrencyCompact(cat.budget_limit)}/mes
-                        </p>
+                    <div className="flex items-center gap-1">
+                      {isOverBudget && <AlertTriangle className="h-4 w-4 text-destructive" />}
+                      {!cat.is_default && (
+                        <button
+                          onClick={() => onDeleteCategory(cat.id)}
+                          className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {isOverBudget && (
-                      <AlertTriangle className="h-4 w-4 text-destructive" />
-                    )}
-                    {!cat.is_default && (
-                      <button
-                        onClick={() => onDeleteCategory(cat.id)}
-                        className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+
+                  <div className="flex items-baseline justify-between mb-2">
+                    <span className="text-lg font-bold text-foreground">{formatCurrencyCompact(spent)}</span>
+                    {cat.budget_limit > 0 && (
+                      <span className={cn(
+                        'text-xs font-medium',
+                        isOverBudget ? 'text-destructive' : isWarning ? 'text-yellow-600' : 'text-muted-foreground'
+                      )}>
+                        {Math.round(pct)}%
+                      </span>
                     )}
                   </div>
-                </div>
 
-                {/* Spent amount */}
-                <div className="flex items-baseline justify-between mb-2">
-                  <span className="text-lg font-bold text-foreground">
-                    {formatCurrencyCompact(spent)}
-                  </span>
                   {cat.budget_limit > 0 && (
-                    <span className={cn(
-                      'text-xs font-medium',
-                      isOverBudget ? 'text-destructive' : isWarning ? 'text-yellow-600' : 'text-muted-foreground'
-                    )}>
-                      {Math.round(pct)}%
-                    </span>
+                    <>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
+                        <div className={cn('h-full rounded-full transition-all', progressColor)} style={{ width: `${Math.min(pct, 100)}%` }} />
+                      </div>
+                      <p className={cn('text-xs', isOverBudget ? 'text-destructive font-medium' : 'text-muted-foreground')}>
+                        {isOverBudget
+                          ? `Excedido: +${formatCurrencyCompact(Math.abs(stats?.remaining ?? 0))}`
+                          : `Disponible: ${formatCurrencyCompact(Math.max(stats?.remaining ?? 0, 0))}`}
+                      </p>
+                    </>
                   )}
-                </div>
-
-                {/* Progress bar */}
-                {cat.budget_limit > 0 && (
-                  <>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
-                      <div
-                        className={cn('h-full rounded-full transition-all', progressColor)}
-                        style={{ width: `${Math.min(pct, 100)}%` }}
-                      />
-                    </div>
-                    <p className={cn(
-                      'text-xs',
-                      isOverBudget ? 'text-destructive font-medium' : 'text-muted-foreground'
-                    )}>
-                      {isOverBudget
-                        ? `Excedido: +${formatCurrencyCompact(Math.abs(stats?.remaining ?? 0))}`
-                        : `Disponible: ${formatCurrencyCompact(Math.max(stats?.remaining ?? 0, 0))}`}
-                    </p>
-                  </>
-                )}
-
-                {cat.budget_limit === 0 && spent === 0 && (
-                  <p className="text-xs text-muted-foreground">Sin gastos asignados</p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+                </CardContent>
+              </Card>
+            );
+          });
+        })()}
       </div>
 
       {showModal && (

@@ -56,6 +56,7 @@ export type Database = {
           frequency: string | null
           id: string
           is_recurring: boolean
+          last_payment_date: string | null
           name: string
           user_id: string
         }
@@ -67,6 +68,7 @@ export type Database = {
           frequency?: string | null
           id?: string
           is_recurring?: boolean
+          last_payment_date?: string | null
           name: string
           user_id: string
         }
@@ -78,6 +80,7 @@ export type Database = {
           frequency?: string | null
           id?: string
           is_recurring?: boolean
+          last_payment_date?: string | null
           name?: string
           user_id?: string
         }
