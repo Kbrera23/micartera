@@ -35,6 +35,7 @@ export interface Expense {
   bank: BankType | null;
   created_at: string;
   next_payment_date?: string;
+  last_payment_date?: string;
   category_id?: string | null;
 }
 

@@ -50,7 +50,8 @@ const Index = () => {
     toggleGoalStatus,
     updateProfile,
     toggleBank,
-    updateBankBalance
+    updateBankBalance,
+    refetch,
   } = useSupabaseFinances();
 
   // Redirección a onboarding si no hay perfil
@@ -178,7 +179,9 @@ const Index = () => {
     trafficLightMessage,
     quarterlyProvision,
     recurringExpenses,
-    oneTimeExpenses
+    oneTimeExpenses,
+    onAddExpense: addExpense,
+    refetch,
   }), [
     userBanks,
     monthlyIncome,
@@ -194,7 +197,9 @@ const Index = () => {
     trafficLightMessage,
     quarterlyProvision,
     recurringExpenses,
-    oneTimeExpenses
+    oneTimeExpenses,
+    addExpense,
+    refetch,
   ]);
 
   const expensesProps = useMemo(() => ({

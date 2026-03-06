@@ -1,26 +1,40 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Expense } from '@/hooks/useSupabaseFinances';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface UpcomingLargePaymentsProps {
   recurringExpenses: Expense[];
+  onAddExpense: (
+    name: string,
+    amount: number,
+    isRecurring: boolean,
+    frequency: 'monthly' | 'quarterly' | 'annual',
+    bank: null
+  ) => Promise<void>;
+  refetch: () => void;
 }
 
-export const UpcomingLargePayments = ({ recurringExpenses }: UpcomingLargePaymentsProps) => {
+export const UpcomingLargePayments = ({ recurringExpenses, onAddExpense, refetch }: UpcomingLargePaymentsProps) => {
   const nonMonthly = recurringExpenses.filter(e => e.frequency !== 'monthly');
 
   if (nonMonthly.length === 0) return null;
 
-  const getNextPaymentDate = (expense: Expense) => {
-    const now = new Date();
+  const getNextPaymentDate = (expense: Expense): Date => {
+    const base = expense.last_payment_date
+      ? new Date(expense.last_payment_date)
+      : new Date();
+    const next = new Date(base);
     if (expense.frequency === 'quarterly') {
-      now.setMonth(now.getMonth() + 3);
+      next.setMonth(next.getMonth() + 3);
     } else if (expense.frequency === 'annual') {
-      now.setFullYear(now.getFullYear() + 1);
+      next.setFullYear(next.getFullYear() + 1);
     }
-    return now;
+    return next;
   };
 
   const getDaysUntilPayment = (date: Date) => {
@@ -29,13 +43,56 @@ export const UpcomingLargePayments = ({ recurringExpenses }: UpcomingLargePaymen
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
+  const handleMarkAsPaid = async (expense: Expense) => {
+    try {
+      const label = expense.frequency === 'quarterly' ? 'trimestral' : 'anual';
+      await onAddExpense(
+        `${expense.name} (pago ${label})`,
+        expense.amount,
+        false,
+        'monthly',
+        null
+      );
+
+      const today = new Date();
+      const nextDate = new Date(today);
+      if (expense.frequency === 'quarterly') {
+        nextDate.setMonth(nextDate.getMonth() + 3);
+      } else if (expense.frequency === 'annual') {
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+      }
+
+      const { error } = await supabase
+        .from('expenses')
+        .update({
+          last_payment_date: today.toISOString().split('T')[0],
+        } as any)
+        .eq('id', expense.id);
+
+      if (error) throw error;
+
+      toast.success(
+        `✅ Pago registrado. Próximo: ${nextDate.toLocaleDateString('es-ES', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })}`
+      );
+
+      refetch();
+    } catch (err) {
+      console.error('Error al marcar pago:', err);
+      toast.error('Error al registrar el pago');
+    }
+  };
+
   const paymentsWithDates = nonMonthly
     .map(expense => {
       const nextDate = getNextPaymentDate(expense);
       return {
         ...expense,
         nextDate,
-        daysUntil: getDaysUntilPayment(nextDate)
+        daysUntil: getDaysUntilPayment(nextDate),
       };
     })
     .sort((a, b) => a.nextDate.getTime() - b.nextDate.getTime())
@@ -58,7 +115,7 @@ export const UpcomingLargePayments = ({ recurringExpenses }: UpcomingLargePaymen
             <div
               key={payment.id}
               className={cn(
-                'flex items-center justify-between p-3 rounded-xl',
+                'flex items-center justify-between p-3 rounded-xl gap-2',
                 isUrgent ? 'bg-destructive/10' : 'bg-muted/50'
               )}
             >
@@ -75,9 +132,18 @@ export const UpcomingLargePayments = ({ recurringExpenses }: UpcomingLargePaymen
                   </span>
                 </div>
               </div>
-              <span className={cn('font-bold text-sm ml-3', isUrgent ? 'text-destructive' : 'text-foreground')}>
+              <span className={cn('font-bold text-sm', isUrgent ? 'text-destructive' : 'text-foreground')}>
                 {formatCurrencyCompact(payment.amount)}
               </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs flex items-center gap-1 shrink-0"
+                onClick={() => handleMarkAsPaid(payment)}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Pagado
+              </Button>
             </div>
           );
         })}

@@ -56,127 +56,88 @@ export const GoalsSection = ({
    };
  
    const GoalCard = ({ goal }: { goal: PurchaseGoal }) => {
-     const progress = getProgress(goal);
-     const monthsLeft = calculateMonthsRemaining(goal.target_date);
-     const monthlyQuota = getMonthlyQuota(goal);
+     const progressPct = getProgress(goal);
+     const daysLeft = Math.ceil(
+       (new Date(goal.target_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+     );
+     const monthsLeft = Math.ceil(daysLeft / 30);
      const isActive = goal.status === 'active';
- 
+     const isCompleted = progressPct >= 100;
+     const isUrgent = monthsLeft <= 1 && !isCompleted;
+     const remaining = goal.target_amount - goal.current_amount;
+
      return (
        <Card className={cn(
-         "glass-card rounded-2xl transition-all",
-         isActive ? "border-primary/30" : "border-muted/50 opacity-75"
+         "rounded-2xl transition-all duration-300",
+         isCompleted
+           ? "border-green-500/50 bg-green-500/5"
+           : isActive ? "border-primary/20" : "border-muted/50 opacity-75"
        )}>
          <CardContent className="p-4">
            {/* Header */}
-           <div className="flex items-start justify-between mb-3">
-             <div className="flex items-start gap-3 flex-1">
-               <div className={cn(
-                 "p-2 rounded-xl",
-                 isActive ? "bg-primary/10" : "bg-muted"
-               )}>
-                 <Target className={cn(
-                   "w-5 h-5",
-                   isActive ? "text-primary" : "text-muted-foreground"
-                 )} />
+           <div className="flex items-start justify-between mb-4">
+             <div className="flex-1 min-w-0 mr-3">
+               <div className="flex items-center gap-2 mb-1">
+                 <h3 className="font-semibold text-foreground truncate">{goal.name}</h3>
+                 <span className={cn(
+                   "px-2 py-0.5 rounded-full text-xs font-medium shrink-0",
+                   isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                 )}>
+                   {isActive ? 'Activo' : 'Pausado'}
+                 </span>
                </div>
-               <div className="flex-1">
-                 <h3 className="font-semibold text-foreground">{goal.name}</h3>
-                 <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                   <span>{formatCurrencyCompact(goal.target_amount)}</span>
-                   <span>•</span>
-                   <span className="flex items-center gap-1">
-                     <Calendar className="w-3.5 h-3.5" />
-                     {format(new Date(goal.target_date), "d MMM yyyy", { locale: es })}
-                   </span>
-                 </div>
-               </div>
-             </div>
- 
-             {/* Status badge */}
-             <span className={cn(
-               "px-2.5 py-1 rounded-full text-xs font-medium",
-               isActive 
-                 ? "bg-primary/10 text-primary" 
-                 : "bg-muted text-muted-foreground"
-             )}>
-               {isActive ? '✓ Activo' : '⏸ Pendiente'}
-             </span>
-           </div>
- 
-           {/* Progress bar */}
-           <div className="mb-3">
-             <div className="flex items-center justify-between text-sm mb-1.5">
-               <span className="text-muted-foreground">
-                 {formatCurrencyCompact(goal.current_amount)} / {formatCurrencyCompact(goal.target_amount)}
-               </span>
-               <span className="font-medium text-foreground">
-                 {progress.toFixed(0)}%
-               </span>
-             </div>
-             <div className="w-full bg-muted rounded-full h-1.5">
-               <div 
-                 className={cn(
-                   "h-1.5 rounded-full transition-all",
-                   isActive ? "bg-primary" : "bg-muted-foreground/50"
+               <p className="text-sm text-muted-foreground">
+                 {isCompleted ? (
+                   <span className="text-green-600 dark:text-green-400 font-medium">✓ Meta alcanzada</span>
+                 ) : isUrgent ? (
+                   <span className="text-orange-500 font-medium">Faltan {daysLeft} días</span>
+                 ) : (
+                   <span>Faltan {monthsLeft} {monthsLeft === 1 ? 'mes' : 'meses'}</span>
                  )}
-                 style={{ width: `${progress}%` }}
+               </p>
+             </div>
+             <div className="text-right shrink-0">
+               <p className="text-xl font-bold text-primary">{formatCurrencyCompact(goal.current_amount)}</p>
+               <p className="text-xs text-muted-foreground">de {formatCurrencyCompact(goal.target_amount)}</p>
+             </div>
+           </div>
+
+           {/* Animated progress bar */}
+           <div className="space-y-1.5 mb-4">
+             <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
+               <div
+                 className={cn(
+                   "h-full transition-all duration-1000 ease-out rounded-full",
+                   isCompleted ? "bg-green-500" : "bg-primary"
+                 )}
+                 style={{ width: `${Math.min(progressPct, 100)}%` }}
                />
              </div>
-           </div>
- 
-           {/* Stats (only for active) */}
-           {isActive && (
-             <div className="grid grid-cols-2 gap-2 mb-3">
-               <div className="bg-primary/5 rounded-xl p-2.5">
-                 <div className="text-xs text-muted-foreground">Cuota mensual</div>
-                 <div className="font-semibold text-primary">
-                   {formatCurrencyCompact(monthlyQuota)}/mes
-                 </div>
-               </div>
-               <div className="bg-muted/50 rounded-xl p-2.5">
-                 <div className="text-xs text-muted-foreground">Tiempo restante</div>
-                 <div className="font-semibold text-foreground">
-                   {monthsLeft} {monthsLeft === 1 ? 'mes' : 'meses'}
-                 </div>
-               </div>
+             <div className="flex justify-between items-center text-xs">
+               <span className="font-semibold text-primary">{progressPct.toFixed(0)}%</span>
+               {!isCompleted && (
+                 <span className="text-muted-foreground">Faltan {formatCurrencyCompact(remaining)}</span>
+               )}
              </div>
-           )}
- 
+           </div>
+
            {/* Actions */}
            <div className="flex items-center gap-2 pt-2 border-t border-border/50">
              {isActive ? (
-               <Button
-                 variant="outline"
-                 size="sm"
-                 className="flex-1"
-                 onClick={() => onToggleGoalStatus(goal.id, 'pending')}
-               >
-                 <Pause className="w-4 h-4 mr-1.5" />
-                 Pausar
+               <Button variant="outline" size="sm" className="flex-1" onClick={() => onToggleGoalStatus(goal.id, 'pending')}>
+                 <Pause className="w-3.5 h-3.5 mr-1.5" />Pausar
                </Button>
              ) : (
-               <Button
-                 variant="default"
-                 size="sm"
-                 className="flex-1"
-                 onClick={() => onToggleGoalStatus(goal.id, 'active')}
-               >
-                 <Play className="w-4 h-4 mr-1.5" />
-                 Activar
+               <Button variant="default" size="sm" className="flex-1" onClick={() => onToggleGoalStatus(goal.id, 'active')}>
+                 <Play className="w-3.5 h-3.5 mr-1.5" />Activar
                </Button>
              )}
-             
              <Button
-               variant="ghost"
-               size="sm"
+               variant="ghost" size="sm"
                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-               onClick={() => {
-                 if (confirm(`¿Eliminar objetivo "${goal.name}"?`)) {
-                   onRemoveGoal(goal.id);
-                 }
-               }}
+               onClick={() => { if (confirm(`¿Eliminar "${goal.name}"?`)) onRemoveGoal(goal.id); }}
              >
-               <Trash2 className="w-4 h-4" />
+               <Trash2 className="w-3.5 h-3.5" />
              </Button>
            </div>
          </CardContent>
