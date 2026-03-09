@@ -55,6 +55,7 @@ export type Database = {
           created_at: string
           frequency: string | null
           id: string
+          is_payment_record: boolean | null
           is_recurring: boolean
           last_payment_date: string | null
           name: string
@@ -67,6 +68,7 @@ export type Database = {
           created_at?: string
           frequency?: string | null
           id?: string
+          is_payment_record?: boolean | null
           is_recurring?: boolean
           last_payment_date?: string | null
           name: string
@@ -79,6 +81,7 @@ export type Database = {
           created_at?: string
           frequency?: string | null
           id?: string
+          is_payment_record?: boolean | null
           is_recurring?: boolean
           last_payment_date?: string | null
           name?: string
@@ -93,6 +96,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      monthly_reminders_completed: {
+        Row: {
+          completed_date: string
+          created_at: string | null
+          id: string
+          month: number
+          reminder_type: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          completed_date: string
+          created_at?: string | null
+          id?: string
+          month: number
+          reminder_type: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          completed_date?: string
+          created_at?: string | null
+          id?: string
+          month?: number
+          reminder_type?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
       }
       notification_settings: {
         Row: {

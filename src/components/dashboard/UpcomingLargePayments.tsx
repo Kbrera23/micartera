@@ -6,6 +6,7 @@ import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UpcomingLargePaymentsProps {
   recurringExpenses: Expense[];
@@ -20,9 +21,8 @@ interface UpcomingLargePaymentsProps {
 }
 
 export const UpcomingLargePayments = ({ recurringExpenses, onAddExpense, refetch }: UpcomingLargePaymentsProps) => {
+  const { user } = useAuth();
   const nonMonthly = recurringExpenses.filter(e => e.frequency !== 'monthly');
-
-  if (nonMonthly.length === 0) return null;
 
   const getNextPaymentDate = (expense: Expense): Date => {
     const base = expense.last_payment_date
@@ -37,39 +37,58 @@ export const UpcomingLargePayments = ({ recurringExpenses, onAddExpense, refetch
     return next;
   };
 
-  const getDaysUntilPayment = (date: Date) => {
-    const now = new Date();
-    const diffTime = date.getTime() - now.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
+  // Only show payments due in the current month
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
 
-  const handleMarkAsPaid = async (expense: Expense) => {
+  const paymentsThisMonth = nonMonthly
+    .map(expense => {
+      const nextDate = getNextPaymentDate(expense);
+      return { ...expense, nextDate, daysUntil: Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) };
+    })
+    .filter(p => p.nextDate.getMonth() === currentMonth && p.nextDate.getFullYear() === currentYear)
+    .sort((a, b) => a.nextDate.getTime() - b.nextDate.getTime())
+    .slice(0, 3);
+
+  if (paymentsThisMonth.length === 0) return null;
+
+  const handleMarkAsPaid = async (expense: Expense & { nextDate: Date }) => {
+    if (!user) return;
     try {
       const label = expense.frequency === 'quarterly' ? 'trimestral' : 'anual';
-      await onAddExpense(
-        `${expense.name} (pago ${label})`,
-        expense.amount,
-        false,
-        'monthly',
-        null
-      );
 
-      const today = new Date();
+      // 1. Insert one-time payment record directly (marked as payment record)
+      const { error: insertError } = await supabase
+        .from('expenses')
+        .insert({
+          name: `${expense.name} (pago ${label})`,
+          amount: expense.amount,
+          is_recurring: false,
+          frequency: 'monthly',
+          category_id: expense.category_id ?? null,
+          user_id: user.id,
+          // @ts-ignore
+          is_payment_record: true,
+        });
+
+      if (insertError) throw insertError;
+
+      // 2. Update last_payment_date on the recurring expense
+      const { error: updateError } = await supabase
+        .from('expenses')
+        .update({ last_payment_date: today.toISOString().split('T')[0] } as any)
+        .eq('id', expense.id);
+
+      if (updateError) throw updateError;
+
+      // 3. Calculate next date for toast
       const nextDate = new Date(today);
       if (expense.frequency === 'quarterly') {
         nextDate.setMonth(nextDate.getMonth() + 3);
-      } else if (expense.frequency === 'annual') {
+      } else {
         nextDate.setFullYear(nextDate.getFullYear() + 1);
       }
-
-      const { error } = await supabase
-        .from('expenses')
-        .update({
-          last_payment_date: today.toISOString().split('T')[0],
-        } as any)
-        .eq('id', expense.id);
-
-      if (error) throw error;
 
       toast.success(
         `✅ Pago registrado. Próximo: ${nextDate.toLocaleDateString('es-ES', {
@@ -86,18 +105,6 @@ export const UpcomingLargePayments = ({ recurringExpenses, onAddExpense, refetch
     }
   };
 
-  const paymentsWithDates = nonMonthly
-    .map(expense => {
-      const nextDate = getNextPaymentDate(expense);
-      return {
-        ...expense,
-        nextDate,
-        daysUntil: getDaysUntilPayment(nextDate),
-      };
-    })
-    .sort((a, b) => a.nextDate.getTime() - b.nextDate.getTime())
-    .slice(0, 3);
-
   return (
     <Card className="border-none shadow-md rounded-2xl">
       <CardHeader className="pb-3">
@@ -109,8 +116,8 @@ export const UpcomingLargePayments = ({ recurringExpenses, onAddExpense, refetch
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {paymentsWithDates.map(payment => {
-          const isUrgent = payment.daysUntil <= 30;
+        {paymentsThisMonth.map(payment => {
+          const isUrgent = payment.daysUntil <= 7;
           return (
             <div
               key={payment.id}

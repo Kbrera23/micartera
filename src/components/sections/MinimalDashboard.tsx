@@ -2,10 +2,8 @@ import { MinimalBankCards } from '@/components/dashboard/MinimalBankCards';
 import { KPICards } from '@/components/dashboard/KPICards';
 import { UpcomingLargePayments } from '@/components/dashboard/UpcomingLargePayments';
 import { RecentExpenses } from '@/components/dashboard/RecentExpenses';
-import { Card, CardContent } from '@/components/ui/card';
+import { MonthlyReminder } from '@/components/dashboard/MonthlyReminder';
 import { BankType, Expense, ExpenseFrequency } from '@/hooks/useSupabaseFinances';
-import { formatCurrencyCompact } from '@/lib/currency';
-import { ArrowRight, CreditCard } from 'lucide-react';
 
 interface MinimalDashboardProps {
   userBanks: { bank: BankType; initial_balance: number }[];
@@ -47,7 +45,6 @@ export const MinimalDashboard = ({
   refetch,
 }: MinimalDashboardProps) => {
   const hasRevolut = userBanks.some(b => b.bank === 'revolut');
-  const showRevolutReminder = hasRevolut && quarterlyProvision > 0;
 
   return (
     <div className="space-y-6">
@@ -63,29 +60,15 @@ export const MinimalDashboard = ({
         rent={rent}
       />
 
-      {/* Revolut Reminder */}
-      {showRevolutReminder && (
-        <Card className="border-none shadow-md rounded-2xl bg-[#191C1F] text-white">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-              <CreditCard className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white/90">Recordatorio mensual</p>
-              <p className="text-xs text-white/60">Mover a Revolut para gastos trimestrales</p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-lg font-bold">{formatCurrencyCompact(quarterlyProvision)}</span>
-              <ArrowRight className="w-4 h-4 text-white/60" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Revolut Reminder - with Done button, hides when completed */}
+      {hasRevolut && (
+        <MonthlyReminder quarterlyProvision={quarterlyProvision} />
       )}
 
-      {/* Upcoming large payments */}
+      {/* Upcoming large payments - only current month */}
       <UpcomingLargePayments recurringExpenses={recurringExpenses} onAddExpense={onAddExpense} refetch={refetch} />
 
-      {/* Recent one-time expenses */}
+      {/* Recent one-time expenses - payment records filtered out */}
       <RecentExpenses expenses={oneTimeExpenses} />
 
       {/* 4 KPI Pillars */}
