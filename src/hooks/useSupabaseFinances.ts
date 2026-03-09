@@ -37,6 +37,7 @@ export interface Expense {
   next_payment_date?: string;
   last_payment_date?: string;
   category_id?: string | null;
+  is_payment_record?: boolean;
 }
 
 export interface PurchaseGoal {
