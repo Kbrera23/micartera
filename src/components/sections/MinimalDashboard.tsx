@@ -2,10 +2,8 @@ import { MinimalBankCards } from '@/components/dashboard/MinimalBankCards';
 import { KPICards } from '@/components/dashboard/KPICards';
 import { UpcomingLargePayments } from '@/components/dashboard/UpcomingLargePayments';
 import { RecentExpenses } from '@/components/dashboard/RecentExpenses';
-import { Card, CardContent } from '@/components/ui/card';
+import { MonthlyReminder } from '@/components/dashboard/MonthlyReminder';
 import { BankType, Expense, ExpenseFrequency } from '@/hooks/useSupabaseFinances';
-import { formatCurrencyCompact } from '@/lib/currency';
-import { ArrowRight, CreditCard } from 'lucide-react';
 
 interface MinimalDashboardProps {
   userBanks: { bank: BankType; initial_balance: number }[];
