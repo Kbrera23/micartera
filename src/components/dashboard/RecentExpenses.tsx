@@ -8,7 +8,7 @@ interface RecentExpensesProps {
 }
 
 export const RecentExpenses = ({ expenses }: RecentExpensesProps) => {
-  const recent = expenses.slice(0, 5);
+  const recent = expenses.filter(e => !e.is_payment_record).slice(0, 5);
 
   if (recent.length === 0) return null;
 
