@@ -1,15 +1,24 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Flame, Star, Zap, CreditCard, Building2 } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { BankType } from '@/hooks/useSupabaseFinances';
+
+// Official bank logos from Wikimedia Commons
+const BANK_LOGOS: Record<BankType, string> = {
+  santander: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Banco_Santander_Logotipo.svg/1200px-Banco_Santander_Logotipo.svg.png',
+  lacaixa: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/CaixaBank%2C_S.A._logo.svg/1200px-CaixaBank%2C_S.A._logo.svg.png',
+  ing: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/ING_Group_N.V._Logo.svg/1200px-ING_Group_N.V._Logo.svg.png',
+  revolut: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Revolut_Logo.svg/1200px-Revolut_Logo.svg.png',
+  bbva: '', // No logo for BBVA
+};
 
 interface BankData {
   id: BankType;
   name: string;
   amount: number;
   bgColor: string;
-  icon: typeof Building2;
+  logo: string;
 }
 
 interface MinimalBankCardsProps {
@@ -45,11 +54,11 @@ export const MinimalBankCards = ({
   const revolutBalance = reserveFund + getInitialBalance('revolut');
 
   const allBanks: BankData[] = [
-    { id: 'santander', name: 'Santander', amount: santanderBalance, bgColor: 'bg-santander', icon: Flame },
-    { id: 'lacaixa', name: 'La Caixa', amount: lacaixaBalance, bgColor: 'bg-lacaixa', icon: Star },
-    { id: 'ing', name: 'ING', amount: totalSubscriptions, bgColor: 'bg-ing', icon: Zap },
-    { id: 'revolut', name: 'Revolut', amount: revolutBalance, bgColor: 'bg-revolut', icon: CreditCard },
-    { id: 'bbva', name: 'BBVA', amount: getInitialBalance('bbva'), bgColor: 'bg-bbva', icon: Building2 },
+    { id: 'santander', name: 'Santander', amount: santanderBalance, bgColor: 'bg-santander', logo: BANK_LOGOS.santander },
+    { id: 'lacaixa', name: 'La Caixa', amount: lacaixaBalance, bgColor: 'bg-lacaixa', logo: BANK_LOGOS.lacaixa },
+    { id: 'ing', name: 'ING', amount: totalSubscriptions, bgColor: 'bg-ing', logo: BANK_LOGOS.ing },
+    { id: 'revolut', name: 'Revolut', amount: revolutBalance, bgColor: 'bg-revolut', logo: BANK_LOGOS.revolut },
+    { id: 'bbva', name: 'BBVA', amount: getInitialBalance('bbva'), bgColor: 'bg-bbva', logo: BANK_LOGOS.bbva },
   ];
 
   // Filter to only show user's selected banks
@@ -61,7 +70,6 @@ export const MinimalBankCards = ({
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
       {activeBanks.map((bank) => {
-        const Icon = bank.icon;
         return (
           <Card 
             key={bank.id}
@@ -72,7 +80,17 @@ export const MinimalBankCards = ({
           >
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Icon className="w-5 h-5 text-white/90" />
+                {bank.logo ? (
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <img
+                      src={bank.logo}
+                      alt={`${bank.name} logo`}
+                      className="w-full h-full object-contain brightness-0 invert"
+                    />
+                  </div>
+                ) : (
+                  <Building2 className="w-5 h-5 text-white/90" />
+                )}
                 <span className="text-xs font-medium text-white/80">{bank.name}</span>
               </div>
               <p className={cn(
