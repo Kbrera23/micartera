@@ -54,11 +54,11 @@ export const MinimalBankCards = ({
   const revolutBalance = reserveFund + getInitialBalance('revolut');
 
   const allBanks: BankData[] = [
-    { id: 'santander', name: 'Santander', amount: santanderBalance, bgColor: 'bg-santander', icon: Flame },
-    { id: 'lacaixa', name: 'La Caixa', amount: lacaixaBalance, bgColor: 'bg-lacaixa', icon: Star },
-    { id: 'ing', name: 'ING', amount: totalSubscriptions, bgColor: 'bg-ing', icon: Zap },
-    { id: 'revolut', name: 'Revolut', amount: revolutBalance, bgColor: 'bg-revolut', icon: CreditCard },
-    { id: 'bbva', name: 'BBVA', amount: getInitialBalance('bbva'), bgColor: 'bg-bbva', icon: Building2 },
+    { id: 'santander', name: 'Santander', amount: santanderBalance, bgColor: 'bg-santander', logo: BANK_LOGOS.santander },
+    { id: 'lacaixa', name: 'La Caixa', amount: lacaixaBalance, bgColor: 'bg-lacaixa', logo: BANK_LOGOS.lacaixa },
+    { id: 'ing', name: 'ING', amount: totalSubscriptions, bgColor: 'bg-ing', logo: BANK_LOGOS.ing },
+    { id: 'revolut', name: 'Revolut', amount: revolutBalance, bgColor: 'bg-revolut', logo: BANK_LOGOS.revolut },
+    { id: 'bbva', name: 'BBVA', amount: getInitialBalance('bbva'), bgColor: 'bg-bbva', logo: BANK_LOGOS.bbva },
   ];
 
   // Filter to only show user's selected banks
