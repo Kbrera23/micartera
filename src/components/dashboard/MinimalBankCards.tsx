@@ -70,7 +70,6 @@ export const MinimalBankCards = ({
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
       {activeBanks.map((bank) => {
-        const Icon = bank.icon;
         return (
           <Card 
             key={bank.id}
@@ -81,7 +80,17 @@ export const MinimalBankCards = ({
           >
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Icon className="w-5 h-5 text-white/90" />
+                {bank.logo ? (
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <img
+                      src={bank.logo}
+                      alt={`${bank.name} logo`}
+                      className="w-full h-full object-contain brightness-0 invert"
+                    />
+                  </div>
+                ) : (
+                  <Building2 className="w-5 h-5 text-white/90" />
+                )}
                 <span className="text-xs font-medium text-white/80">{bank.name}</span>
               </div>
               <p className={cn(
