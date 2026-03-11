@@ -42,7 +42,15 @@ export const BankCard = ({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className={cn('p-2 rounded-xl', colorClass.includes('santander') ? 'bg-white/20' : 'bg-white/30')}>
-              <Building2 className="h-4 w-4 text-white" />
+              {BANK_LOGOS[name] ? (
+                <img
+                  src={BANK_LOGOS[name]}
+                  alt={`${displayName} logo`}
+                  className="w-5 h-5 object-contain brightness-0 invert"
+                />
+              ) : (
+                <Building2 className="h-4 w-4 text-white" />
+              )}
             </div>
             <span className="font-semibold text-white text-sm">{displayName}</span>
           </div>
