@@ -1,7 +1,7 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
-import { Wallet, Receipt, PiggyBank, Sparkles, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
+import { Wallet, Receipt, PiggyBank, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
 
 interface KPICardsProps {
   monthlyIncome: number;
@@ -28,36 +28,17 @@ export const KPICards = ({
   trafficLightStatus,
   trafficLightMessage
 }: KPICardsProps) => {
-  // Gastos fijos totales = Alquiler + Gastos recurrentes mensuales
   const totalGastosFijos = rent + totalFixedExpenses;
-  
-  // Provisión total = Ahorro mensual + Fondo de reserva + Cuotas de objetivos
   const totalProvision = savingsGoal + reserveFund + totalPurchaseGoalQuotas;
 
-  // Traffic light colors
   const getTrafficLightColors = () => {
     switch (trafficLightStatus) {
       case 'green':
-        return {
-          bgClass: 'bg-income/10 dark:bg-income/20',
-          iconClass: 'bg-income text-income-foreground',
-          valueClass: 'text-income',
-          icon: CheckCircle
-        };
+        return { dotClass: 'bg-income', valueClass: 'text-income', icon: CheckCircle };
       case 'yellow':
-        return {
-          bgClass: 'bg-yellow-100 dark:bg-yellow-900/30',
-          iconClass: 'bg-yellow-500 text-white',
-          valueClass: 'text-yellow-600 dark:text-yellow-400',
-          icon: TrendingUp
-        };
+        return { dotClass: 'bg-yellow-500', valueClass: 'text-yellow-500', icon: TrendingUp };
       case 'red':
-        return {
-          bgClass: 'bg-destructive/10 dark:bg-destructive/20',
-          iconClass: 'bg-destructive text-destructive-foreground',
-          valueClass: 'text-destructive',
-          icon: AlertTriangle
-        };
+        return { dotClass: 'bg-destructive', valueClass: 'text-destructive', icon: AlertTriangle };
     }
   };
 
@@ -69,43 +50,39 @@ export const KPICards = ({
       label: 'Nómina',
       value: monthlyIncome,
       icon: Wallet,
-      bgClass: 'bg-income-light dark:bg-income/15',
-      iconClass: 'bg-income text-income-foreground',
+      dotClass: 'bg-income',
       valueClass: 'text-income',
-      subtitle: null
+      subtitle: null,
     },
     {
       label: 'Gastos Fijos',
       value: totalGastosFijos,
       icon: Receipt,
-      bgClass: 'bg-expense-light dark:bg-expense/15',
-      iconClass: 'bg-expense text-expense-foreground',
+      dotClass: 'bg-expense',
       valueClass: 'text-expense',
-      subtitle: rent > 0 ? `Incluye alquiler: ${formatCurrencyCompact(rent)}` : null
+      subtitle: rent > 0 ? `Alquiler: ${formatCurrencyCompact(rent)}` : null,
     },
     {
       label: 'Provisión Ahorro',
       value: totalProvision,
       icon: PiggyBank,
-      bgClass: 'bg-recurring-light dark:bg-recurring/15',
-      iconClass: 'bg-recurring text-recurring-foreground',
+      dotClass: 'bg-recurring',
       valueClass: 'text-recurring',
-      subtitle: activeGoalsCount > 0 
-        ? `Incluye ${activeGoalsCount} ${activeGoalsCount === 1 ? 'objetivo' : 'objetivos'}: ${formatCurrencyCompact(totalPurchaseGoalQuotas)}`
-        : reserveFund > 0 
-          ? `Fondo reserva: ${formatCurrencyCompact(reserveFund)}`
-          : null
+      subtitle: activeGoalsCount > 0
+        ? `${activeGoalsCount} ${activeGoalsCount === 1 ? 'objetivo' : 'objetivos'}: ${formatCurrencyCompact(totalPurchaseGoalQuotas)}`
+        : reserveFund > 0
+          ? `Reserva: ${formatCurrencyCompact(reserveFund)}`
+          : null,
     },
     {
       label: 'DINERO LIBRE',
       value: dineroLibre,
       icon: TrafficIcon,
-      bgClass: trafficColors.bgClass,
-      iconClass: trafficColors.iconClass,
+      dotClass: trafficColors.dotClass,
       valueClass: trafficColors.valueClass,
       highlight: true,
-      subtitle: trafficLightMessage
-    }
+      subtitle: trafficLightMessage,
+    },
   ];
 
   return (
@@ -113,46 +90,39 @@ export const KPICards = ({
       {kpis.map((kpi) => {
         const Icon = kpi.icon;
         return (
-          <Card 
+          <div
             key={kpi.label}
             className={cn(
-              'border-none shadow-md rounded-2xl transition-all',
-              kpi.bgClass,
-              kpi.highlight && 'ring-2 ring-offset-2 ring-offset-background shadow-lg',
-              kpi.highlight && trafficLightStatus === 'green' && 'ring-income/50',
-              kpi.highlight && trafficLightStatus === 'yellow' && 'ring-yellow-500/50',
-              kpi.highlight && trafficLightStatus === 'red' && 'ring-destructive/50'
+              'glass-card rounded-2xl p-4 transition-all duration-200 hover:glass-card-elevated',
+              kpi.highlight && 'ring-1 ring-offset-1 ring-offset-background',
+              kpi.highlight && trafficLightStatus === 'green' && 'ring-income/30',
+              kpi.highlight && trafficLightStatus === 'yellow' && 'ring-yellow-500/30',
+              kpi.highlight && trafficLightStatus === 'red' && 'ring-destructive/30'
             )}
           >
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center', kpi.iconClass)}>
-                  <Icon className="w-4 h-4" />
-                </div>
-              </div>
-              <p className={cn(
-                'text-2xl font-bold tracking-tight',
-                kpi.valueClass,
-                kpi.highlight && 'text-3xl'
-              )}>
-                {formatCurrencyCompact(kpi.value)}
+            <div className="flex items-center gap-2 mb-3">
+              <div className={cn('w-2 h-2 rounded-full', kpi.dotClass)} />
+              <Icon className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <p className={cn(
+              'text-xl font-bold tracking-tight font-mono',
+              kpi.valueClass,
+              kpi.highlight && 'text-2xl'
+            )}>
+              {formatCurrencyCompact(kpi.value)}
+            </p>
+            <p className={cn(
+              'text-[11px] text-muted-foreground mt-1 font-medium',
+              kpi.highlight && 'font-semibold text-foreground'
+            )}>
+              {kpi.label}
+            </p>
+            {kpi.subtitle && (
+              <p className="text-[10px] mt-1 leading-tight text-muted-foreground/60">
+                {kpi.subtitle}
               </p>
-              <p className={cn(
-                'text-xs text-muted-foreground mt-1',
-                kpi.highlight && 'font-semibold text-foreground'
-              )}>
-                {kpi.label}
-              </p>
-              {kpi.subtitle && (
-                <p className={cn(
-                  'text-[10px] mt-1 leading-tight',
-                  kpi.highlight ? 'text-muted-foreground font-medium' : 'text-muted-foreground/70'
-                )}>
-                  {kpi.subtitle}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </div>
         );
       })}
     </div>

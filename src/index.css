@@ -2,134 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 20% 10%;
+    --background: 220 16% 96%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 160 60% 40%;
+    --primary: 158 64% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 220 20% 20%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 20%;
 
-    --muted: 210 15% 94%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 160 50% 95%;
-    --accent-foreground: 160 60% 30%;
+    --accent: 158 40% 94%;
+    --accent-foreground: 158 64% 30%;
 
-    --destructive: 0 70% 55%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --income: 160 60% 40%;
+    --income: 158 64% 42%;
     --income-foreground: 0 0% 100%;
-    --income-light: 160 50% 95%;
+    --income-light: 158 40% 95%;
 
-    --expense: 12 80% 60%;
+    --expense: 4 90% 58%;
     --expense-foreground: 0 0% 100%;
-    --expense-light: 12 70% 96%;
+    --expense-light: 4 80% 96%;
 
-    --recurring: 230 70% 55%;
+    --recurring: 234 89% 60%;
     --recurring-foreground: 0 0% 100%;
-    --recurring-light: 230 60% 96%;
+    --recurring-light: 234 60% 96%;
 
-    --goal: 280 65% 55%;
+    --goal: 270 76% 55%;
     --goal-foreground: 0 0% 100%;
-    --goal-light: 280 50% 96%;
+    --goal-light: 270 50% 96%;
 
-    /* Bank colors - Official HSL */
     --santander: 0 100% 46%;
     --lacaixa: 189 100% 41%;
     --ing: 25 100% 50%;
     --revolut: 210 14% 11%;
     --bbva: 211 100% 27%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 160 60% 40%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 158 64% 42%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 158 64% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 158 64% 42%;
   }
 
-  /* Premium Dark Mode - OLED Black */
+  /* Premium Dark Mode - True OLED Black */
   .dark {
     --background: 0 0% 0%;
-    --foreground: 0 0% 95%;
+    --foreground: 0 0% 96%;
 
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 95%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 160 60% 45%;
+    --primary: 158 64% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 0 0% 9%;
+    --secondary-foreground: 0 0% 92%;
 
-    --muted: 0 0% 12%;
+    --muted: 0 0% 11%;
     --muted-foreground: 0 0% 55%;
 
-    --accent: 160 40% 15%;
-    --accent-foreground: 160 50% 80%;
+    --accent: 158 35% 14%;
+    --accent-foreground: 158 50% 80%;
 
-    --destructive: 0 60% 45%;
+    --destructive: 0 62% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --income: 160 55% 45%;
+    --income: 158 60% 48%;
     --income-foreground: 0 0% 100%;
-    --income-light: 160 40% 10%;
+    --income-light: 158 35% 10%;
 
-    --expense: 12 70% 50%;
+    --expense: 4 80% 52%;
     --expense-foreground: 0 0% 100%;
-    --expense-light: 12 50% 10%;
+    --expense-light: 4 50% 10%;
 
-    --recurring: 230 60% 55%;
+    --recurring: 234 70% 58%;
     --recurring-foreground: 0 0% 100%;
-    --recurring-light: 230 40% 12%;
+    --recurring-light: 234 40% 12%;
 
-    --goal: 280 55% 55%;
+    --goal: 270 60% 58%;
     --goal-foreground: 0 0% 100%;
-    --goal-light: 280 40% 12%;
+    --goal-light: 270 40% 12%;
 
-    /* Bank colors dark - Keep vibrant */
     --santander: 0 100% 46%;
     --lacaixa: 189 100% 41%;
     --ing: 25 100% 50%;
-    --revolut: 0 0% 12%;
+    --revolut: 0 0% 10%;
     --bbva: 211 100% 35%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 160 60% 45%;
+    --border: 0 0% 13%;
+    --input: 0 0% 13%;
+    --ring: 158 64% 48%;
 
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 160 60% 45%;
+    --sidebar-background: 0 0% 3%;
+    --sidebar-foreground: 0 0% 92%;
+    --sidebar-primary: 158 64% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 160 60% 45%;
+    --sidebar-accent: 0 0% 9%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 13%;
+    --sidebar-ring: 158 64% 48%;
   }
 }
 
@@ -139,7 +137,6 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Fix altura completa iOS */
   html {
     height: 100%;
     height: -webkit-fill-available;
@@ -148,8 +145,8 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     min-height: 100vh;
     min-height: -webkit-fill-available;
     width: 100%;
@@ -157,9 +154,9 @@
     padding: 0;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
-  /* Safe areas iOS */
   @supports (padding: env(safe-area-inset-top)) {
     body {
       padding-top: env(safe-area-inset-top);
@@ -180,7 +177,6 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Prevent auto-zoom on inputs for iOS */
   input,
   input[type="text"],
   input[type="number"],
@@ -193,7 +189,6 @@
     font-size: 16px !important;
   }
 
-  /* Scrolling suave iOS */
   .overflow-auto, .overflow-y-auto {
     -webkit-overflow-scrolling: touch;
   }
@@ -201,38 +196,49 @@
 
 @layer utilities {
   .gradient-income {
-    background: linear-gradient(135deg, hsl(var(--income)) 0%, hsl(160 70% 35%) 100%);
+    background: linear-gradient(135deg, hsl(var(--income)) 0%, hsl(158 70% 36%) 100%);
   }
 
   .gradient-expense {
-    background: linear-gradient(135deg, hsl(var(--expense)) 0%, hsl(12 90% 50%) 100%);
+    background: linear-gradient(135deg, hsl(var(--expense)) 0%, hsl(4 95% 50%) 100%);
   }
 
   .gradient-recurring {
-    background: linear-gradient(135deg, hsl(var(--recurring)) 0%, hsl(250 70% 50%) 100%);
+    background: linear-gradient(135deg, hsl(var(--recurring)) 0%, hsl(250 85% 55%) 100%);
   }
 
   .gradient-goal {
-    background: linear-gradient(135deg, hsl(var(--goal)) 0%, hsl(300 60% 50%) 100%);
+    background: linear-gradient(135deg, hsl(var(--goal)) 0%, hsl(290 70% 50%) 100%);
   }
 
   .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-lg;
+    @apply bg-card/70 backdrop-blur-xl border border-border/30;
+    box-shadow:
+      0 0 0 1px hsl(var(--border) / 0.05),
+      0 4px 24px -4px hsl(0 0% 0% / 0.08),
+      0 12px 48px -8px hsl(0 0% 0% / 0.06);
+  }
+
+  .glass-card-elevated {
+    @apply bg-card/80 backdrop-blur-xl border border-border/20;
+    box-shadow:
+      0 0 0 1px hsl(var(--border) / 0.05),
+      0 8px 32px -6px hsl(0 0% 0% / 0.12),
+      0 20px 60px -12px hsl(0 0% 0% / 0.08);
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .animate-slide-up {
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Hide scrollbar but allow scrolling */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -241,23 +247,53 @@
     display: none;
   }
 
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
+      transform: translateY(0);
     }
   }
 
   @keyframes slideUp {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(16px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-12px) rotate(1deg); }
+    66% { transform: translateY(-6px) rotate(-1deg); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  @keyframes grid-move {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(40px); }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
   }
 }
