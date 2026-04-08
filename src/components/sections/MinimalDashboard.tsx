@@ -47,10 +47,14 @@ export const MinimalDashboard = ({
   const hasRevolut = userBanks.some(b => b.bank === 'revolut');
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Resumen financiero</p>
+      </div>
       
-      {/* Bank Cards Header - Horizontal Scroll */}
+      {/* Bank Cards Header */}
       <MinimalBankCards
         userBanks={userBanks}
         monthlyIncome={monthlyIncome}
@@ -60,15 +64,15 @@ export const MinimalDashboard = ({
         rent={rent}
       />
 
-      {/* Revolut Reminder - with Done button, hides when completed */}
+      {/* Revolut Reminder */}
       {hasRevolut && (
         <MonthlyReminder quarterlyProvision={quarterlyProvision} />
       )}
 
-      {/* Upcoming large payments - only current month */}
+      {/* Upcoming large payments */}
       <UpcomingLargePayments recurringExpenses={recurringExpenses} onAddExpense={onAddExpense} refetch={refetch} />
 
-      {/* Recent one-time expenses - payment records filtered out */}
+      {/* Recent one-time expenses */}
       <RecentExpenses expenses={oneTimeExpenses} />
 
       {/* 4 KPI Pillars */}

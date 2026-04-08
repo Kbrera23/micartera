@@ -1,17 +1,28 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, Wallet } from 'lucide-react';
+import { Loader2, ArrowRight, Wallet } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'La contraseña debe tener al menos 6 caracteres');
+
+// Generate floating orbs data once
+const generateOrbs = () =>
+  Array.from({ length: 5 }, (_, i) => ({
+    id: i,
+    size: 200 + Math.random() * 300,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    delay: i * 1.2,
+    duration: 8 + Math.random() * 6,
+    hue: [158, 234, 270, 158, 200][i],
+  }));
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -19,11 +30,12 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+  const orbs = useMemo(generateOrbs, []);
 
   // Mouse parallax state
-  const cardRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [glowPos, setGlowPos] = useState({ x: 50, y: 50 });
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
@@ -34,21 +46,18 @@ export default function Auth() {
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
       const rect = e.currentTarget.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = (e.clientX - cx) / (rect.width / 2);   // -1 to 1
-      const dy = (e.clientY - cy) / (rect.height / 2);  // -1 to 1
-      setTilt({ x: dy * 10, y: -dx * 10 });
-      setGlowPos({
-        x: ((e.clientX - rect.left) / rect.width) * 100,
-        y: ((e.clientY - rect.top) / rect.height) * 100,
-      });
+      const mx = (e.clientX - rect.left) / rect.width;
+      const my = (e.clientY - rect.top) / rect.height;
+      const dx = (mx - 0.5) * 2; // -1 to 1
+      const dy = (my - 0.5) * 2;
+      setMouse({ x: mx, y: my });
+      setTilt({ x: dy * 12, y: -dx * 12 });
     });
   }, []);
 
   const handleMouseLeave = useCallback(() => {
     setTilt({ x: 0, y: 0 });
-    setGlowPos({ x: 50, y: 50 });
+    setMouse({ x: 0.5, y: 0.5 });
   }, []);
 
   const validateInputs = () => {
@@ -90,70 +99,168 @@ export default function Auth() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-background p-4 overflow-hidden"
+      ref={containerRef}
+      className="min-h-screen flex items-center justify-center overflow-hidden relative"
+      style={{ background: 'hsl(222, 47%, 5%)' }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Ambient background blobs that react to mouse */}
+      {/* Animated grid */}
       <div
-        className="pointer-events-none fixed inset-0 transition-all duration-300"
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
-          background: `radial-gradient(600px circle at ${glowPos.x}% ${glowPos.y}%, hsl(var(--primary) / 0.12), transparent 70%)`,
+          backgroundImage: `linear-gradient(hsl(158 64% 48% / 0.5) 1px, transparent 1px),
+                            linear-gradient(90deg, hsl(158 64% 48% / 0.5) 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
+          transform: `translate(${(mouse.x - 0.5) * -10}px, ${(mouse.y - 0.5) * -10}px)`,
+          transition: 'transform 0.3s ease-out',
         }}
       />
 
+      {/* Floating orbs that react to mouse */}
+      {orbs.map((orb) => (
+        <div
+          key={orb.id}
+          className="pointer-events-none absolute rounded-full blur-3xl animate-pulse-glow"
+          style={{
+            width: orb.size,
+            height: orb.size,
+            left: `${orb.x}%`,
+            top: `${orb.y}%`,
+            background: `radial-gradient(circle, hsl(${orb.hue} 70% 50% / 0.12), transparent 70%)`,
+            transform: `translate(${(mouse.x - 0.5) * -(20 + orb.id * 8)}px, ${(mouse.y - 0.5) * -(20 + orb.id * 8)}px)`,
+            transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            animationDelay: `${orb.delay}s`,
+            animationDuration: `${orb.duration}s`,
+          }}
+        />
+      ))}
+
+      {/* Mouse spotlight */}
       <div
-        ref={cardRef}
+        className="pointer-events-none fixed inset-0"
         style={{
-          transform: `perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-          transition: 'transform 0.15s ease-out',
+          background: `radial-gradient(800px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.06), transparent 60%)`,
+          transition: 'background 0.15s ease-out',
+        }}
+      />
+
+      {/* Card with 3D tilt */}
+      <div
+        className="relative z-10 w-full max-w-[420px] mx-4"
+        style={{
+          transform: `perspective(1200px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale3d(1.01, 1.01, 1.01)`,
+          transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'transform',
+          transformStyle: 'preserve-3d',
         }}
       >
-        <Card className="w-full max-w-md border-none shadow-2xl rounded-3xl relative overflow-hidden">
-          {/* Inner glow that follows cursor */}
+        {/* Card glow border */}
+        <div
+          className="absolute -inset-[1px] rounded-3xl opacity-60"
+          style={{
+            background: `conic-gradient(from ${mouse.x * 360}deg at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.3), transparent 40%, hsl(234 89% 60% / 0.2), transparent 70%, hsl(158 64% 48% / 0.3))`,
+            transition: 'background 0.3s ease-out',
+          }}
+        />
+
+        <div className="relative rounded-3xl overflow-hidden" style={{ background: 'hsl(0 0% 6% / 0.9)', backdropFilter: 'blur(40px)' }}>
+          {/* Inner cursor glow */}
           <div
-            className="pointer-events-none absolute inset-0 rounded-3xl transition-all duration-300"
+            className="pointer-events-none absolute inset-0 rounded-3xl"
             style={{
-              background: `radial-gradient(300px circle at ${glowPos.x}% ${glowPos.y}%, hsl(var(--primary) / 0.08), transparent 70%)`,
+              background: `radial-gradient(400px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.05), transparent 60%)`,
             }}
           />
 
-          <CardHeader className="text-center pb-2 relative z-10">
+          {/* Header */}
+          <div className="relative z-10 pt-10 pb-4 px-8 text-center">
             <div
-              className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4"
+              className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
               style={{
-                transform: `translateX(${tilt.y * 1.5}px) translateY(${tilt.x * 1.5}px)`,
-                transition: 'transform 0.15s ease-out',
+                background: 'linear-gradient(135deg, hsl(158 64% 48%), hsl(158 64% 38%))',
+                transform: `translateX(${tilt.y * 2}px) translateY(${tilt.x * 2}px) translateZ(30px)`,
+                transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: '0 8px 32px hsl(158 64% 48% / 0.3)',
               }}
             >
-              <Wallet className="w-8 h-8 text-primary" />
+              <Wallet className="w-7 h-7 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold">MiCartera</CardTitle>
-            <CardDescription>Gestiona tus finanzas de forma inteligente</CardDescription>
-          </CardHeader>
+            <h1
+              className="text-2xl font-bold tracking-tight text-white mb-1"
+              style={{
+                transform: `translateX(${tilt.y * 0.5}px) translateY(${tilt.x * 0.5}px)`,
+                transition: 'transform 0.2s ease-out',
+              }}
+            >
+              MiCartera
+            </h1>
+            <p className="text-sm text-white/40">Control financiero inteligente</p>
+          </div>
 
-          <CardContent className="relative z-10">
+          {/* Form content */}
+          <div className="relative z-10 px-8 pb-8">
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-                <TabsTrigger value="register">Registrarse</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-6 bg-white/5 border border-white/5 rounded-xl h-11">
+                <TabsTrigger
+                  value="login"
+                  className="rounded-lg text-sm font-medium data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/40 transition-all"
+                >
+                  Iniciar Sesión
+                </TabsTrigger>
+                <TabsTrigger
+                  value="register"
+                  className="rounded-lg text-sm font-medium data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/40 transition-all"
+                >
+                  Registrarse
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input id="login-email" type="email" placeholder="tu@email.com" value={email}
-                      onChange={(e) => setEmail(e.target.value)} className="rounded-xl h-12 text-base" autoComplete="email" required />
+                    <Label htmlFor="login-email" className="text-xs font-medium text-white/50 uppercase tracking-wider">Email</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="h-12 rounded-xl bg-white/5 border-white/8 text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                      autoComplete="email"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Contraseña</Label>
-                    <Input id="login-password" type="password" placeholder="••••••••" value={password}
-                      onChange={(e) => setPassword(e.target.value)} className="rounded-xl h-12 text-base" autoComplete="current-password" required />
+                    <Label htmlFor="login-password" className="text-xs font-medium text-white/50 uppercase tracking-wider">Contraseña</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-12 rounded-xl bg-white/5 border-white/8 text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                      autoComplete="current-password"
+                      required
+                    />
                   </div>
-                  <Button type="submit" className="w-full h-12 rounded-xl text-base font-semibold" disabled={loading}>
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Entrar'}
+                  <Button
+                    type="submit"
+                    className="w-full h-12 rounded-xl text-sm font-semibold group relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, hsl(158 64% 48%), hsl(158 64% 38%))',
+                      boxShadow: '0 4px 24px hsl(158 64% 48% / 0.25)',
+                    }}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        Entrar
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </TabsContent>
@@ -161,24 +268,60 @@ export default function Auth() {
               <TabsContent value="register">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
-                    <Input id="register-email" type="email" placeholder="tu@email.com" value={email}
-                      onChange={(e) => setEmail(e.target.value)} className="rounded-xl h-12 text-base" autoComplete="email" required />
+                    <Label htmlFor="register-email" className="text-xs font-medium text-white/50 uppercase tracking-wider">Email</Label>
+                    <Input
+                      id="register-email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="h-12 rounded-xl bg-white/5 border-white/8 text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                      autoComplete="email"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-password">Contraseña</Label>
-                    <Input id="register-password" type="password" placeholder="Mínimo 6 caracteres" value={password}
-                      onChange={(e) => setPassword(e.target.value)} className="rounded-xl h-12 text-base" autoComplete="new-password" required />
+                    <Label htmlFor="register-password" className="text-xs font-medium text-white/50 uppercase tracking-wider">Contraseña</Label>
+                    <Input
+                      id="register-password"
+                      type="password"
+                      placeholder="Mínimo 6 caracteres"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-12 rounded-xl bg-white/5 border-white/8 text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                      autoComplete="new-password"
+                      required
+                    />
                   </div>
-                  <Button type="submit" className="w-full h-12 rounded-xl text-base font-semibold" disabled={loading}>
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Crear Cuenta'}
+                  <Button
+                    type="submit"
+                    className="w-full h-12 rounded-xl text-sm font-semibold group relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, hsl(158 64% 48%), hsl(158 64% 38%))',
+                      boxShadow: '0 4px 24px hsl(158 64% 48% / 0.25)',
+                    }}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        Crear Cuenta
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </TabsContent>
             </Tabs>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
+
+      {/* Bottom branding */}
+      <p className="absolute bottom-6 text-[11px] text-white/15 tracking-widest uppercase font-medium">
+        MiCartera · v3.0
+      </p>
     </div>
   );
 }
