@@ -140,7 +140,8 @@ export default function Auth() {
       <div
         className="pointer-events-none fixed inset-0"
         style={{
-          background: `radial-gradient(800px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.06), transparent 60%)`,
+          background: `radial-gradient(600px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.08), transparent 50%),
+                       radial-gradient(300px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.04), transparent 60%)`,
           transition: 'background 0.15s ease-out',
         }}
       />
