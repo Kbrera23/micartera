@@ -393,7 +393,8 @@ export const useSupabaseFinances = () => {
     );
     const totalSubscriptions = subscriptions.reduce((sum, e) => sum + e.amount, 0);
 
-    const dineroLibre = monthlyIncome - rent - totalFixedExpenses - savingsGoal - reserveFund - totalPurchaseGoalQuotas;
+    // Only subtract what has actually been paid this month, not provisions
+    const dineroLibre = monthlyIncome - rent - totalFixedExpenses - savingsGoal - totalPurchaseGoalQuotas - paidThisMonth;
     const hasInsufficientFunds = dineroLibre < 0;
 
     const dineroLibrePercent = monthlyIncome > 0 ? (dineroLibre / monthlyIncome) * 100 : 0;
