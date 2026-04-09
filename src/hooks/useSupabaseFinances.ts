@@ -96,13 +96,18 @@ export const useSupabaseFinances = () => {
     }
 
     try {
-      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes] = await Promise.all([
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+
+      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
         supabase.from('expenses').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('purchase_goals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('user_banks').select('*').eq('user_id', user.id),
         // @ts-ignore - categories table added via SQL
         supabase.from('categories').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+        supabase.from('monthly_payments_tracking' as any).select('amount').eq('user_id', user.id).eq('month', currentMonth).eq('year', currentYear),
       ]);
 
       if (profileRes.data) {
