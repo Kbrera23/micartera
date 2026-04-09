@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 interface MonthlyReminderProps {
   quarterlyProvision: number;
+  refetch: () => void;
 }
 
 export const MonthlyReminder = ({ quarterlyProvision }: MonthlyReminderProps) => {
