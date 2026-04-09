@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BankType } from '@/hooks/useSupabaseFinances';
 import { formatInputCurrency } from '@/lib/currency';
 import { toast } from 'sonner';
-import { LogOut, Flame, Star, Zap, CreditCard, Building2, Camera, Loader2, ChevronDown, ChevronUp, Bell } from 'lucide-react';
+import { LogOut, Building2, Camera, Loader2, ChevronDown, ChevronUp, Bell } from 'lucide-react';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
