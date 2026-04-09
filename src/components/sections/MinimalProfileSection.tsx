@@ -22,12 +22,20 @@ interface MinimalProfileSectionProps {
   onUpdateBankBalance: (bankId: BankType, balance: number) => void;
 }
 
-const BANKS: { id: BankType; name: string; color: string; icon: typeof Building2 }[] = [
-  { id: 'santander', name: 'Santander', color: 'bg-santander', icon: Flame },
-  { id: 'lacaixa', name: 'La Caixa', color: 'bg-lacaixa', icon: Star },
-  { id: 'ing', name: 'ING', color: 'bg-ing', icon: Zap },
-  { id: 'revolut', name: 'Revolut', color: 'bg-revolut', icon: CreditCard },
-  { id: 'bbva', name: 'BBVA', color: 'bg-bbva', icon: Building2 },
+const BANK_LOGOS: Record<BankType, string> = {
+  santander: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Banco_Santander_Logotipo.svg/1200px-Banco_Santander_Logotipo.svg.png',
+  lacaixa: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/CaixaBank%2C_S.A._logo.svg/1200px-CaixaBank%2C_S.A._logo.svg.png',
+  ing: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/ING_Group_N.V._Logo.svg/1200px-ING_Group_N.V._Logo.svg.png',
+  revolut: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Revolut_Logo.svg/1200px-Revolut_Logo.svg.png',
+  bbva: '',
+};
+
+const BANKS: { id: BankType; name: string; color: string }[] = [
+  { id: 'santander', name: 'Santander', color: 'bg-santander' },
+  { id: 'lacaixa', name: 'La Caixa', color: 'bg-lacaixa' },
+  { id: 'ing', name: 'ING', color: 'bg-ing' },
+  { id: 'revolut', name: 'Revolut', color: 'bg-revolut' },
+  { id: 'bbva', name: 'BBVA', color: 'bg-bbva' },
 ];
 
 // Reusable inline-save row
