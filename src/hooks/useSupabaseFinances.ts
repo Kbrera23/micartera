@@ -87,6 +87,7 @@ export const useSupabaseFinances = () => {
   const [loading, setLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [paidThisMonth, setPaidThisMonth] = useState(0);
 
   const fetchData = useCallback(async () => {
     if (!user) {
