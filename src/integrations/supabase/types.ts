@@ -97,6 +97,39 @@ export type Database = {
           },
         ]
       }
+      monthly_payments_tracking: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          month: number
+          paid_date: string
+          payment_type: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          month: number
+          paid_date: string
+          payment_type: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          month?: number
+          paid_date?: string
+          payment_type?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       monthly_reminders_completed: {
         Row: {
           completed_date: string

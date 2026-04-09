@@ -87,6 +87,7 @@ export const useSupabaseFinances = () => {
   const [loading, setLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [paidThisMonth, setPaidThisMonth] = useState(0);
 
   const fetchData = useCallback(async () => {
     if (!user) {
@@ -95,13 +96,18 @@ export const useSupabaseFinances = () => {
     }
 
     try {
-      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes] = await Promise.all([
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+
+      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
         supabase.from('expenses').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('purchase_goals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('user_banks').select('*').eq('user_id', user.id),
         // @ts-ignore - categories table added via SQL
         supabase.from('categories').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+        supabase.from('monthly_payments_tracking' as any).select('amount').eq('user_id', user.id).eq('month', currentMonth).eq('year', currentYear),
       ]);
 
       if (profileRes.data) {
@@ -123,6 +129,11 @@ export const useSupabaseFinances = () => {
         ...b,
         initial_balance: b.initial_balance || 0
       })));
+
+      // Sum paid amounts this month
+      const trackingData = (trackingRes.data || []) as any[];
+      const totalPaid = trackingData.reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0);
+      setPaidThisMonth(totalPaid);
 
       // Handle categories - create defaults if none exist
       const cats = (categoriesRes.data || []) as unknown as Category[];
@@ -382,7 +393,8 @@ export const useSupabaseFinances = () => {
     );
     const totalSubscriptions = subscriptions.reduce((sum, e) => sum + e.amount, 0);
 
-    const dineroLibre = monthlyIncome - rent - totalFixedExpenses - savingsGoal - reserveFund - totalPurchaseGoalQuotas;
+    // Only subtract what has actually been paid this month, not provisions
+    const dineroLibre = monthlyIncome - rent - totalFixedExpenses - savingsGoal - totalPurchaseGoalQuotas - paidThisMonth;
     const hasInsufficientFunds = dineroLibre < 0;
 
     const dineroLibrePercent = monthlyIncome > 0 ? (dineroLibre / monthlyIncome) * 100 : 0;
@@ -427,7 +439,7 @@ export const useSupabaseFinances = () => {
       hasInsufficientFunds, subscriptions, lacaixaBalance, revolutBalance,
       monthlyRevolutProvision, expensesByCategory,
     };
-  }, [profile, expenses, purchaseGoals, userBanks, categories]);
+  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth]);
 
   return {
     profile,

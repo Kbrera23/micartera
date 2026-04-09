@@ -58,7 +58,7 @@ export const UpcomingLargePayments = ({ recurringExpenses, onAddExpense, refetch
     try {
       const label = expense.frequency === 'quarterly' ? 'trimestral' : 'anual';
 
-      // 1. Insert one-time payment record directly (marked as payment record)
+      // 1. Insert one-time payment record
       const { error: insertError } = await supabase
         .from('expenses')
         .insert({
@@ -71,18 +71,30 @@ export const UpcomingLargePayments = ({ recurringExpenses, onAddExpense, refetch
           // @ts-ignore
           is_payment_record: true,
         });
-
       if (insertError) throw insertError;
 
-      // 2. Update last_payment_date on the recurring expense
+      // 2. Register in tracking table so it subtracts from dineroLibre
+      const today = new Date();
+      const { error: trackingError } = await supabase
+        .from('monthly_payments_tracking' as any)
+        .insert({
+          user_id: user.id,
+          payment_type: `expense_payment_${expense.id}`,
+          amount: expense.amount,
+          month: today.getMonth() + 1,
+          year: today.getFullYear(),
+          paid_date: today.toISOString().split('T')[0],
+        });
+      if (trackingError) console.warn('Tracking insert warning:', trackingError);
+
+      // 3. Update last_payment_date on the recurring expense
       const { error: updateError } = await supabase
         .from('expenses')
         .update({ last_payment_date: today.toISOString().split('T')[0] } as any)
         .eq('id', expense.id);
-
       if (updateError) throw updateError;
 
-      // 3. Calculate next date for toast
+      // 4. Calculate next date for toast
       const nextDate = new Date(today);
       if (expense.frequency === 'quarterly') {
         nextDate.setMonth(nextDate.getMonth() + 3);
