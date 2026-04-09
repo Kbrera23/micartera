@@ -182,8 +182,8 @@ export const MinimalProfileSection = ({
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Mis Bancos</p>
         <div className="flex gap-2 flex-wrap">
           {BANKS.map((bank) => {
-            const Icon = bank.icon;
             const isActive = activeBankIds.includes(bank.id);
+            const logo = BANK_LOGOS[bank.id];
             return (
               <button
                 key={bank.id}
@@ -194,7 +194,11 @@ export const MinimalProfileSection = ({
                 )}
               >
                 <div className={cn('w-5 h-5 rounded-md flex items-center justify-center', bank.color)}>
-                  <Icon className="w-3 h-3 text-white" />
+                  {logo ? (
+                    <img src={logo} alt={bank.name} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
+                  ) : (
+                    <Building2 className="w-3 h-3 text-white" />
+                  )}
                 </div>
                 {bank.name}
               </button>
