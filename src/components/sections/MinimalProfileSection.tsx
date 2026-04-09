@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BankType } from '@/hooks/useSupabaseFinances';
 import { formatInputCurrency } from '@/lib/currency';
 import { toast } from 'sonner';
-import { LogOut, Flame, Star, Zap, CreditCard, Building2, Camera, Loader2, ChevronDown, ChevronUp, Bell } from 'lucide-react';
+import { LogOut, Building2, Camera, Loader2, ChevronDown, ChevronUp, Bell } from 'lucide-react';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,12 +22,20 @@ interface MinimalProfileSectionProps {
   onUpdateBankBalance: (bankId: BankType, balance: number) => void;
 }
 
-const BANKS: { id: BankType; name: string; color: string; icon: typeof Building2 }[] = [
-  { id: 'santander', name: 'Santander', color: 'bg-santander', icon: Flame },
-  { id: 'lacaixa', name: 'La Caixa', color: 'bg-lacaixa', icon: Star },
-  { id: 'ing', name: 'ING', color: 'bg-ing', icon: Zap },
-  { id: 'revolut', name: 'Revolut', color: 'bg-revolut', icon: CreditCard },
-  { id: 'bbva', name: 'BBVA', color: 'bg-bbva', icon: Building2 },
+const BANK_LOGOS: Record<BankType, string> = {
+  santander: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Banco_Santander_Logotipo.svg/1200px-Banco_Santander_Logotipo.svg.png',
+  lacaixa: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/CaixaBank%2C_S.A._logo.svg/1200px-CaixaBank%2C_S.A._logo.svg.png',
+  ing: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/ING_Group_N.V._Logo.svg/1200px-ING_Group_N.V._Logo.svg.png',
+  revolut: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Revolut_Logo.svg/1200px-Revolut_Logo.svg.png',
+  bbva: '',
+};
+
+const BANKS: { id: BankType; name: string; color: string }[] = [
+  { id: 'santander', name: 'Santander', color: 'bg-santander' },
+  { id: 'lacaixa', name: 'La Caixa', color: 'bg-lacaixa' },
+  { id: 'ing', name: 'ING', color: 'bg-ing' },
+  { id: 'revolut', name: 'Revolut', color: 'bg-revolut' },
+  { id: 'bbva', name: 'BBVA', color: 'bg-bbva' },
 ];
 
 // Reusable inline-save row
@@ -174,8 +182,8 @@ export const MinimalProfileSection = ({
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Mis Bancos</p>
         <div className="flex gap-2 flex-wrap">
           {BANKS.map((bank) => {
-            const Icon = bank.icon;
             const isActive = activeBankIds.includes(bank.id);
+            const logo = BANK_LOGOS[bank.id];
             return (
               <button
                 key={bank.id}
@@ -186,7 +194,11 @@ export const MinimalProfileSection = ({
                 )}
               >
                 <div className={cn('w-5 h-5 rounded-md flex items-center justify-center', bank.color)}>
-                  <Icon className="w-3 h-3 text-white" />
+                  {logo ? (
+                    <img src={logo} alt={bank.name} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
+                  ) : (
+                    <Building2 className="w-3 h-3 text-white" />
+                  )}
                 </div>
                 {bank.name}
               </button>
@@ -199,11 +211,15 @@ export const MinimalProfileSection = ({
           <div className="mt-4 pt-3 border-t border-border/50 space-y-0">
             <p className="text-xs text-muted-foreground mb-2">Saldos iniciales (El Colchón)</p>
             {BANKS.filter(b => activeBankIds.includes(b.id)).map((bank) => {
-              const Icon = bank.icon;
+              const logo = BANK_LOGOS[bank.id];
               return (
                 <div key={bank.id} className="flex items-center gap-3 py-2 border-b border-border/40 last:border-0">
                   <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
-                    <Icon className="w-3 h-3 text-white" />
+                    {logo ? (
+                      <img src={logo} alt={bank.name} className="w-4 h-4 object-contain brightness-0 invert" />
+                    ) : (
+                      <Building2 className="w-3 h-3 text-white" />
+                    )}
                   </div>
                   <span className="text-sm text-muted-foreground w-24 shrink-0">{bank.name}</span>
                   <Input
