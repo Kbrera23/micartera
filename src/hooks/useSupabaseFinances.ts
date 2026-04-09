@@ -439,7 +439,7 @@ export const useSupabaseFinances = () => {
       hasInsufficientFunds, subscriptions, lacaixaBalance, revolutBalance,
       monthlyRevolutProvision, expensesByCategory,
     };
-  }, [profile, expenses, purchaseGoals, userBanks, categories]);
+  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth]);
 
   return {
     profile,
