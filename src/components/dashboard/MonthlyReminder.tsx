@@ -12,7 +12,7 @@ interface MonthlyReminderProps {
   refetch: () => void;
 }
 
-export const MonthlyReminder = ({ quarterlyProvision }: MonthlyReminderProps) => {
+export const MonthlyReminder = ({ quarterlyProvision, refetch }: MonthlyReminderProps) => {
   const { user } = useAuth();
   const [isCompleted, setIsCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
