@@ -66,7 +66,7 @@ export const MinimalDashboard = ({
 
       {/* Revolut Reminder */}
       {hasRevolut && (
-        <MonthlyReminder quarterlyProvision={quarterlyProvision} />
+        <MonthlyReminder quarterlyProvision={quarterlyProvision} refetch={refetch} />
       )}
 
       {/* Upcoming large payments */}

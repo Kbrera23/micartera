@@ -41,6 +41,7 @@ export const MonthlyReminder = ({ quarterlyProvision, refetch }: MonthlyReminder
   const handleDone = async () => {
     if (!user) return;
     try {
+      // 1. Mark reminder as completed
       const { error } = await supabase
         .from('monthly_reminders_completed' as any)
         .insert({
@@ -51,8 +52,23 @@ export const MonthlyReminder = ({ quarterlyProvision, refetch }: MonthlyReminder
           year: currentYear,
         });
       if (error) throw error;
+
+      // 2. Register payment in tracking table so it subtracts from dineroLibre
+      const { error: trackingError } = await supabase
+        .from('monthly_payments_tracking' as any)
+        .insert({
+          user_id: user.id,
+          payment_type: 'quarterly_provision',
+          amount: quarterlyProvision,
+          month: currentMonth,
+          year: currentYear,
+          paid_date: today.toISOString().split('T')[0],
+        });
+      if (trackingError) throw trackingError;
+
       setIsCompleted(true);
       toast.success('✅ Recordatorio completado');
+      refetch();
     } catch (err) {
       console.error('Error:', err);
       toast.error('Error al marcar como completado');
