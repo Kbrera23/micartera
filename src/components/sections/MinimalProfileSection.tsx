@@ -211,11 +211,15 @@ export const MinimalProfileSection = ({
           <div className="mt-4 pt-3 border-t border-border/50 space-y-0">
             <p className="text-xs text-muted-foreground mb-2">Saldos iniciales (El Colchón)</p>
             {BANKS.filter(b => activeBankIds.includes(b.id)).map((bank) => {
-              const Icon = bank.icon;
+              const logo = BANK_LOGOS[bank.id];
               return (
                 <div key={bank.id} className="flex items-center gap-3 py-2 border-b border-border/40 last:border-0">
                   <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
-                    <Icon className="w-3 h-3 text-white" />
+                    {logo ? (
+                      <img src={logo} alt={bank.name} className="w-4 h-4 object-contain brightness-0 invert" />
+                    ) : (
+                      <Building2 className="w-3 h-3 text-white" />
+                    )}
                   </div>
                   <span className="text-sm text-muted-foreground w-24 shrink-0">{bank.name}</span>
                   <Input
