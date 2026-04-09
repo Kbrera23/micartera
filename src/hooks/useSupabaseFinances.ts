@@ -130,6 +130,11 @@ export const useSupabaseFinances = () => {
         initial_balance: b.initial_balance || 0
       })));
 
+      // Sum paid amounts this month
+      const trackingData = (trackingRes.data || []) as any[];
+      const totalPaid = trackingData.reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0);
+      setPaidThisMonth(totalPaid);
+
       // Handle categories - create defaults if none exist
       const cats = (categoriesRes.data || []) as unknown as Category[];
       if (cats.length === 0) {
