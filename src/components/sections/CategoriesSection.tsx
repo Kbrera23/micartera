@@ -200,7 +200,7 @@ export const CategoriesSection = ({
             Control visual
           </div>
           <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Una categoría única por gasto, sin duplicados.</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Organiza y controla tus gastos.</p>
         </div>
         <Button onClick={() => setShowModal(true)} className="rounded-xl gap-2 shadow-lg shadow-primary/20">
           <Plus className="h-4 w-4" />
