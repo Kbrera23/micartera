@@ -218,19 +218,33 @@ export const EditExpenseModal = ({ expense, isOpen, onClose, onSave, categories 
           {uniqueCategories.length > 0 && (
             <div>
               <label className="block text-sm font-semibold text-foreground mb-2">Categoría (opcional)</label>
-              <select
-                value={categoryId || ''}
-                onChange={e => setCategoryId(e.target.value || null)}
-                disabled={saving}
-                className={selectClass}
-              >
-                <option value="">Sin categoría</option>
+              <div className="grid max-h-44 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-border bg-secondary/40 p-2">
+                <button
+                  type="button"
+                  onClick={() => setCategoryId(null)}
+                  disabled={saving}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-all disabled:opacity-50 ${
+                    !categoryId ? 'border-primary bg-primary/15 text-primary' : 'border-border/70 bg-card/60 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-md bg-muted">—</span>
+                  <span className="truncate">Sin categoría</span>
+                </button>
                 {uniqueCategories.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.icon} {cat.name}
-                  </option>
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setCategoryId(cat.id)}
+                    disabled={saving}
+                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-all disabled:opacity-50 ${
+                      categoryId === cat.id ? 'border-primary bg-primary/15 text-primary' : 'border-border/70 bg-card/60 text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <span className="grid h-7 w-7 place-items-center rounded-md bg-muted">{cat.icon}</span>
+                    <span className="truncate">{cat.name}</span>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
           )}
 
