@@ -16,11 +16,10 @@ const navItems = [
 
 export const BottomNav = ({ currentSection, onSectionChange }: BottomNavProps) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-pb"
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 safe-area-pb bg-card border-t border-border"
       style={{
-        background: 'hsl(var(--card) / 0.85)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        borderTop: '1px solid hsl(var(--border) / 0.4)',
+        boxShadow: '0 -8px 24px -12px hsl(222 47% 11% / 0.10)',
       }}
     >
       <div className="flex justify-around items-center h-16 px-1 max-w-lg mx-auto">
@@ -40,15 +39,14 @@ export const BottomNav = ({ currentSection, onSectionChange }: BottomNavProps) =
               <div
                 className={cn(
                   'p-1.5 rounded-xl transition-all duration-300',
-                  isActive && 'bg-primary/10'
+                  isActive && 'bg-accent'
                 )}
-                style={isActive ? { boxShadow: '0 2px 12px hsl(158 64% 48% / 0.15)' } : {}}
               >
                 <Icon className={cn('h-5 w-5 transition-all', isActive && 'scale-110')} />
               </div>
               <span className={cn(
                 'text-[10px] font-semibold tracking-tight transition-all',
-                isActive ? 'text-primary' : 'text-muted-foreground/70'
+                isActive ? 'text-primary' : 'text-muted-foreground'
               )}>
                 {item.label}
               </span>

@@ -25,16 +25,17 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
         onMouseEnter={() => setIsCollapsed(false)}
         onMouseLeave={() => setIsCollapsed(true)}
         className={cn(
-          'min-h-screen bg-card/50 backdrop-blur-xl border-r border-border/50 flex flex-col transition-all duration-300 ease-in-out overflow-hidden',
-          isCollapsed ? 'w-[72px]' : 'w-[260px]'
+          'min-h-screen bg-sidebar border-r border-border flex flex-col transition-all duration-300 ease-out overflow-hidden',
+          isCollapsed ? 'w-[76px]' : 'w-[260px]'
         )}
+        style={{ boxShadow: '1px 0 24px -12px hsl(222 47% 11% / 0.06)' }}
       >
         {/* Logo Header */}
         <div className={cn('p-4 pb-6', !isCollapsed && 'p-6 pb-8')}>
           <div className="flex items-center gap-3">
             <div
-              className="p-2.5 rounded-2xl bg-primary text-primary-foreground shadow-lg shrink-0"
-              style={{ boxShadow: '0 4px 20px hsl(158 64% 48% / 0.25)' }}
+              className="p-2.5 rounded-2xl bg-primary text-primary-foreground shrink-0"
+              style={{ boxShadow: '0 6px 20px -6px hsl(var(--primary) / 0.45)' }}
             >
               <Wallet className="h-5 w-5" />
             </div>
@@ -44,7 +45,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
                 isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
               )}
             >
-              <h1 className="text-base font-bold tracking-tight whitespace-nowrap">MiCartera</h1>
+              <h1 className="text-base font-bold tracking-tight whitespace-nowrap text-foreground">MiCartera</h1>
               <p className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">Gestión Financiera</p>
             </div>
           </div>
@@ -54,7 +55,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
         <nav className="flex-1 px-2">
           <p
             className={cn(
-              'text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest px-3 mb-3 transition-all duration-300 overflow-hidden whitespace-nowrap',
+              'text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-3 transition-all duration-300 overflow-hidden whitespace-nowrap',
               isCollapsed ? 'opacity-0 h-0 mb-0' : 'opacity-100 h-auto'
             )}
           >
@@ -72,10 +73,10 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
                     'w-full flex items-center gap-3 rounded-xl transition-all duration-200',
                     isCollapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-2.5',
                     isActive
-                      ? 'bg-primary text-primary-foreground shadow-md'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )}
-                  style={isActive ? { boxShadow: '0 4px 16px hsl(158 64% 48% / 0.2)' } : {}}
+                  style={isActive ? { boxShadow: '0 6px 20px -8px hsl(var(--primary) / 0.45)' } : {}}
                 >
                   <Icon className="h-[18px] w-[18px] shrink-0" />
                   <span
@@ -111,11 +112,11 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
         <div className="p-3">
           <div
             className={cn(
-              'px-3 py-3 rounded-xl bg-muted/30 text-center transition-all duration-300 overflow-hidden',
+              'px-3 py-3 rounded-xl bg-secondary text-center transition-all duration-300 overflow-hidden',
               isCollapsed ? 'px-1' : ''
             )}
           >
-            <p className="text-[10px] text-muted-foreground/50 font-medium tracking-wide whitespace-nowrap">
+            <p className="text-[10px] text-muted-foreground font-medium tracking-wide whitespace-nowrap">
               {isCollapsed ? 'v3' : 'v3.0 · Premium'}
             </p>
           </div>
