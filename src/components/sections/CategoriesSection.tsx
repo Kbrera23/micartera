@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -30,6 +30,18 @@ const PRESET_COLORS = [
 
 const PRESET_ICONS = ['🛒', '🚗', '🎮', '📺', '🏠', '💊', '👕', '📁', '✈️', '🍕', '💪', '📚', '🎵', '💻', '🐾', '🌿'];
 
+const normalizeCategoryName = (name: string) => name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-ES');
+
+const getUniqueCategories = (items: Category[]) => {
+  const seen = new Set<string>();
+  return items.filter(category => {
+    const key = normalizeCategoryName(category.name);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 interface NewCategoryModalProps {
   onClose: () => void;
   onSave: (name: string, color: string, icon: string, budgetLimit: number) => Promise<void>;
@@ -54,11 +66,11 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="glass-card-elevated rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10">
+            <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
               <Tag className="w-5 h-5 text-primary" />
             </div>
             <h3 className="text-lg font-bold text-foreground">Nueva Categoría</h3>
@@ -70,8 +82,8 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
 
         <div className="p-6 space-y-5">
           {/* Preview */}
-          <div className="flex items-center gap-3 p-4 bg-muted rounded-xl">
-            <span className="text-2xl">{icon}</span>
+          <div className="flex items-center gap-3 p-4 bg-secondary/80 border border-border/70 rounded-xl">
+            <span className="text-2xl grid h-11 w-11 place-items-center rounded-xl bg-card border border-border/70">{icon}</span>
             <div>
               <p className="font-semibold text-foreground">{name || 'Nombre categoría'}</p>
               <p className="text-xs text-muted-foreground">
@@ -89,7 +101,7 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Ej: Restaurantes, Gym..."
-              className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-4 py-3 bg-secondary/70 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
@@ -102,8 +114,8 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
                   key={i}
                   onClick={() => setIcon(i)}
                   className={cn(
-                    'text-xl p-2 rounded-lg transition-all',
-                    icon === i ? 'bg-primary/20 ring-2 ring-primary' : 'hover:bg-muted'
+                    'text-xl p-2 rounded-lg transition-all border border-transparent',
+                    icon === i ? 'bg-primary/20 ring-2 ring-primary border-primary/30' : 'hover:bg-muted/80'
                   )}
                 >
                   {i}
@@ -140,7 +152,7 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
                 value={budgetLimit}
                 onChange={e => setBudgetLimit(e.target.value)}
                 placeholder="0"
-                className="w-full pl-8 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full pl-8 pr-4 py-3 bg-secondary/70 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
             <p className="text-xs text-muted-foreground mt-1">Deja en 0 para sin límite</p>
