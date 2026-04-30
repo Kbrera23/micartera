@@ -184,20 +184,25 @@ export const CategoriesSection = ({
 }: CategoriesSectionProps) => {
   const [showModal, setShowModal] = useState(false);
 
+  const uniqueCategories = useMemo(() => getUniqueCategories(categories), [categories]);
   const statsMap = new Map(expensesByCategory.map(s => [s.category.id, s]));
 
-  const totalBudget = categories.reduce((sum, c) => sum + c.budget_limit, 0);
+  const totalBudget = uniqueCategories.reduce((sum, c) => sum + c.budget_limit, 0);
   const totalSpent = expensesByCategory.reduce((sum, s) => sum + s.total, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card/55 p-5 shadow-2xl shadow-background/30 backdrop-blur-xl">
         <div>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <Sparkles className="h-3.5 w-3.5" />
+            Control visual
+          </div>
           <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Organiza y controla tus gastos</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Una categoría única por gasto, sin duplicados.</p>
         </div>
-        <Button onClick={() => setShowModal(true)} className="rounded-xl gap-2">
+        <Button onClick={() => setShowModal(true)} className="rounded-xl gap-2 shadow-lg shadow-primary/20">
           <Plus className="h-4 w-4" />
           Nueva
         </Button>
@@ -205,7 +210,7 @@ export const CategoriesSection = ({
 
       {/* Summary */}
       {totalBudget > 0 && (
-        <Card className="rounded-2xl border-border">
+        <Card className="glass-card-elevated rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -232,7 +237,7 @@ export const CategoriesSection = ({
       {/* Category grid - only show categories with spending */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(() => {
-          const withSpend = categories.filter(cat => {
+          const withSpend = uniqueCategories.filter(cat => {
             const stats = statsMap.get(cat.id);
             return (stats?.total ?? 0) > 0;
           });
@@ -259,11 +264,11 @@ export const CategoriesSection = ({
             const progressColor = isOverBudget
               ? 'bg-destructive'
               : isWarning
-              ? 'bg-yellow-500'
-              : 'bg-green-500';
+              ? 'bg-expense'
+              : 'bg-income';
 
             return (
-              <Card key={cat.id} className="rounded-2xl border-border hover:shadow-md transition-shadow">
+              <Card key={cat.id} className="glass-card rounded-2xl transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
