@@ -70,6 +70,18 @@ const DEFAULT_CATEGORIES = [
   { name: 'Otros', color: '#6b7280', icon: '📁', budget_limit: 0, is_default: true },
 ];
 
+const normalizeCategoryName = (name: string) => name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-ES');
+
+const dedupeCategories = (items: Category[]) => {
+  const seen = new Set<string>();
+  return items.filter(category => {
+    const key = `${category.user_id}:${normalizeCategoryName(category.name)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 const calculateMonthsRemaining = (targetDate: string): number => {
   const now = new Date();
   const target = new Date(targetDate);
@@ -135,16 +147,21 @@ export const useSupabaseFinances = () => {
       const totalPaid = trackingData.reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0);
       setPaidThisMonth(totalPaid);
 
-      // Handle categories - create defaults if none exist
-      const cats = (categoriesRes.data || []) as unknown as Category[];
+      // Handle categories - create defaults if none exist and always dedupe defensively
+      const cats = dedupeCategories((categoriesRes.data || []) as unknown as Category[]);
       if (cats.length === 0) {
-        const inserts = await Promise.all(
+        await Promise.allSettled(
           DEFAULT_CATEGORIES.map(cat =>
             // @ts-ignore
-            supabase.from('categories').insert({ user_id: user.id, ...cat }).select().single()
+            supabase.from('categories').insert({ user_id: user.id, ...cat })
           )
         );
-        setCategories(inserts.map(r => r.data).filter(Boolean) as unknown as Category[]);
+        const { data: createdCategories } = await (supabase as any)
+          .from('categories')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true });
+        setCategories(dedupeCategories((createdCategories || []) as Category[]));
       } else {
         setCategories(cats);
       }
@@ -232,15 +249,21 @@ export const useSupabaseFinances = () => {
   // Category operations
   const addCategory = async (name: string, color: string, icon: string, budgetLimit: number) => {
     if (!user) return;
+    const cleanName = name.trim().replace(/\s+/g, ' ');
+    const normalizedName = normalizeCategoryName(cleanName);
+    if (categories.some(category => normalizeCategoryName(category.name) === normalizedName)) {
+      toast.info('Esa categoría ya existe');
+      return;
+    }
     const { data, error } = await (supabase as any)
       .from('categories')
-      .insert({ user_id: user.id, name, color, icon, budget_limit: budgetLimit, is_default: false })
+      .insert({ user_id: user.id, name: cleanName, color, icon, budget_limit: budgetLimit, is_default: false })
       .select()
       .single();
     if (error) {
-      toast.error('Error al crear categoría');
+      toast.error(error.code === '23505' ? 'Esa categoría ya existe' : 'Error al crear categoría');
     } else if (data) {
-      setCategories(prev => [...prev, data as Category]);
+      setCategories(prev => dedupeCategories([...prev, data as Category]));
       toast.success('Categoría creada');
     }
   };

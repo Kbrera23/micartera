@@ -14,7 +14,7 @@ export const AppLayout = ({ children, currentSection, onSectionChange }: AppLayo
 
   return (
     <div 
-      className="min-h-screen bg-background flex w-full flex-col"
+      className="min-h-screen bg-background flex w-full flex-col relative overflow-hidden"
       style={{
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom) + 5rem)' : 'env(safe-area-inset-bottom)',
@@ -23,7 +23,9 @@ export const AppLayout = ({ children, currentSection, onSectionChange }: AppLayo
         minHeight: '-webkit-fill-available',
       }}
     >
-      <div className="flex flex-1 w-full">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,hsl(var(--primary)/0.14),transparent_32%),radial-gradient(circle_at_82%_18%,hsl(var(--recurring)/0.13),transparent_28%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--background))_0%,hsl(var(--secondary)/0.72)_48%,hsl(var(--background))_100%)]" />
+      <div className="relative z-10 flex flex-1 w-full">
         {/* Desktop Sidebar */}
         {!isMobile && (
           <Sidebar currentSection={currentSection} onSectionChange={onSectionChange} />

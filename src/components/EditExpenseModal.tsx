@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react';
 import { X, Save, DollarSign, Repeat } from 'lucide-react';
 import { ExpenseFrequency, BankType, Category } from '@/hooks/useSupabaseFinances';
 
+const normalizeCategoryName = (name: string) => name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-ES');
+
+const getUniqueCategories = (items: Category[]) => {
+  const seen = new Set<string>();
+  return items.filter(category => {
+    const key = normalizeCategoryName(category.name);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 interface Expense {
   id: string;
   name: string;
@@ -43,6 +55,7 @@ export const EditExpenseModal = ({ expense, isOpen, onClose, onSave, categories 
   const [bank, setBank] = useState<BankType | null>(expense.bank);
   const [categoryId, setCategoryId] = useState<string | null>(expense.category_id ?? null);
   const [saving, setSaving] = useState(false);
+  const uniqueCategories = getUniqueCategories(categories);
 
   useEffect(() => {
     setName(expense.name);
@@ -84,12 +97,12 @@ export const EditExpenseModal = ({ expense, isOpen, onClose, onSave, categories 
     }
   };
 
-  const inputClass = "w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-all";
-  const selectClass = "w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-all";
+  const inputClass = "w-full px-4 py-3 bg-secondary/70 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-all";
+  const selectClass = "w-full px-4 py-3 bg-secondary/70 border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-all";
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+      <div className="glass-card-elevated rounded-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
 
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
@@ -202,22 +215,36 @@ export const EditExpenseModal = ({ expense, isOpen, onClose, onSave, categories 
           </div>
 
           {/* Category */}
-          {categories.length > 0 && (
+          {uniqueCategories.length > 0 && (
             <div>
               <label className="block text-sm font-semibold text-foreground mb-2">Categoría (opcional)</label>
-              <select
-                value={categoryId || ''}
-                onChange={e => setCategoryId(e.target.value || null)}
-                disabled={saving}
-                className={selectClass}
-              >
-                <option value="">Sin categoría</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.icon} {cat.name}
-                  </option>
+              <div className="grid max-h-44 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-border bg-secondary/40 p-2">
+                <button
+                  type="button"
+                  onClick={() => setCategoryId(null)}
+                  disabled={saving}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-all disabled:opacity-50 ${
+                    !categoryId ? 'border-primary bg-primary/15 text-primary' : 'border-border/70 bg-card/60 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-md bg-muted">—</span>
+                  <span className="truncate">Sin categoría</span>
+                </button>
+                {uniqueCategories.map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setCategoryId(cat.id)}
+                    disabled={saving}
+                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-all disabled:opacity-50 ${
+                      categoryId === cat.id ? 'border-primary bg-primary/15 text-primary' : 'border-border/70 bg-card/60 text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <span className="grid h-7 w-7 place-items-center rounded-md bg-muted">{cat.icon}</span>
+                    <span className="truncate">{cat.name}</span>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
           )}
 

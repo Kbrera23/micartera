@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -30,6 +30,18 @@ const PRESET_COLORS = [
 
 const PRESET_ICONS = ['🛒', '🚗', '🎮', '📺', '🏠', '💊', '👕', '📁', '✈️', '🍕', '💪', '📚', '🎵', '💻', '🐾', '🌿'];
 
+const normalizeCategoryName = (name: string) => name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-ES');
+
+const getUniqueCategories = (items: Category[]) => {
+  const seen = new Set<string>();
+  return items.filter(category => {
+    const key = normalizeCategoryName(category.name);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 interface NewCategoryModalProps {
   onClose: () => void;
   onSave: (name: string, color: string, icon: string, budgetLimit: number) => Promise<void>;
@@ -54,11 +66,11 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="glass-card-elevated rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10">
+            <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
               <Tag className="w-5 h-5 text-primary" />
             </div>
             <h3 className="text-lg font-bold text-foreground">Nueva Categoría</h3>
@@ -70,8 +82,8 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
 
         <div className="p-6 space-y-5">
           {/* Preview */}
-          <div className="flex items-center gap-3 p-4 bg-muted rounded-xl">
-            <span className="text-2xl">{icon}</span>
+          <div className="flex items-center gap-3 p-4 bg-secondary/80 border border-border/70 rounded-xl">
+            <span className="text-2xl grid h-11 w-11 place-items-center rounded-xl bg-card border border-border/70">{icon}</span>
             <div>
               <p className="font-semibold text-foreground">{name || 'Nombre categoría'}</p>
               <p className="text-xs text-muted-foreground">
@@ -89,7 +101,7 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Ej: Restaurantes, Gym..."
-              className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-4 py-3 bg-secondary/70 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
@@ -102,8 +114,8 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
                   key={i}
                   onClick={() => setIcon(i)}
                   className={cn(
-                    'text-xl p-2 rounded-lg transition-all',
-                    icon === i ? 'bg-primary/20 ring-2 ring-primary' : 'hover:bg-muted'
+                    'text-xl p-2 rounded-lg transition-all border border-transparent',
+                    icon === i ? 'bg-primary/20 ring-2 ring-primary border-primary/30' : 'hover:bg-muted/80'
                   )}
                 >
                   {i}
@@ -140,7 +152,7 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
                 value={budgetLimit}
                 onChange={e => setBudgetLimit(e.target.value)}
                 placeholder="0"
-                className="w-full pl-8 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full pl-8 pr-4 py-3 bg-secondary/70 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
             <p className="text-xs text-muted-foreground mt-1">Deja en 0 para sin límite</p>
@@ -172,20 +184,25 @@ export const CategoriesSection = ({
 }: CategoriesSectionProps) => {
   const [showModal, setShowModal] = useState(false);
 
+  const uniqueCategories = useMemo(() => getUniqueCategories(categories), [categories]);
   const statsMap = new Map(expensesByCategory.map(s => [s.category.id, s]));
 
-  const totalBudget = categories.reduce((sum, c) => sum + c.budget_limit, 0);
+  const totalBudget = uniqueCategories.reduce((sum, c) => sum + c.budget_limit, 0);
   const totalSpent = expensesByCategory.reduce((sum, s) => sum + s.total, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card/55 p-5 shadow-2xl shadow-background/30 backdrop-blur-xl">
         <div>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <Sparkles className="h-3.5 w-3.5" />
+            Control visual
+          </div>
           <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Organiza y controla tus gastos</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Organiza y controla tus gastos.</p>
         </div>
-        <Button onClick={() => setShowModal(true)} className="rounded-xl gap-2">
+        <Button onClick={() => setShowModal(true)} className="rounded-xl gap-2 shadow-lg shadow-primary/20">
           <Plus className="h-4 w-4" />
           Nueva
         </Button>
@@ -193,7 +210,7 @@ export const CategoriesSection = ({
 
       {/* Summary */}
       {totalBudget > 0 && (
-        <Card className="rounded-2xl border-border">
+        <Card className="glass-card-elevated rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -220,7 +237,7 @@ export const CategoriesSection = ({
       {/* Category grid - only show categories with spending */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(() => {
-          const withSpend = categories.filter(cat => {
+          const withSpend = uniqueCategories.filter(cat => {
             const stats = statsMap.get(cat.id);
             return (stats?.total ?? 0) > 0;
           });
@@ -247,11 +264,11 @@ export const CategoriesSection = ({
             const progressColor = isOverBudget
               ? 'bg-destructive'
               : isWarning
-              ? 'bg-yellow-500'
-              : 'bg-green-500';
+              ? 'bg-expense'
+              : 'bg-income';
 
             return (
-              <Card key={cat.id} className="rounded-2xl border-border hover:shadow-md transition-shadow">
+              <Card key={cat.id} className="glass-card rounded-2xl transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
