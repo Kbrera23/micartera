@@ -10,6 +10,8 @@ import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
+document.documentElement.classList.add("dark");
+
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
