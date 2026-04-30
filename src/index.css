@@ -6,128 +6,126 @@
 
 @layer base {
   :root {
-    --background: 220 16% 96%;
+    /* Light theme — Investment Bank Premium */
+    /* Background: slate-50 (#F8FAFC) */
+    --background: 210 40% 98%;
+    /* Foreground: slate-900 (#0F172A) */
     --foreground: 222 47% 11%;
 
+    /* Card: pure white */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 158 64% 42%;
+    /* Primary: indigo-900 / navy (#1E3A8A area) */
+    --primary: 224 76% 28%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 224 70% 38%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 20%;
+    /* Secondary: slate-100 */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 14% 94%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted: slate-100 / slate-500 text */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 158 40% 94%;
-    --accent-foreground: 158 64% 30%;
+    /* Accent: indigo-50 */
+    --accent: 226 100% 97%;
+    --accent-foreground: 224 76% 28%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --income: 158 64% 42%;
+    /* Semantic finance colors — refined for light premium theme */
+    --income: 158 64% 38%;
     --income-foreground: 0 0% 100%;
-    --income-light: 158 40% 95%;
+    --income-light: 152 60% 96%;
 
-    --expense: 4 90% 58%;
+    --expense: 4 74% 50%;
     --expense-foreground: 0 0% 100%;
-    --expense-light: 4 80% 96%;
+    --expense-light: 4 80% 97%;
 
-    --recurring: 234 89% 60%;
+    --recurring: 224 76% 38%;
     --recurring-foreground: 0 0% 100%;
-    --recurring-light: 234 60% 96%;
+    --recurring-light: 226 100% 97%;
 
-    --goal: 270 76% 55%;
+    --goal: 262 60% 48%;
     --goal-foreground: 0 0% 100%;
-    --goal-light: 270 50% 96%;
+    --goal-light: 262 60% 97%;
 
     --santander: 0 100% 46%;
     --lacaixa: 189 100% 41%;
     --ing: 25 100% 50%;
-    --revolut: 210 14% 11%;
+    --revolut: 222 47% 11%;
     --bbva: 211 100% 27%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 158 64% 42%;
+    /* Borders: barely-there slate-200 */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 224 76% 28%;
 
     --radius: 0.875rem;
 
+    /* Sidebar: white with navy accents */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 158 64% 42%;
+    --sidebar-primary: 224 76% 28%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 158 64% 42%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 224 76% 28%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 224 76% 28%;
   }
 
-  /* Premium Dark Mode - True OLED Black */
+  /* Dark mode preserved but not used by default */
   .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 96%;
-
     --card: 0 0% 5%;
     --card-foreground: 0 0% 96%;
-
     --popover: 0 0% 5%;
     --popover-foreground: 0 0% 96%;
-
-    --primary: 158 64% 48%;
+    --primary: 224 76% 58%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 0 0% 9%;
     --secondary-foreground: 0 0% 92%;
-
     --muted: 0 0% 11%;
     --muted-foreground: 0 0% 55%;
-
-    --accent: 158 35% 14%;
-    --accent-foreground: 158 50% 80%;
-
+    --accent: 224 35% 14%;
+    --accent-foreground: 224 50% 80%;
     --destructive: 0 62% 48%;
     --destructive-foreground: 0 0% 100%;
-
     --income: 158 60% 48%;
     --income-foreground: 0 0% 100%;
     --income-light: 158 35% 10%;
-
     --expense: 4 80% 52%;
     --expense-foreground: 0 0% 100%;
     --expense-light: 4 50% 10%;
-
-    --recurring: 234 70% 58%;
+    --recurring: 224 70% 58%;
     --recurring-foreground: 0 0% 100%;
-    --recurring-light: 234 40% 12%;
-
+    --recurring-light: 224 40% 12%;
     --goal: 270 60% 58%;
     --goal-foreground: 0 0% 100%;
     --goal-light: 270 40% 12%;
-
     --santander: 0 100% 46%;
     --lacaixa: 189 100% 41%;
     --ing: 25 100% 50%;
     --revolut: 0 0% 10%;
     --bbva: 211 100% 35%;
-
     --border: 0 0% 13%;
     --input: 0 0% 13%;
-    --ring: 158 64% 48%;
-
+    --ring: 224 76% 58%;
     --sidebar-background: 0 0% 3%;
     --sidebar-foreground: 0 0% 92%;
-    --sidebar-primary: 158 64% 48%;
+    --sidebar-primary: 224 76% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 9%;
     --sidebar-accent-foreground: 0 0% 92%;
     --sidebar-border: 0 0% 13%;
-    --sidebar-ring: 158 64% 48%;
+    --sidebar-ring: 224 76% 58%;
   }
 }
 
@@ -155,6 +153,12 @@
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground;
+    letter-spacing: -0.02em;
   }
 
   @supports (padding: env(safe-area-inset-top)) {
@@ -192,48 +196,65 @@
   .overflow-auto, .overflow-y-auto {
     -webkit-overflow-scrolling: touch;
   }
+
+  button, a {
+    transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease,
+                box-shadow 200ms ease, transform 200ms ease, opacity 200ms ease;
+  }
 }
 
 @layer utilities {
   .gradient-income {
-    background: linear-gradient(135deg, hsl(var(--income)) 0%, hsl(158 70% 36%) 100%);
+    background: linear-gradient(135deg, hsl(var(--income)) 0%, hsl(158 70% 32%) 100%);
   }
 
   .gradient-expense {
-    background: linear-gradient(135deg, hsl(var(--expense)) 0%, hsl(4 95% 50%) 100%);
+    background: linear-gradient(135deg, hsl(var(--expense)) 0%, hsl(4 80% 44%) 100%);
   }
 
   .gradient-recurring {
-    background: linear-gradient(135deg, hsl(var(--recurring)) 0%, hsl(250 85% 55%) 100%);
+    background: linear-gradient(135deg, hsl(var(--recurring)) 0%, hsl(224 76% 28%) 100%);
   }
 
   .gradient-goal {
-    background: linear-gradient(135deg, hsl(var(--goal)) 0%, hsl(290 70% 50%) 100%);
+    background: linear-gradient(135deg, hsl(var(--goal)) 0%, hsl(262 70% 40%) 100%);
   }
 
+  /* Premium soft white cards (replaces former glass dark style) */
   .glass-card {
-    @apply bg-card/70 backdrop-blur-xl border border-border/30;
+    @apply bg-card border border-transparent;
     box-shadow:
-      0 0 0 1px hsl(var(--border) / 0.05),
-      0 4px 24px -4px hsl(0 0% 0% / 0.08),
-      0 12px 48px -8px hsl(0 0% 0% / 0.06);
+      0 1px 2px hsl(222 47% 11% / 0.04),
+      0 4px 16px -4px hsl(222 47% 11% / 0.06),
+      0 12px 32px -12px hsl(222 47% 11% / 0.08);
   }
 
   .glass-card-elevated {
-    @apply bg-card/80 backdrop-blur-xl border border-border/20;
+    @apply bg-card border border-transparent;
     box-shadow:
-      0 0 0 1px hsl(var(--border) / 0.05),
-      0 8px 32px -6px hsl(0 0% 0% / 0.12),
-      0 20px 60px -12px hsl(0 0% 0% / 0.08);
+      0 2px 4px hsl(222 47% 11% / 0.04),
+      0 8px 24px -6px hsl(222 47% 11% / 0.08),
+      0 24px 48px -12px hsl(222 47% 11% / 0.10);
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .animate-slide-up {
-    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
+
+  .animate-section-enter {
+    animation: sectionEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Stagger helpers for cards */
+  .stagger-1 { animation-delay: 60ms; }
+  .stagger-2 { animation-delay: 120ms; }
+  .stagger-3 { animation-delay: 180ms; }
+  .stagger-4 { animation-delay: 240ms; }
+  .stagger-5 { animation-delay: 300ms; }
 
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -252,25 +273,18 @@
   }
 
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes sectionEnter {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes float {
@@ -282,11 +296,6 @@
   @keyframes pulse-glow {
     0%, 100% { opacity: 0.4; }
     50% { opacity: 0.8; }
-  }
-
-  @keyframes grid-move {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(40px); }
   }
 
   .animate-float {
