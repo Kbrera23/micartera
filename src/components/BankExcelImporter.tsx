@@ -212,51 +212,18 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     if (!user || !movimientos.length) return;
     setSaving(true);
     try {
-      // Cargar categorías del usuario
-      const { data: userCategories } = await supabase
-        .from('categories')
-        .select('id, name')
-        .eq('user_id', user.id);
-
-      // Crear las categorías que falten
-      const existingNames = new Set((userCategories || []).map(c => c.name.toLowerCase().trim()));
-      const neededCategories = Array.from(new Set(movimientos.map(m => m.categoria)));
-      const toCreate = neededCategories.filter(n => !existingNames.has(n.toLowerCase()));
-
-      if (toCreate.length) {
-        await supabase.from('categories').insert(
-          toCreate.map(name => {
-            const meta = getCategoryMeta(name);
-            return {
-              user_id: user.id,
-              name,
-              icon: meta.icon,
-              color: '#6b7280',
-              budget_limit: 0,
-              is_default: false,
-            };
-          })
-        );
-      }
-
-      const { data: refreshedCategories } = await supabase
-        .from('categories')
-        .select('id, name')
-        .eq('user_id', user.id);
-
-      const catMap = new Map(
-        (refreshedCategories || []).map(c => [c.name.toLowerCase().trim(), c.id])
-      );
-
-      const rows = movimientos.map(m => ({
-        user_id: user.id,
-        name: m.concepto,
-        amount: m.importe,
-        is_recurring: false,
-        frequency: 'monthly',
-        category_id: catMap.get(m.categoria.toLowerCase()) ?? null,
-        created_at: m.fecha || new Date().toISOString(),
-      }));
+      const rows = movimientos.map(m => {
+        const meta = getCategoryMeta(m.categoria);
+        return {
+          user_id: user.id,
+          name: `${meta.icon} ${m.concepto} — [${m.categoria}]`,
+          amount: m.importe,
+          is_recurring: false,
+          frequency: 'monthly' as const,
+          bank: null,
+          created_at: m.fecha || new Date().toISOString(),
+        };
+      });
 
       const { error } = await supabase.from('expenses').insert(rows);
       if (error) throw error;
