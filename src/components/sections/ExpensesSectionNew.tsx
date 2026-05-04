@@ -30,6 +30,7 @@ export const ExpensesSection = ({
   categories = [],
 }: ExpensesSectionProps) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const { refetch } = useSupabaseFinances();
 
   const allExpenses = [...recurringExpenses, ...oneTimeExpenses];
   const {
