@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { AddExpenseForm } from '@/components/AddExpenseFormNew';
 import { ExpenseListNew } from '@/components/ExpenseListNew';
 import { ExpenseFrequency, BankType, Expense, Category } from '@/hooks/useSupabaseFinances';
-import { BankCSVImporter } from '@/components/BankCSVImporter';
+import { BankExcelImporter } from '@/components/BankExcelImporter';
+import { useSupabaseFinances } from '@/hooks/useSupabaseFinances';
 import { EditExpenseModal } from '@/components/EditExpenseModal';
 import { ExpenseFilters } from '@/components/ExpenseFilters';
 import { useExpenseFilters } from '@/hooks/useExpenseFilters';
@@ -29,6 +30,7 @@ export const ExpensesSection = ({
   categories = [],
 }: ExpensesSectionProps) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const { refetch } = useSupabaseFinances();
 
   const allExpenses = [...recurringExpenses, ...oneTimeExpenses];
   const {
@@ -54,7 +56,7 @@ export const ExpensesSection = ({
 
       {/* Importador de movimientos bancarios */}
       <div className="mb-6">
-        <BankCSVImporter />
+        <BankExcelImporter onImported={refetch} />
       </div>
 
       {/* Filtros */}
