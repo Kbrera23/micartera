@@ -186,7 +186,7 @@ export const GoalsSection = ({
            </h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
              {activeGoals.map(goal => (
-               <GoalCard key={goal.id} goal={goal} />
+               <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} />
              ))}
            </div>
          </div>
@@ -201,7 +201,7 @@ export const GoalsSection = ({
            </h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
              {pendingGoals.map(goal => (
-               <GoalCard key={goal.id} goal={goal} />
+               <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} />
              ))}
            </div>
          </div>
