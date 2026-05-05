@@ -211,6 +211,7 @@ const Index = () => {
     onRemoveExpense: removeExpense,
     onUpdateExpense: updateExpense,
     categories,
+    refetch,
   }), [
     recurringExpenses,
     oneTimeExpenses,
@@ -220,6 +221,7 @@ const Index = () => {
     removeExpense,
     updateExpense,
     categories,
+    refetch,
   ]);
 
   const goalsProps = useMemo(() => ({
