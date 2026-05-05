@@ -3,7 +3,6 @@ import { AddExpenseForm } from '@/components/AddExpenseFormNew';
 import { ExpenseListNew } from '@/components/ExpenseListNew';
 import { ExpenseFrequency, BankType, Expense, Category } from '@/hooks/useSupabaseFinances';
 import { BankExcelImporter } from '@/components/BankExcelImporter';
-import { useSupabaseFinances } from '@/hooks/useSupabaseFinances';
 import { EditExpenseModal } from '@/components/EditExpenseModal';
 import { ExpenseFilters } from '@/components/ExpenseFilters';
 import { useExpenseFilters } from '@/hooks/useExpenseFilters';
