@@ -16,6 +16,7 @@ interface ExpensesSectionProps {
   onRemoveExpense: (id: string) => void;
   onUpdateExpense: (id: string, updates: Partial<Expense>) => Promise<void>;
   categories?: Category[];
+  refetch?: () => void;
 }
 
 export const ExpensesSection = ({
@@ -27,9 +28,9 @@ export const ExpensesSection = ({
   onRemoveExpense,
   onUpdateExpense,
   categories = [],
+  refetch,
 }: ExpensesSectionProps) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const { refetch } = useSupabaseFinances();
 
   const allExpenses = [...recurringExpenses, ...oneTimeExpenses];
   const {
