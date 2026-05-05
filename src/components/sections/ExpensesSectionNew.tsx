@@ -3,7 +3,6 @@ import { AddExpenseForm } from '@/components/AddExpenseFormNew';
 import { ExpenseListNew } from '@/components/ExpenseListNew';
 import { ExpenseFrequency, BankType, Expense, Category } from '@/hooks/useSupabaseFinances';
 import { BankExcelImporter } from '@/components/BankExcelImporter';
-import { useSupabaseFinances } from '@/hooks/useSupabaseFinances';
 import { EditExpenseModal } from '@/components/EditExpenseModal';
 import { ExpenseFilters } from '@/components/ExpenseFilters';
 import { useExpenseFilters } from '@/hooks/useExpenseFilters';
@@ -17,6 +16,7 @@ interface ExpensesSectionProps {
   onRemoveExpense: (id: string) => void;
   onUpdateExpense: (id: string, updates: Partial<Expense>) => Promise<void>;
   categories?: Category[];
+  refetch?: () => void;
 }
 
 export const ExpensesSection = ({
@@ -28,9 +28,9 @@ export const ExpensesSection = ({
   onRemoveExpense,
   onUpdateExpense,
   categories = [],
+  refetch,
 }: ExpensesSectionProps) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const { refetch } = useSupabaseFinances();
 
   const allExpenses = [...recurringExpenses, ...oneTimeExpenses];
   const {
@@ -56,7 +56,7 @@ export const ExpensesSection = ({
 
       {/* Importador de movimientos bancarios */}
       <div className="mb-6">
-        <BankExcelImporter onImported={refetch} />
+        <BankExcelImporter onImported={refetch ?? (() => {})} />
       </div>
 
       {/* Filtros */}
