@@ -1,40 +1,56 @@
-import { useState, useMemo } from 'react';
-import { Plus, Target, Play, Pause, Trash2, Calendar } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Plus, Target, Play, Pause, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { PurchaseGoal, GoalWithQuota } from '@/hooks/useSupabaseFinances';
+import { PurchaseGoal } from '@/hooks/useSupabaseFinances';
 import { GoalCreationModal } from '@/components/GoalCreationModal';
- 
- interface GoalsSectionProps {
-   goals: GoalWithQuota[];
-   totalActiveQuotas: number;
-   dineroLibre: number;
-   hasInsufficientFunds: boolean;
-   onAddGoal: (name: string, targetAmount: number, targetDate: Date) => void;
-   onRemoveGoal: (id: string) => void;
-   onToggleGoalStatus: (goalId: string, newStatus: 'active' | 'pending') => void;
- }
- 
+
+interface GoalsSectionProps {
+  goals: PurchaseGoal[];
+  totalActiveQuotas: number;
+  dineroLibre: number;
+  hasInsufficientFunds: boolean;
+  onAddGoal: (name: string, targetAmount: number, targetDate: Date) => void;
+  onRemoveGoal: (id: string) => void;
+  onToggleGoalStatus: (goalId: string, newStatus: 'active' | 'pending') => void;
+}
+
+const calculateMonthsRemaining = (targetDate: string): number => {
+  const now = new Date();
+  const target = new Date(targetDate);
+  const months = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
+  return Math.max(1, months);
+};
+
+// ✅ GoalCard movido FUERA del componente padre (Prompt 3 ya aplicado)
 interface GoalCardProps {
-  goal: GoalWithQuota;
+  goal: PurchaseGoal;
   onToggleGoalStatus: (goalId: string, newStatus: 'active' | 'pending') => void;
   onRemoveGoal: (id: string) => void;
 }
 
 const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal }: GoalCardProps) => {
-  const progressPct = goal.progressPercent;
+  // ✅ Prompt 4: estado de confirmación inline, sin confirm() nativo
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const timer = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(timer);
+  }, [confirmDelete]);
+
+  const progressPct = Math.min(100, (goal.current_amount / goal.target_amount) * 100);
   const daysLeft = Math.ceil(
     (new Date(goal.target_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
   );
-  const monthsLeft = goal.monthsRemaining;
+  const monthsLeft = Math.ceil(daysLeft / 30);
   const isActive = goal.status === 'active';
   const isCompleted = progressPct >= 100;
   const isUrgent = monthsLeft <= 1 && !isCompleted;
   const remaining = goal.target_amount - goal.current_amount;
+  const monthlyQuota = remaining > 0 ? remaining / calculateMonthsRemaining(goal.target_date) : 0;
 
   return (
     <Card className={cn(
@@ -72,7 +88,7 @@ const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal }: GoalCardProps) => 
           </div>
         </div>
 
-        {/* Animated progress bar */}
+        {/* Progress bar */}
         <div className="space-y-1.5 mb-4">
           <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
             <div
@@ -86,7 +102,9 @@ const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal }: GoalCardProps) => 
           <div className="flex justify-between items-center text-xs">
             <span className="font-semibold text-primary">{progressPct.toFixed(0)}%</span>
             {!isCompleted && (
-              <span className="text-muted-foreground">Faltan {formatCurrencyCompact(remaining)}</span>
+              <span className="text-muted-foreground">
+                {formatCurrencyCompact(monthlyQuota)}/mes · Faltan {formatCurrencyCompact(remaining)}
+              </span>
             )}
           </div>
         </div>
@@ -102,13 +120,38 @@ const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal }: GoalCardProps) => 
               <Play className="w-3.5 h-3.5 mr-1.5" />Activar
             </Button>
           )}
-          <Button
-            variant="ghost" size="sm"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => { if (confirm(`¿Eliminar "${goal.name}"?`)) onRemoveGoal(goal.id); }}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
+
+          {/* ✅ Confirmación inline sin confirm() nativo */}
+          {confirmDelete ? (
+            <div className="flex items-center gap-1.5 animate-fade-in">
+              <span className="text-xs text-muted-foreground">¿Eliminar?</span>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => { onRemoveGoal(goal.id); setConfirmDelete(false); }}
+              >
+                Sí
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setConfirmDelete(false)}
+              >
+                No
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -126,13 +169,12 @@ export const GoalsSection = ({
 }: GoalsSectionProps) => {
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Separate active and pending goals
   const activeGoals = useMemo(() => goals.filter(g => g.status === 'active'), [goals]);
   const pendingGoals = useMemo(() => goals.filter(g => g.status === 'pending'), [goals]);
 
-  // Calculate totals
   const totalActiveAmount = activeGoals.reduce((sum, g) => sum + g.target_amount, 0);
   const totalPendingAmount = pendingGoals.reduce((sum, g) => sum + g.target_amount, 0);
+
   return (
     <div className="space-y-6">
       {/* Header Summary */}
@@ -148,57 +190,57 @@ export const GoalsSection = ({
               Nuevo
             </Button>
           </div>
- 
-           <div className="grid grid-cols-3 gap-3">
-             <div className="bg-card/50 rounded-xl p-3 text-center">
-               <div className="text-xs text-muted-foreground mb-1">Activos</div>
-               <div className="text-xl font-bold text-foreground">{activeGoals.length}</div>
-               <div className="text-xs text-muted-foreground">{formatCurrencyCompact(totalActiveAmount)}</div>
-             </div>
-             <div className="bg-card/50 rounded-xl p-3 text-center">
-               <div className="text-xs text-muted-foreground mb-1">Cuota Total</div>
-               <div className="text-xl font-bold text-primary">{formatCurrencyCompact(totalActiveQuotas)}</div>
-               <div className="text-xs text-muted-foreground">mensual</div>
-             </div>
-             <div className="bg-card/50 rounded-xl p-3 text-center">
-               <div className="text-xs text-muted-foreground mb-1">Pendientes</div>
-               <div className="text-xl font-bold text-muted-foreground">{pendingGoals.length}</div>
-               <div className="text-xs text-muted-foreground">{formatCurrencyCompact(totalPendingAmount)}</div>
-             </div>
-           </div>
-         </CardContent>
-       </Card>
- 
-       {/* Active Goals */}
-       {activeGoals.length > 0 && (
-         <div>
-           <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
-             <Play className="w-4 h-4 text-primary" />
-             Activos ({activeGoals.length})
-           </h3>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-             {activeGoals.map(goal => (
-               <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} />
-             ))}
-           </div>
-         </div>
-       )}
- 
-       {/* Pending Goals */}
-       {pendingGoals.length > 0 && (
-         <div>
-           <h3 className="text-base font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-             <Pause className="w-4 h-4" />
-             Pendientes ({pendingGoals.length})
-           </h3>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-             {pendingGoals.map(goal => (
-               <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} />
-             ))}
-           </div>
-         </div>
-       )}
- 
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-card/50 rounded-xl p-3 text-center">
+              <div className="text-xs text-muted-foreground mb-1">Activos</div>
+              <div className="text-xl font-bold text-foreground">{activeGoals.length}</div>
+              <div className="text-xs text-muted-foreground">{formatCurrencyCompact(totalActiveAmount)}</div>
+            </div>
+            <div className="bg-card/50 rounded-xl p-3 text-center">
+              <div className="text-xs text-muted-foreground mb-1">Cuota Total</div>
+              <div className="text-xl font-bold text-primary">{formatCurrencyCompact(totalActiveQuotas)}</div>
+              <div className="text-xs text-muted-foreground">mensual</div>
+            </div>
+            <div className="bg-card/50 rounded-xl p-3 text-center">
+              <div className="text-xs text-muted-foreground mb-1">Pendientes</div>
+              <div className="text-xl font-bold text-muted-foreground">{pendingGoals.length}</div>
+              <div className="text-xs text-muted-foreground">{formatCurrencyCompact(totalPendingAmount)}</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Active Goals */}
+      {activeGoals.length > 0 && (
+        <div>
+          <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Play className="w-4 h-4 text-primary" />
+            Activos ({activeGoals.length})
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {activeGoals.map(goal => (
+              <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pending Goals */}
+      {pendingGoals.length > 0 && (
+        <div>
+          <h3 className="text-base font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+            <Pause className="w-4 h-4" />
+            Pendientes ({pendingGoals.length})
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {pendingGoals.map(goal => (
+              <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Empty state */}
       {goals.length === 0 && (
         <Card className="glass-card rounded-2xl">
@@ -218,7 +260,6 @@ export const GoalsSection = ({
         </Card>
       )}
 
-      {/* Modal de creación mejorado */}
       <GoalCreationModal
         show={showAddModal}
         onClose={() => setShowAddModal(false)}

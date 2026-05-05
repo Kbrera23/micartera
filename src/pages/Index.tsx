@@ -261,11 +261,12 @@ const Index = () => {
   ]);
 
   const categoriesProps = useMemo(() => ({
-    categories,
-    expensesByCategory,
-    onAddCategory: addCategory,
-    onDeleteCategory: deleteCategory,
-  }), [categories, expensesByCategory, addCategory, deleteCategory]);
+  categories,
+  expensesByCategory,
+  onAddCategory: addCategory,
+  onUpdateCategory: updateCategory,
+  onDeleteCategory: deleteCategory,
+}), [categories, expensesByCategory, addCategory, updateCategory, deleteCategory]);
 
   // ========== RENDER MEMOIZADO ==========
   const renderSection = useMemo(() => {

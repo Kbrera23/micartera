@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AddExpenseForm } from '@/components/AddExpenseFormNew';
 import { ExpenseListNew } from '@/components/ExpenseListNew';
 import { ExpenseFrequency, BankType, Expense, Category } from '@/hooks/useSupabaseFinances';
@@ -32,7 +32,11 @@ export const ExpensesSection = ({
 }: ExpensesSectionProps) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
-  const allExpenses = [...recurringExpenses, ...oneTimeExpenses];
+  const allExpenses = useMemo(
+    () => [...recurringExpenses, ...oneTimeExpenses],
+    [recurringExpenses, oneTimeExpenses]
+  );
+
   const {
     filters,
     setFilters,
@@ -41,14 +45,30 @@ export const ExpensesSection = ({
     filteredCount,
   } = useExpenseFilters(allExpenses);
 
-  const filteredRecurring = filteredExpenses.filter(e => e.is_recurring);
-  const filteredOneTime = filteredExpenses.filter(e => !e.is_recurring);
-  const filteredRecurringTotal = filteredRecurring.reduce((sum, e) => {
-    if (e.frequency === 'quarterly') return sum + e.amount / 3;
-    if (e.frequency === 'annual') return sum + e.amount / 12;
-    return sum + e.amount;
-  }, 0);
-  const filteredOneTimeTotal = filteredOneTime.reduce((sum, e) => sum + e.amount, 0);
+  // ✅ Prompt 5: totales memoizados
+  const filteredRecurring = useMemo(
+    () => filteredExpenses.filter(e => e.is_recurring),
+    [filteredExpenses]
+  );
+
+  const filteredOneTime = useMemo(
+    () => filteredExpenses.filter(e => !e.is_recurring),
+    [filteredExpenses]
+  );
+
+  const filteredRecurringTotal = useMemo(
+    () => filteredRecurring.reduce((sum, e) => {
+      if (e.frequency === 'quarterly') return sum + e.amount / 3;
+      if (e.frequency === 'annual') return sum + e.amount / 12;
+      return sum + e.amount;
+    }, 0),
+    [filteredRecurring]
+  );
+
+  const filteredOneTimeTotal = useMemo(
+    () => filteredOneTime.reduce((sum, e) => sum + e.amount, 0),
+    [filteredOneTime]
+  );
 
   return (
     <div className="space-y-6">

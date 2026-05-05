@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles, Pencil } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Category } from '@/hooks/useSupabaseFinances';
@@ -19,6 +19,7 @@ interface CategoriesSectionProps {
   categories: Category[];
   expensesByCategory: CategoryWithStats[];
   onAddCategory: (name: string, color: string, icon: string, budgetLimit: number) => Promise<void>;
+  onUpdateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
 }
 
@@ -42,16 +43,19 @@ const getUniqueCategories = (items: Category[]) => {
   });
 };
 
-interface NewCategoryModalProps {
+// ========== MODAL COMPARTIDO (nueva y edición) ==========
+interface CategoryModalProps {
+  initial?: Partial<Category>;
+  title: string;
   onClose: () => void;
   onSave: (name: string, color: string, icon: string, budgetLimit: number) => Promise<void>;
 }
 
-const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
-  const [name, setName] = useState('');
-  const [color, setColor] = useState('#10b981');
-  const [icon, setIcon] = useState('📁');
-  const [budgetLimit, setBudgetLimit] = useState('');
+const CategoryModal = ({ initial, title, onClose, onSave }: CategoryModalProps) => {
+  const [name, setName] = useState(initial?.name || '');
+  const [color, setColor] = useState(initial?.color || '#10b981');
+  const [icon, setIcon] = useState(initial?.icon || '📁');
+  const [budgetLimit, setBudgetLimit] = useState(initial?.budget_limit?.toString() || '');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -73,7 +77,7 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
             <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
               <Tag className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="text-lg font-bold text-foreground">Nueva Categoría</h3>
+            <h3 className="text-lg font-bold text-foreground">{title}</h3>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground">
             ✕
@@ -163,12 +167,8 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
           <Button variant="outline" onClick={onClose} disabled={saving} className="flex-1 rounded-xl">
             Cancelar
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving || !name.trim()}
-            className="flex-1 rounded-xl"
-          >
-            {saving ? 'Guardando...' : 'Crear Categoría'}
+          <Button onClick={handleSave} disabled={saving || !name.trim()} className="flex-1 rounded-xl">
+            {saving ? 'Guardando...' : 'Guardar'}
           </Button>
         </div>
       </div>
@@ -176,13 +176,16 @@ const NewCategoryModal = ({ onClose, onSave }: NewCategoryModalProps) => {
   );
 };
 
+// ========== COMPONENTE PRINCIPAL ==========
 export const CategoriesSection = ({
   categories,
   expensesByCategory,
   onAddCategory,
+  onUpdateCategory,
   onDeleteCategory,
 }: CategoriesSectionProps) => {
-  const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const uniqueCategories = useMemo(() => getUniqueCategories(categories), [categories]);
   const statsMap = new Map(expensesByCategory.map(s => [s.category.id, s]));
@@ -202,7 +205,7 @@ export const CategoriesSection = ({
           <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Organiza y controla tus gastos.</p>
         </div>
-        <Button onClick={() => setShowModal(true)} className="rounded-xl gap-2 shadow-lg shadow-primary/20">
+        <Button onClick={() => setShowAddModal(true)} className="rounded-xl gap-2 shadow-lg shadow-primary/20">
           <Plus className="h-4 w-4" />
           Nueva
         </Button>
@@ -221,10 +224,7 @@ export const CategoriesSection = ({
                 {formatCurrencyCompact(totalSpent)} / {formatCurrencyCompact(totalBudget)}
               </span>
             </div>
-            <Progress
-              value={Math.min((totalSpent / totalBudget) * 100, 100)}
-              className="h-2"
-            />
+            <Progress value={Math.min((totalSpent / totalBudget) * 100, 100)} className="h-2" />
             <p className="text-xs text-muted-foreground mt-2">
               {totalSpent > totalBudget
                 ? `⚠️ Excedido por ${formatCurrencyCompact(totalSpent - totalBudget)}`
@@ -234,13 +234,14 @@ export const CategoriesSection = ({
         </Card>
       )}
 
-      {/* Category grid - only show categories with spending */}
+      {/* Category grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(() => {
           const withSpend = uniqueCategories.filter(cat => {
             const stats = statsMap.get(cat.id);
             return (stats?.total ?? 0) > 0;
           });
+
           if (withSpend.length === 0) {
             return (
               <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
@@ -254,6 +255,7 @@ export const CategoriesSection = ({
               </div>
             );
           }
+
           return withSpend.map(cat => {
             const stats = statsMap.get(cat.id);
             const pct = stats?.percentage ?? 0;
@@ -285,8 +287,15 @@ export const CategoriesSection = ({
                         )}
                       </div>
                     </div>
+                    {/* ✅ Prompt 6: botones editar y eliminar */}
                     <div className="flex items-center gap-1">
                       {isOverBudget && <AlertTriangle className="h-4 w-4 text-destructive" />}
+                      <button
+                        onClick={() => setEditingCategory(cat)}
+                        className="p-1.5 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-lg transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
                       {!cat.is_default && (
                         <button
                           onClick={() => onDeleteCategory(cat.id)}
@@ -329,10 +338,24 @@ export const CategoriesSection = ({
         })()}
       </div>
 
-      {showModal && (
-        <NewCategoryModal
-          onClose={() => setShowModal(false)}
+      {/* Modal nueva categoría */}
+      {showAddModal && (
+        <CategoryModal
+          title="Nueva Categoría"
+          onClose={() => setShowAddModal(false)}
           onSave={onAddCategory}
+        />
+      )}
+
+      {/* Modal editar categoría */}
+      {editingCategory && (
+        <CategoryModal
+          title="Editar Categoría"
+          initial={editingCategory}
+          onClose={() => setEditingCategory(null)}
+          onSave={(name, color, icon, budgetLimit) =>
+            onUpdateCategory(editingCategory.id, { name, color, icon, budget_limit: budgetLimit })
+          }
         />
       )}
     </div>
