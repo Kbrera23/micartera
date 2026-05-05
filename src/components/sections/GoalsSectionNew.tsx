@@ -6,11 +6,11 @@ import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { PurchaseGoal } from '@/hooks/useSupabaseFinances';
+import { PurchaseGoal, GoalWithQuota } from '@/hooks/useSupabaseFinances';
 import { GoalCreationModal } from '@/components/GoalCreationModal';
  
  interface GoalsSectionProps {
-   goals: PurchaseGoal[];
+   goals: GoalWithQuota[];
    totalActiveQuotas: number;
    dineroLibre: number;
    hasInsufficientFunds: boolean;
@@ -19,26 +19,18 @@ import { GoalCreationModal } from '@/components/GoalCreationModal';
    onToggleGoalStatus: (goalId: string, newStatus: 'active' | 'pending') => void;
  }
  
- const calculateMonthsRemaining = (targetDate: string): number => {
-   const now = new Date();
-   const target = new Date(targetDate);
-   const months = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
-   return Math.max(1, months);
- };
- 
- 
 interface GoalCardProps {
-  goal: PurchaseGoal;
+  goal: GoalWithQuota;
   onToggleGoalStatus: (goalId: string, newStatus: 'active' | 'pending') => void;
   onRemoveGoal: (id: string) => void;
 }
 
 const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal }: GoalCardProps) => {
-  const progressPct = Math.min(100, (goal.current_amount / goal.target_amount) * 100);
+  const progressPct = goal.progressPercent;
   const daysLeft = Math.ceil(
     (new Date(goal.target_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
   );
-  const monthsLeft = Math.ceil(daysLeft / 30);
+  const monthsLeft = goal.monthsRemaining;
   const isActive = goal.status === 'active';
   const isCompleted = progressPct >= 100;
   const isUrgent = monthsLeft <= 1 && !isCompleted;
