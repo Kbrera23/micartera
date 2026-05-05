@@ -51,6 +51,12 @@ export interface PurchaseGoal {
   created_at: string;
 }
 
+export interface GoalWithQuota extends PurchaseGoal {
+  monthlyQuota: number;
+  monthsRemaining: number;
+  progressPercent: number;
+}
+
 export interface UserBank {
   id: string;
   user_id: string;
