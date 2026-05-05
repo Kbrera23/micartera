@@ -51,6 +51,12 @@ export interface PurchaseGoal {
   created_at: string;
 }
 
+export interface GoalWithQuota extends PurchaseGoal {
+  monthlyQuota: number;
+  monthsRemaining: number;
+  progressPercent: number;
+}
+
 export interface UserBank {
   id: string;
   user_id: string;
@@ -398,17 +404,17 @@ export const useSupabaseFinances = () => {
     const lacaixaBalance = userBanks.find(b => b.bank === 'lacaixa')?.initial_balance || 0;
     const revolutBalance = userBanks.find(b => b.bank === 'revolut')?.initial_balance || 0;
 
-    const goalsWithQuotas = purchaseGoals
-      .filter(goal => goal.status === 'active')
-      .map(goal => {
-        const remaining = goal.target_amount - goal.current_amount;
-        const months = calculateMonthsRemaining(goal.target_date);
-        const monthlyQuota = remaining > 0 ? remaining / months : 0;
-        const progressPercent = goal.target_amount > 0 ? (goal.current_amount / goal.target_amount) * 100 : 0;
-        return { ...goal, monthlyQuota, monthsRemaining: months, progressPercent };
-      });
+    const goalsWithQuotas: GoalWithQuota[] = purchaseGoals.map(goal => {
+      const remaining = goal.target_amount - goal.current_amount;
+      const months = calculateMonthsRemaining(goal.target_date);
+      const monthlyQuota = remaining > 0 ? remaining / months : 0;
+      const progressPercent = goal.target_amount > 0 ? (goal.current_amount / goal.target_amount) * 100 : 0;
+      return { ...goal, monthlyQuota, monthsRemaining: months, progressPercent };
+    });
 
-    const totalPurchaseGoalQuotas = goalsWithQuotas.reduce((sum, g) => sum + g.monthlyQuota, 0);
+    const totalPurchaseGoalQuotas = goalsWithQuotas
+      .filter(g => g.status === 'active')
+      .reduce((sum, g) => sum + g.monthlyQuota, 0);
 
     const subscriptionKeywords = ['netflix', 'spotify', 'hbo', 'disney', 'amazon', 'prime', 'internet', 'gym', 'gimnasio', 'movil', 'telefono', 'fibra'];
     const subscriptions = monthlyRecurring.filter(e =>

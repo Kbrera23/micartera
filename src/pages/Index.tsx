@@ -225,7 +225,7 @@ const Index = () => {
   ]);
 
   const goalsProps = useMemo(() => ({
-    goals: purchaseGoals,
+    goals: goalsWithQuotas,
     totalActiveQuotas: totalPurchaseGoalQuotas,
     dineroLibre,
     hasInsufficientFunds,
@@ -233,7 +233,7 @@ const Index = () => {
     onRemoveGoal: removePurchaseGoal,
     onToggleGoalStatus: toggleGoalStatus
   }), [
-    purchaseGoals,
+    goalsWithQuotas,
     totalPurchaseGoalQuotas,
     dineroLibre,
     hasInsufficientFunds,
