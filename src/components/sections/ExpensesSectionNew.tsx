@@ -56,7 +56,7 @@ export const ExpensesSection = ({
 
       {/* Importador de movimientos bancarios */}
       <div className="mb-6">
-        <BankExcelImporter onImported={refetch} />
+        <BankExcelImporter onImported={refetch ?? (() => {})} />
       </div>
 
       {/* Filtros */}
