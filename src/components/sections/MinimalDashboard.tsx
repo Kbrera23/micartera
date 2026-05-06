@@ -3,7 +3,8 @@ import { KPICards } from '@/components/dashboard/KPICards';
 import { UpcomingLargePayments } from '@/components/dashboard/UpcomingLargePayments';
 import { RecentExpenses } from '@/components/dashboard/RecentExpenses';
 import { MonthlyReminder } from '@/components/dashboard/MonthlyReminder';
-import { BankType, Expense, ExpenseFrequency } from '@/hooks/useSupabaseFinances';
+import { MonthlySummaryCard } from '@/components/dashboard/MonthlySummaryCard';
+import { BankType, Expense, ExpenseFrequency, Category } from '@/hooks/useSupabaseFinances';
 
 interface MinimalDashboardProps {
   userBanks: { bank: BankType; initial_balance: number }[];
@@ -21,6 +22,8 @@ interface MinimalDashboardProps {
   quarterlyProvision: number;
   recurringExpenses: Expense[];
   oneTimeExpenses: Expense[];
+  expenses: Expense[];
+  categories: Category[];
   onAddExpense: (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency, bank: BankType | null) => Promise<void>;
   refetch: () => void;
 }
@@ -41,6 +44,8 @@ export const MinimalDashboard = ({
   quarterlyProvision,
   recurringExpenses,
   oneTimeExpenses,
+  expenses,
+  categories,
   onAddExpense,
   refetch,
 }: MinimalDashboardProps) => {
@@ -53,7 +58,10 @@ export const MinimalDashboard = ({
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Resumen financiero</p>
       </div>
-      
+
+      {/* Monthly Summary */}
+      <MonthlySummaryCard expenses={expenses} categories={categories} />
+
       {/* Bank Cards Header */}
       <MinimalBankCards
         userBanks={userBanks}
