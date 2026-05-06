@@ -25,13 +25,13 @@ import { cn } from '@/lib/utils';
 
 // ====== CATEGORÍAS DISPONIBLES ======
 const CATEGORIES = [
-  { name: 'Internet', icon: '🌐', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
+  { name: 'Alimentación', icon: '🛒', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
   { name: 'Transporte', icon: '🚌', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-  { name: 'Gasolina', icon: '⛽', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-  { name: 'Comida', icon: '🍔', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-  { name: 'Ocio', icon: '🎮', color: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
   { name: 'Suscripciones', icon: '📺', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-  { name: 'Otros Gastos', icon: '📁', color: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
+  { name: 'Salud', icon: '💊', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
+  { name: 'Ocio', icon: '🎮', color: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
+  { name: 'Ropa', icon: '👕', color: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
+  { name: 'Otros', icon: '📁', color: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
 ] as const;
 
 type CategoryName = typeof CATEGORIES[number]['name'];
@@ -40,23 +40,45 @@ const getCategoryMeta = (name: string) =>
   CATEGORIES.find(c => c.name === name) ?? CATEGORIES[CATEGORIES.length - 1];
 
 // ====== MOTOR DE CATEGORIZACIÓN ======
-const categorizarGasto = (concepto: string): CategoryName => {
+// Devuelve la categoría detectada y si fue auto-categorizada (no "Otros")
+const categorizarGasto = (concepto: string): { categoria: CategoryName; auto: boolean } => {
   const texto = (concepto || '').toLowerCase();
 
-  if (/repsol|cepsa|shell|\bbp\b|galp|gasolinera/.test(texto)) return 'Gasolina';
+  if (/mercadona|lidl|carrefour|alimentacion|alimentación|supermercado|\bdia\b|aldi/.test(texto))
+    return { categoria: 'Alimentación', auto: true };
 
-  if (/mercadona|carrefour|lidl|\bdia\b|aldi|supermercado|alimentacion|burger|mcdo|mcdonald|pizza|kebab|restaurante/.test(texto))
-    return 'Comida';
+  if (/uber|cabify|renfe|taxi|gasolina|repsol|\bbp\b|cepsa|shell|galp|gasolinera/.test(texto))
+    return { categoria: 'Transporte', auto: true };
 
-  if (/uber|cabify|taxi|metro|renfe|\bbus\b|tren|cercanias/.test(texto)) return 'Transporte';
+  if (/netflix|spotify|\bhbo\b|disney|amazon/.test(texto))
+    return { categoria: 'Suscripciones', auto: true };
 
-  if (/movistar|vodafone|orange|internet|fibra|jazztel/.test(texto)) return 'Internet';
+  if (/farmacia|clinica|clínica|medico|médico|salud|hospital/.test(texto))
+    return { categoria: 'Salud', auto: true };
 
-  if (/netflix|spotify|amazon prime|disney|\bhbo\b|youtube premium/.test(texto)) return 'Suscripciones';
+  if (/\bgym\b|gimnasio|decathlon/.test(texto))
+    return { categoria: 'Ocio', auto: true };
 
-  if (/cine|teatro|concierto|\bbar\b|\bpub\b|discoteca|steam|playstation/.test(texto)) return 'Ocio';
+  if (/zara|mango|primark|ropa|h&m|hm\b/.test(texto))
+    return { categoria: 'Ropa', auto: true };
 
-  return 'Otros Gastos';
+  return { categoria: 'Otros', auto: false };
+};
+
+// ====== LIMPIEZA DE NOMBRE ======
+const limpiarConcepto = (concepto: string): string => {
+  let t = (concepto || '').trim();
+  // Quitar referencia de tarjeta: Tarj.:*1234, Tarj:*1234, TARJ.:*1234, etc.
+  t = t.replace(/,?\s*tarj\.?:?\s*\*?\d+/gi, '');
+  // Quitar prefijos comunes
+  t = t.replace(/\b(pago movil en|pago móvil en|compra en|compra\s+|pago\s+en|recibo\s+de|recibo\s+)\b/gi, '');
+  // Limpiar comas/espacios extra
+  t = t.replace(/\s{2,}/g, ' ').replace(/\s*,\s*/g, ', ').replace(/^[,\s]+|[,\s]+$/g, '');
+  // Capitalización: lowercase y luego capitalizar palabras
+  t = t.toLowerCase().replace(/\b([a-záéíóúñ])/g, m => m.toUpperCase());
+  // Máx 40 chars
+  if (t.length > 40) t = t.slice(0, 39).trimEnd() + '…';
+  return t || concepto.slice(0, 40);
 };
 
 // ====== TIPOS ======
