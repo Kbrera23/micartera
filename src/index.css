@@ -1,101 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @layer base {
   :root {
-    /* Light theme — Investment Bank Premium */
-    /* Background: slate-50 (#F8FAFC) */
-    --background: 210 40% 98%;
-    /* Foreground: slate-900 (#0F172A) */
-    --foreground: 222 47% 11%;
+    /* ── Teal Premium Dark ── */
+    --background: 200 45% 10%;
+    --foreground: 195 30% 94%;
 
-    /* Card: pure white */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 200 40% 13%;
+    --card-foreground: 195 30% 94%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 200 40% 13%;
+    --popover-foreground: 195 30% 94%;
 
-    /* Primary: indigo-900 / navy (#1E3A8A area) */
-    --primary: 224 76% 28%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 224 70% 38%;
+    /* Primary: cyan eléctrico */
+    --primary: 186 100% 50%;
+    --primary-foreground: 200 45% 8%;
+    --primary-glow: 186 100% 60%;
 
-    /* Secondary: slate-100 */
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 200 35% 17%;
+    --secondary-foreground: 195 20% 80%;
 
-    /* Muted: slate-100 / slate-500 text */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 200 35% 17%;
+    --muted-foreground: 200 15% 52%;
 
-    /* Accent: indigo-50 */
-    --accent: 226 100% 97%;
-    --accent-foreground: 224 76% 28%;
+    --accent: 200 35% 20%;
+    --accent-foreground: 186 100% 50%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Semantic finance colors — refined for light premium theme */
-    --income: 158 64% 38%;
+    /* Finanzas */
+    --income: 158 64% 42%;
     --income-foreground: 0 0% 100%;
-    --income-light: 152 60% 96%;
+    --income-light: 158 35% 12%;
 
-    --expense: 4 74% 50%;
+    --expense: 4 74% 52%;
     --expense-foreground: 0 0% 100%;
-    --expense-light: 4 80% 97%;
+    --expense-light: 4 50% 11%;
 
-    --recurring: 224 76% 38%;
-    --recurring-foreground: 0 0% 100%;
-    --recurring-light: 226 100% 97%;
+    --recurring: 186 100% 40%;
+    --recurring-foreground: 200 45% 8%;
+    --recurring-light: 186 50% 12%;
 
-    --goal: 262 60% 48%;
+    --goal: 270 60% 58%;
     --goal-foreground: 0 0% 100%;
-    --goal-light: 262 60% 97%;
+    --goal-light: 270 40% 12%;
 
+    /* Bancos */
     --santander: 0 100% 46%;
     --lacaixa: 189 100% 41%;
     --ing: 25 100% 50%;
-    --revolut: 222 47% 11%;
-    --bbva: 211 100% 27%;
+    --revolut: 195 30% 94%;
+    --bbva: 211 100% 35%;
 
-    /* Borders: barely-there slate-200 */
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 224 76% 28%;
+    --border: 200 30% 20%;
+    --input: 200 30% 18%;
+    --ring: 186 100% 50%;
 
     --radius: 0.875rem;
 
-    /* Sidebar: white with navy accents */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 224 76% 28%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 224 76% 28%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 224 76% 28%;
+    /* Sidebar */
+    --sidebar-background: 200 45% 8%;
+    --sidebar-foreground: 195 20% 80%;
+    --sidebar-primary: 186 100% 50%;
+    --sidebar-primary-foreground: 200 45% 8%;
+    --sidebar-accent: 200 35% 14%;
+    --sidebar-accent-foreground: 186 100% 50%;
+    --sidebar-border: 200 30% 16%;
+    --sidebar-ring: 186 100% 50%;
   }
 
-  /* Dark mode preserved but not used by default */
   .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 96%;
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 96%;
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 96%;
-    --primary: 224 76% 58%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 9%;
-    --secondary-foreground: 0 0% 92%;
-    --muted: 0 0% 11%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 224 35% 14%;
-    --accent-foreground: 224 50% 80%;
+    --background: 200 45% 10%;
+    --foreground: 195 30% 94%;
+    --card: 200 40% 13%;
+    --card-foreground: 195 30% 94%;
+    --popover: 200 40% 13%;
+    --popover-foreground: 195 30% 94%;
+    --primary: 186 100% 50%;
+    --primary-foreground: 200 45% 8%;
+    --secondary: 200 35% 17%;
+    --secondary-foreground: 195 20% 80%;
+    --muted: 200 35% 17%;
+    --muted-foreground: 200 15% 52%;
+    --accent: 200 35% 20%;
+    --accent-foreground: 186 100% 50%;
     --destructive: 0 62% 48%;
     --destructive-foreground: 0 0% 100%;
     --income: 158 60% 48%;
@@ -104,28 +97,28 @@
     --expense: 4 80% 52%;
     --expense-foreground: 0 0% 100%;
     --expense-light: 4 50% 10%;
-    --recurring: 224 70% 58%;
-    --recurring-foreground: 0 0% 100%;
-    --recurring-light: 224 40% 12%;
+    --recurring: 186 100% 40%;
+    --recurring-foreground: 200 45% 8%;
+    --recurring-light: 186 50% 12%;
     --goal: 270 60% 58%;
     --goal-foreground: 0 0% 100%;
     --goal-light: 270 40% 12%;
     --santander: 0 100% 46%;
     --lacaixa: 189 100% 41%;
     --ing: 25 100% 50%;
-    --revolut: 0 0% 10%;
+    --revolut: 195 30% 94%;
     --bbva: 211 100% 35%;
-    --border: 0 0% 13%;
-    --input: 0 0% 13%;
-    --ring: 224 76% 58%;
-    --sidebar-background: 0 0% 3%;
-    --sidebar-foreground: 0 0% 92%;
-    --sidebar-primary: 224 76% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 9%;
-    --sidebar-accent-foreground: 0 0% 92%;
-    --sidebar-border: 0 0% 13%;
-    --sidebar-ring: 224 76% 58%;
+    --border: 200 30% 20%;
+    --input: 200 30% 18%;
+    --ring: 186 100% 50%;
+    --sidebar-background: 200 45% 8%;
+    --sidebar-foreground: 195 20% 80%;
+    --sidebar-primary: 186 100% 50%;
+    --sidebar-primary-foreground: 200 45% 8%;
+    --sidebar-accent: 200 35% 14%;
+    --sidebar-accent-foreground: 186 100% 50%;
+    --sidebar-border: 200 30% 16%;
+    --sidebar-ring: 186 100% 50%;
   }
 }
 
@@ -154,6 +147,11 @@
     -webkit-overflow-scrolling: touch;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     letter-spacing: -0.01em;
+    background:
+      radial-gradient(ellipse at 0% 0%, hsl(195 60% 16%) 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 100%, hsl(210 50% 12%) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 50%, hsl(200 45% 11%) 0%, transparent 70%),
+      hsl(200 45% 10%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -204,105 +202,143 @@
 }
 
 @layer utilities {
+  /* ── Gradientes ── */
   .gradient-income {
     background: linear-gradient(135deg, hsl(var(--income)) 0%, hsl(158 70% 32%) 100%);
   }
-
   .gradient-expense {
     background: linear-gradient(135deg, hsl(var(--expense)) 0%, hsl(4 80% 44%) 100%);
   }
-
   .gradient-recurring {
-    background: linear-gradient(135deg, hsl(var(--recurring)) 0%, hsl(224 76% 28%) 100%);
+    background: linear-gradient(135deg, hsl(186 100% 40%) 0%, hsl(195 80% 30%) 100%);
   }
-
   .gradient-goal {
     background: linear-gradient(135deg, hsl(var(--goal)) 0%, hsl(262 70% 40%) 100%);
   }
+  .gradient-cyan {
+    background: linear-gradient(135deg, hsl(186 100% 50%) 0%, hsl(195 90% 40%) 100%);
+  }
 
-  /* Premium soft white cards (replaces former glass dark style) */
+  /* ── Glassmorphism Teal Premium ── */
   .glass-card {
-    @apply bg-card border border-transparent;
+    background: linear-gradient(
+      135deg,
+      hsl(200 40% 16% / 0.85) 0%,
+      hsl(200 35% 13% / 0.90) 100%
+    );
+    border: 1px solid hsl(186 60% 60% / 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     box-shadow:
-      0 1px 2px hsl(222 47% 11% / 0.04),
-      0 4px 16px -4px hsl(222 47% 11% / 0.06),
-      0 12px 32px -12px hsl(222 47% 11% / 0.08);
+      0 1px 0 hsl(186 100% 80% / 0.04) inset,
+      0 4px 24px -4px hsl(200 45% 4% / 0.5),
+      0 12px 48px -12px hsl(200 45% 4% / 0.35);
   }
 
   .glass-card-elevated {
-    @apply bg-card border border-transparent;
+    background: linear-gradient(
+      135deg,
+      hsl(200 40% 18% / 0.90) 0%,
+      hsl(200 35% 14% / 0.95) 100%
+    );
+    border: 1px solid hsl(186 60% 60% / 0.12);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
     box-shadow:
-      0 2px 4px hsl(222 47% 11% / 0.04),
-      0 8px 24px -6px hsl(222 47% 11% / 0.08),
-      0 24px 48px -12px hsl(222 47% 11% / 0.10);
+      0 1px 0 hsl(186 100% 80% / 0.06) inset,
+      0 8px 32px -8px hsl(200 45% 4% / 0.6),
+      0 24px 64px -16px hsl(200 45% 4% / 0.45),
+      0 0 0 1px hsl(186 100% 50% / 0.04);
   }
 
+  .glass-card-cyan {
+    background: linear-gradient(
+      135deg,
+      hsl(186 40% 16% / 0.90) 0%,
+      hsl(200 40% 14% / 0.95) 100%
+    );
+    border: 1px solid hsl(186 100% 50% / 0.20);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow:
+      0 1px 0 hsl(186 100% 70% / 0.08) inset,
+      0 8px 32px -8px hsl(186 50% 4% / 0.4),
+      0 0 32px -8px hsl(186 100% 50% / 0.06);
+  }
+
+  /* ── Animaciones ── */
   .animate-fade-in {
     animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-
   .animate-slide-up {
     animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-
   .animate-section-enter {
     animation: sectionEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  .animate-shimmer {
+    animation: shimmer 2.5s ease-in-out infinite;
+  }
 
-  /* Stagger helpers for cards */
+  /* Stagger */
   .stagger-1 { animation-delay: 60ms; }
   .stagger-2 { animation-delay: 120ms; }
   .stagger-3 { animation-delay: 180ms; }
   .stagger-4 { animation-delay: 240ms; }
   .stagger-5 { animation-delay: 300ms; }
 
+  /* ── Utilidades ── */
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+  .text-cyan {
+    color: hsl(186 100% 50%);
+  }
+  .text-cyan-gradient {
+    background: linear-gradient(135deg, hsl(186 100% 60%) 0%, hsl(195 90% 45%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
+  /* ── Keyframes ── */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes sectionEnter {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes float {
     0%, 100% { transform: translateY(0px) rotate(0deg); }
-    33% { transform: translateY(-12px) rotate(1deg); }
-    66% { transform: translateY(-6px) rotate(-1deg); }
+    33%       { transform: translateY(-12px) rotate(1deg); }
+    66%       { transform: translateY(-6px) rotate(-1deg); }
   }
-
   @keyframes pulse-glow {
     0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.8; }
+    50%       { opacity: 0.8; }
   }
-
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .animate-pulse-glow {
-    animation: pulse-glow 3s ease-in-out infinite;
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
   }
 }
