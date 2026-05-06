@@ -239,23 +239,23 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     if (!user || !movimientos.length) return;
     setSaving(true);
     try {
-      const rows = movimientos.map(m => {
-        const meta = getCategoryMeta(m.categoria);
-        return {
-          user_id: user.id,
-          name: `${meta.icon} ${m.concepto} — [${m.categoria}]`,
-          amount: m.importe,
-          is_recurring: false,
-          frequency: 'monthly' as const,
-          bank: null,
-          created_at: m.fecha || new Date().toISOString(),
-        };
-      });
+      const rows = movimientos.map(m => ({
+        user_id: user.id,
+        name: m.concepto,
+        amount: m.importe,
+        is_recurring: false,
+        frequency: 'monthly' as const,
+        bank: null,
+        created_at: m.fecha || new Date().toISOString(),
+      }));
 
       const { error } = await supabase.from('expenses').insert(rows);
       if (error) throw error;
 
-      toast.success(`✅ ${movimientos.length} movimientos importados correctamente`);
+      const autoCount = movimientos.filter(m => m.autoCategorized).length;
+      toast.success(
+        `${movimientos.length} gastos importados, ${autoCount} categorizados automáticamente`
+      );
       onImported?.();
       handleClose(false);
     } catch (err: any) {
