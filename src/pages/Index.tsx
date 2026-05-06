@@ -180,6 +180,8 @@ const Index = () => {
     quarterlyProvision,
     recurringExpenses,
     oneTimeExpenses,
+    expenses,
+    categories,
     onAddExpense: addExpense,
     refetch,
   }), [
@@ -198,6 +200,8 @@ const Index = () => {
     quarterlyProvision,
     recurringExpenses,
     oneTimeExpenses,
+    expenses,
+    categories,
     addExpense,
     refetch,
   ]);
