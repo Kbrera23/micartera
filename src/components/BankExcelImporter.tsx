@@ -84,10 +84,12 @@ const limpiarConcepto = (concepto: string): string => {
 // ====== TIPOS ======
 interface Movimiento {
   id: string;
-  concepto: string;
+  concepto: string; // nombre limpio
+  conceptoOriginal: string;
   importe: number;
   fecha: string | null;
   categoria: CategoryName;
+  autoCategorized: boolean;
 }
 
 // ====== PARSER EXCEL ======
