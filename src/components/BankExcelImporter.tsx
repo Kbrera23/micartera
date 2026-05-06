@@ -153,12 +153,15 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
       }
     }
 
+    const cat = categorizarGasto(concepto);
     movimientos.push({
       id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
-      concepto,
+      concepto: limpiarConcepto(concepto),
+      conceptoOriginal: concepto,
       importe: Math.abs(importe),
       fecha,
-      categoria: categorizarGasto(concepto),
+      categoria: cat.categoria,
+      autoCategorized: cat.auto,
     });
   }
 
