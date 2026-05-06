@@ -1,22 +1,12 @@
-import { Building2 } from 'lucide-react';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { BankType } from '@/hooks/useSupabaseFinances';
-
-const BANK_LOGOS: Record<BankType, string> = {
-  santander: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Banco_Santander_Logotipo.svg/1200px-Banco_Santander_Logotipo.svg.png',
-  lacaixa: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/CaixaBank%2C_S.A._logo.svg/1200px-CaixaBank%2C_S.A._logo.svg.png',
-  ing: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/ING_Group_N.V._Logo.svg/1200px-ING_Group_N.V._Logo.svg.png',
-  revolut: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Revolut_Logo.svg/1200px-Revolut_Logo.svg.png',
-  bbva: '',
-};
 
 interface BankData {
   id: BankType;
   name: string;
   amount: number;
   bgColor: string;
-  logo: string;
 }
 
 interface MinimalBankCardsProps {
@@ -27,6 +17,54 @@ interface MinimalBankCardsProps {
   reserveFund: number;
   rent: number;
 }
+
+// SVGs inline para cada banco — sin dependencia de URLs externas
+const BANK_TEXT_COLOR: Record<BankType, string> = {
+  santander: 'white',
+  lacaixa: 'white',
+  ing: 'white',
+  revolut: '#0a0a0a',
+  bbva: 'white',
+};
+
+const BankLogo = ({ bankId }: { bankId: BankType }) => {
+  const color = BANK_TEXT_COLOR[bankId];
+  switch (bankId) {
+    case 'santander':
+      return (
+        <svg viewBox="0 0 130 26" className="h-5 w-auto">
+          <text x="0" y="20" fontSize="18" fontWeight="700" fontFamily="Arial, sans-serif" fill={color}>Santander</text>
+        </svg>
+      );
+    case 'lacaixa':
+      return (
+        <svg viewBox="0 0 110 26" className="h-5 w-auto">
+          <text x="0" y="20" fontSize="18" fontWeight="700" fontFamily="Arial, sans-serif" fill={color}>CaixaBank</text>
+        </svg>
+      );
+    case 'ing':
+      return (
+        <svg viewBox="0 0 52 26" className="h-5 w-auto">
+          <rect width="52" height="26" rx="4" fill={color} opacity="0.2"/>
+          <text x="6" y="19" fontSize="16" fontWeight="900" fontFamily="Arial, sans-serif" fill={color}>ING</text>
+        </svg>
+      );
+    case 'revolut':
+      return (
+        <svg viewBox="0 0 90 26" className="h-5 w-auto">
+          <text x="0" y="20" fontSize="18" fontWeight="700" fontFamily="Arial, sans-serif" fill={color}>Revolut</text>
+        </svg>
+      );
+    case 'bbva':
+      return (
+        <svg viewBox="0 0 65 26" className="h-5 w-auto">
+          <text x="0" y="20" fontSize="18" fontWeight="900" fontFamily="Arial, sans-serif" fill={color}>BBVA</text>
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
 
 export const MinimalBankCards = ({
   userBanks,
@@ -46,11 +84,11 @@ export const MinimalBankCards = ({
   const revolutBalance = reserveFund + getInitialBalance('revolut');
 
   const allBanks: BankData[] = [
-    { id: 'santander', name: 'Santander', amount: santanderBalance, bgColor: 'bg-santander', logo: BANK_LOGOS.santander },
-    { id: 'lacaixa', name: 'La Caixa', amount: lacaixaBalance, bgColor: 'bg-lacaixa', logo: BANK_LOGOS.lacaixa },
-    { id: 'ing', name: 'ING', amount: totalSubscriptions, bgColor: 'bg-ing', logo: BANK_LOGOS.ing },
-    { id: 'revolut', name: 'Revolut', amount: revolutBalance, bgColor: 'bg-revolut', logo: BANK_LOGOS.revolut },
-    { id: 'bbva', name: 'BBVA', amount: getInitialBalance('bbva'), bgColor: 'bg-bbva', logo: BANK_LOGOS.bbva },
+    { id: 'santander', name: 'Santander', amount: santanderBalance, bgColor: 'bg-santander' },
+    { id: 'lacaixa', name: 'La Caixa', amount: lacaixaBalance, bgColor: 'bg-lacaixa' },
+    { id: 'ing', name: 'ING', amount: totalSubscriptions, bgColor: 'bg-ing' },
+    { id: 'revolut', name: 'Revolut', amount: revolutBalance, bgColor: 'bg-revolut' },
+    { id: 'bbva', name: 'BBVA', amount: getInitialBalance('bbva'), bgColor: 'bg-bbva' },
   ];
 
   const activeBankIds = userBanks.map(b => b.bank);
@@ -64,28 +102,17 @@ export const MinimalBankCards = ({
         <div
           key={bank.id}
           className={cn(
-            'flex-shrink-0 rounded-2xl min-w-[140px] p-4 shadow-lg transition-all duration-200 hover:scale-[1.02]',
+            'flex-shrink-0 rounded-2xl min-w-[150px] p-4 shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl',
             bank.bgColor
           )}
         >
-          <div className="flex items-center gap-2 mb-3">
-            {bank.logo ? (
-              <div className="w-5 h-5 flex items-center justify-center">
-                <img
-                  src={bank.logo}
-                  alt={`${bank.name} logo`}
-                  className="w-full h-full object-contain brightness-0 invert"
-                />
-              </div>
-            ) : (
-              <Building2 className="w-4 h-4 text-white/80" />
-            )}
-            <span className="text-[11px] font-semibold text-white/70 tracking-wide">{bank.name}</span>
+          <div className="mb-3 h-6 flex items-center">
+            <BankLogo bankId={bank.id} />
           </div>
           <p className={cn(
-            'text-xl font-bold text-white font-mono tracking-tight',
-            bank.amount < 0 && 'text-red-200'
-          )}>
+            'text-xl font-bold font-mono tracking-tight',
+bank.id === 'revolut' ? 'text-gray-900' : 'text-white',
+bank.amount < 0 && 'text-red-500'          )}>
             {formatCurrencyCompact(bank.amount)}
           </p>
         </div>
