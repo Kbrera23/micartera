@@ -25,10 +25,16 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
         onMouseEnter={() => setIsCollapsed(false)}
         onMouseLeave={() => setIsCollapsed(true)}
         className={cn(
-          'min-h-screen bg-sidebar border-r border-border flex flex-col transition-all duration-300 ease-out overflow-hidden',
+          'min-h-screen flex flex-col transition-all duration-300 ease-out overflow-hidden',
           isCollapsed ? 'w-[76px]' : 'w-[260px]'
         )}
-        style={{ boxShadow: '1px 0 24px -12px hsl(222 47% 11% / 0.06)' }}
+        style={{
+          background: 'hsl(200 45% 8% / 0.85)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderRight: '1px solid hsl(186 60% 60% / 0.08)',
+          boxShadow: '1px 0 32px -12px hsl(200 45% 4% / 0.6)',
+        }}
       >
         {/* Logo Header */}
         <div className={cn('p-4 pb-6', !isCollapsed && 'p-6 pb-8')}>
