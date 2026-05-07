@@ -54,48 +54,60 @@ export const MinimalDashboard = ({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
+      <div className="animate-fade-in" style={{ animationDelay: '0ms' }}>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Resumen financiero</p>
       </div>
 
       {/* Monthly Summary */}
-      <MonthlySummaryCard expenses={expenses} categories={categories} />
+      <div style={{ animationDelay: '60ms' }} className="animate-fade-in">
+        <MonthlySummaryCard expenses={expenses} categories={categories} />
+      </div>
 
       {/* Bank Cards Header */}
-      <MinimalBankCards
-        userBanks={userBanks}
-        monthlyIncome={monthlyIncome}
-        savingsGoal={savingsGoal}
-        totalSubscriptions={totalSubscriptions}
-        reserveFund={reserveFund}
-        rent={rent}
-      />
+      <div style={{ animationDelay: '120ms' }} className="animate-fade-in">
+        <MinimalBankCards
+          userBanks={userBanks}
+          monthlyIncome={monthlyIncome}
+          savingsGoal={savingsGoal}
+          totalSubscriptions={totalSubscriptions}
+          reserveFund={reserveFund}
+          rent={rent}
+        />
+      </div>
 
       {/* Revolut Reminder */}
       {hasRevolut && (
-        <MonthlyReminder quarterlyProvision={quarterlyProvision} refetch={refetch} />
+        <div style={{ animationDelay: '180ms' }} className="animate-fade-in">
+          <MonthlyReminder quarterlyProvision={quarterlyProvision} refetch={refetch} />
+        </div>
       )}
 
       {/* Upcoming large payments */}
-      <UpcomingLargePayments recurringExpenses={recurringExpenses} onAddExpense={onAddExpense} refetch={refetch} />
+      <div style={{ animationDelay: '240ms' }} className="animate-fade-in">
+        <UpcomingLargePayments recurringExpenses={recurringExpenses} onAddExpense={onAddExpense} refetch={refetch} />
+      </div>
 
       {/* Recent one-time expenses */}
-      <RecentExpenses expenses={oneTimeExpenses} />
+      <div style={{ animationDelay: '300ms' }} className="animate-fade-in">
+        <RecentExpenses expenses={oneTimeExpenses} categories={categories} />
+      </div>
 
       {/* 4 KPI Pillars */}
-      <KPICards
-        monthlyIncome={monthlyIncome}
-        totalFixedExpenses={totalFixedExpenses}
-        rent={rent}
-        savingsGoal={savingsGoal}
-        reserveFund={reserveFund}
-        dineroLibre={dineroLibre}
-        totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
-        activeGoalsCount={activeGoalsCount}
-        trafficLightStatus={trafficLightStatus}
-        trafficLightMessage={trafficLightMessage}
-      />
+      <div style={{ animationDelay: '360ms' }} className="animate-fade-in">
+        <KPICards
+          monthlyIncome={monthlyIncome}
+          totalFixedExpenses={totalFixedExpenses}
+          rent={rent}
+          savingsGoal={savingsGoal}
+          reserveFund={reserveFund}
+          dineroLibre={dineroLibre}
+          totalPurchaseGoalQuotas={totalPurchaseGoalQuotas}
+          activeGoalsCount={activeGoalsCount}
+          trafficLightStatus={trafficLightStatus}
+          trafficLightMessage={trafficLightMessage}
+        />
+      </div>
     </div>
   );
 };
