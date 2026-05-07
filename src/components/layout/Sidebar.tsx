@@ -25,10 +25,16 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
         onMouseEnter={() => setIsCollapsed(false)}
         onMouseLeave={() => setIsCollapsed(true)}
         className={cn(
-          'min-h-screen bg-sidebar border-r border-border flex flex-col transition-all duration-300 ease-out overflow-hidden',
+          'min-h-screen flex flex-col transition-all duration-300 ease-out overflow-hidden',
           isCollapsed ? 'w-[76px]' : 'w-[260px]'
         )}
-        style={{ boxShadow: '1px 0 24px -12px hsl(222 47% 11% / 0.06)' }}
+        style={{
+          background: 'hsl(200 45% 8% / 0.85)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderRight: '1px solid hsl(186 60% 60% / 0.08)',
+          boxShadow: '1px 0 32px -12px hsl(200 45% 4% / 0.6)',
+        }}
       >
         {/* Logo Header */}
         <div className={cn('p-4 pb-6', !isCollapsed && 'p-6 pb-8')}>
@@ -73,10 +79,18 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
                     'w-full flex items-center gap-3 rounded-xl transition-all duration-200',
                     isCollapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-2.5',
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      ? 'glass-card text-foreground'
+                      : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
                   )}
-                  style={isActive ? { boxShadow: '0 6px 20px -8px hsl(var(--primary) / 0.45)' } : {}}
+                  style={
+                    isActive
+                      ? {
+                          color: 'hsl(186 100% 70%)',
+                          borderColor: 'hsl(186 100% 50% / 0.25)',
+                          boxShadow: '0 6px 20px -8px hsl(186 100% 50% / 0.35), inset 0 0 0 1px hsl(186 100% 50% / 0.15)',
+                        }
+                      : {}
+                  }
                 >
                   <Icon className="h-[18px] w-[18px] shrink-0" />
                   <span

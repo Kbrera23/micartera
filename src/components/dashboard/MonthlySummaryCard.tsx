@@ -75,38 +75,35 @@ export const MonthlySummaryCard = ({ expenses, categories }: MonthlySummaryCardP
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl bg-white shadow-md',
-        'animate-fade-in transition-all duration-300 hover:shadow-lg'
+        'glass-card-elevated relative overflow-hidden rounded-2xl',
+        'animate-fade-in transition-all duration-300 hover:-translate-y-0.5'
       )}
     >
-      {/* Subtle gradient accent */}
+      {/* Subtle cyan accent */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/40"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-blue-900/5 blur-3xl"
+        className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full blur-3xl"
+        style={{ background: 'hsl(186 100% 50% / 0.08)' }}
       />
 
       <div className="relative p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
-              <Sparkles className="h-3.5 w-3.5 text-blue-900" />
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <Sparkles className="h-3.5 w-3.5" style={{ color: 'hsl(186 100% 60%)' }} />
               Resumen del mes
             </div>
-            <h3 className="mt-1 text-lg font-semibold text-slate-900">{capitalizedMonth}</h3>
+            <h3 className="mt-1 text-lg font-semibold text-foreground">{capitalizedMonth}</h3>
           </div>
 
           {summary.hasPreviousData ? (
             <div
               className={cn(
-                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold',
-                isUp && 'bg-red-50 text-red-700',
-                isDown && 'bg-emerald-50 text-emerald-700',
-                !isUp && !isDown && 'bg-slate-100 text-slate-600'
+                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold backdrop-blur-md border',
+                isUp && 'bg-red-500/10 text-red-400 border-red-500/20',
+                isDown && 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                !isUp && !isDown && 'bg-white/5 text-muted-foreground border-white/10'
               )}
             >
               {isUp && <TrendingUp className="h-3.5 w-3.5" />}
@@ -115,7 +112,10 @@ export const MonthlySummaryCard = ({ expenses, categories }: MonthlySummaryCardP
               {Math.abs(summary.percentChange).toFixed(1)}%
             </div>
           ) : (
-            <div className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-900">
+            <div
+              className="rounded-full px-3 py-1.5 text-xs font-semibold border"
+              style={{ background: 'hsl(186 100% 50% / 0.1)', color: 'hsl(186 100% 70%)', borderColor: 'hsl(186 100% 50% / 0.2)' }}
+            >
               Primer mes registrado
             </div>
           )}
@@ -124,41 +124,41 @@ export const MonthlySummaryCard = ({ expenses, categories }: MonthlySummaryCardP
         {/* Totals */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-xs font-medium text-slate-500">Gastado este mes</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900 font-mono">
+            <p className="text-xs font-medium text-muted-foreground">Gastado este mes</p>
+            <p className="mt-1 text-2xl font-bold text-foreground font-mono">
               {formatCurrency(summary.currentTotal)}
             </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Mes anterior</p>
-            <p className="mt-1 text-2xl font-bold text-slate-400 font-mono">
+            <p className="text-xs font-medium text-muted-foreground">Mes anterior</p>
+            <p className="mt-1 text-2xl font-bold text-muted-foreground/60 font-mono">
               {summary.hasPreviousData ? formatCurrency(summary.previousTotal) : '—'}
             </p>
           </div>
         </div>
 
         {/* Top category */}
-        <div className="mt-5 pt-5 border-t border-slate-100">
+        <div className="mt-5 pt-5 border-t border-white/5">
           {summary.topCategory ? (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
                   className="flex h-10 w-10 items-center justify-center rounded-xl text-lg"
-                  style={{ backgroundColor: `${summary.topCategory.color}15` }}
+                  style={{ backgroundColor: `${summary.topCategory.color}25` }}
                 >
                   {summary.topCategory.icon}
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-500">Mayor gasto en</p>
-                  <p className="text-sm font-semibold text-slate-900">{summary.topCategory.name}</p>
+                  <p className="text-xs font-medium text-muted-foreground">Mayor gasto en</p>
+                  <p className="text-sm font-semibold text-foreground">{summary.topCategory.name}</p>
                 </div>
               </div>
-              <p className="text-base font-bold text-slate-900 font-mono">
+              <p className="text-base font-bold text-foreground font-mono">
                 {formatCurrency(summary.topCategory.total)}
               </p>
             </div>
           ) : (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {summary.hasCurrentData
                 ? 'Asigna categorías a tus gastos para ver el desglose.'
                 : 'Aún no hay gastos registrados este mes.'}
@@ -168,12 +168,12 @@ export const MonthlySummaryCard = ({ expenses, categories }: MonthlySummaryCardP
 
         {/* Comparison message */}
         {summary.hasPreviousData && (
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-muted-foreground">
             {isUp && (
-              <>Estás gastando <span className="font-semibold text-red-700">{formatCurrency(Math.abs(summary.diff))}</span> más que el mes pasado.</>
+              <>Estás gastando <span className="font-semibold text-red-400">{formatCurrency(Math.abs(summary.diff))}</span> más que el mes pasado.</>
             )}
             {isDown && (
-              <>Has ahorrado <span className="font-semibold text-emerald-700">{formatCurrency(Math.abs(summary.diff))}</span> respecto al mes pasado.</>
+              <>Has ahorrado <span className="font-semibold text-emerald-400">{formatCurrency(Math.abs(summary.diff))}</span> respecto al mes pasado.</>
             )}
             {!isUp && !isDown && <>Mismo nivel de gasto que el mes anterior.</>}
           </p>
