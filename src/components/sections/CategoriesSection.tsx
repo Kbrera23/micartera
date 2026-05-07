@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles, Pencil } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Category } from '@/hooks/useSupabaseFinances';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
@@ -43,7 +41,6 @@ const getUniqueCategories = (items: Category[]) => {
   });
 };
 
-// ========== MODAL COMPARTIDO (nueva y edición) ==========
 interface CategoryModalProps {
   initial?: Partial<Category>;
   title: string;
@@ -72,102 +69,78 @@ const CategoryModal = ({ initial, title, onClose, onSave }: CategoryModalProps) 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="glass-card-elevated rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-border">
+        <div className="flex items-center justify-between p-6 border-b border-border/50">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
               <Tag className="w-5 h-5 text-primary" />
             </div>
             <h3 className="text-lg font-bold text-foreground">{title}</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground">
-            ✕
-          </button>
+          <button onClick={onClose} className="p-2 hover:bg-muted/50 rounded-lg transition-colors text-muted-foreground">✕</button>
         </div>
 
         <div className="p-6 space-y-5">
           {/* Preview */}
-          <div className="flex items-center gap-3 p-4 bg-secondary/80 border border-border/70 rounded-xl">
-            <span className="text-2xl grid h-11 w-11 place-items-center rounded-xl bg-card border border-border/70">{icon}</span>
+          <div className="flex items-center gap-3 p-4 rounded-xl" style={{ background: 'hsl(200 35% 16%)' }}>
+            <span className="text-2xl grid h-11 w-11 place-items-center rounded-xl border border-border/50" style={{ background: 'hsl(200 40% 13%)' }}>{icon}</span>
             <div>
               <p className="font-semibold text-foreground">{name || 'Nombre categoría'}</p>
               <p className="text-xs text-muted-foreground">
                 Presupuesto: {budgetLimit ? formatCurrencyCompact(parseFloat(budgetLimit)) : '—'}/mes
               </p>
             </div>
-            <div className="ml-auto w-4 h-4 rounded-full" style={{ backgroundColor: color }} />
+            <div className="ml-auto w-4 h-4 rounded-full ring-2 ring-border/30" style={{ backgroundColor: color }} />
           </div>
 
-          {/* Name */}
           <div>
             <label className="text-sm font-medium text-foreground block mb-2">Nombre</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
+            <input type="text" value={name} onChange={e => setName(e.target.value)}
               placeholder="Ej: Restaurantes, Gym..."
-              className="w-full px-4 py-3 bg-secondary/70 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+              className="w-full px-4 py-3 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+              style={{ background: 'hsl(200 35% 16%)', border: '1px solid hsl(200 30% 22%)' }} />
           </div>
 
-          {/* Icon picker */}
           <div>
             <label className="text-sm font-medium text-foreground block mb-2">Icono</label>
             <div className="grid grid-cols-8 gap-2">
               {PRESET_ICONS.map(i => (
-                <button
-                  key={i}
-                  onClick={() => setIcon(i)}
-                  className={cn(
-                    'text-xl p-2 rounded-lg transition-all border border-transparent',
-                    icon === i ? 'bg-primary/20 ring-2 ring-primary border-primary/30' : 'hover:bg-muted/80'
-                  )}
-                >
-                  {i}
-                </button>
+                <button key={i} onClick={() => setIcon(i)}
+                  className={cn('text-xl p-2 rounded-lg transition-all border',
+                    icon === i ? 'bg-primary/20 ring-2 ring-primary border-primary/30' : 'border-transparent hover:bg-muted/50'
+                  )}>{i}</button>
               ))}
             </div>
           </div>
 
-          {/* Color picker */}
           <div>
             <label className="text-sm font-medium text-foreground block mb-2">Color</label>
             <div className="flex flex-wrap gap-2">
               {PRESET_COLORS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className={cn(
-                    'w-8 h-8 rounded-full transition-all',
-                    color === c ? 'ring-2 ring-offset-2 ring-offset-card ring-foreground scale-110' : 'hover:scale-105'
+                <button key={c} onClick={() => setColor(c)}
+                  className={cn('w-8 h-8 rounded-full transition-all',
+                    color === c ? 'ring-2 ring-offset-2 ring-offset-card ring-white scale-110' : 'hover:scale-105'
                   )}
-                  style={{ backgroundColor: c }}
-                />
+                  style={{ backgroundColor: c }} />
               ))}
             </div>
           </div>
 
-          {/* Budget limit */}
           <div>
             <label className="text-sm font-medium text-foreground block mb-2">Presupuesto mensual (opcional)</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
-              <input
-                type="number"
-                value={budgetLimit}
-                onChange={e => setBudgetLimit(e.target.value)}
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
+              <input type="number" value={budgetLimit} onChange={e => setBudgetLimit(e.target.value)}
                 placeholder="0"
-                className="w-full pl-8 pr-4 py-3 bg-secondary/70 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
+                className="w-full pl-8 pr-4 py-3 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                style={{ background: 'hsl(200 35% 16%)', border: '1px solid hsl(200 30% 22%)' }} />
             </div>
             <p className="text-xs text-muted-foreground mt-1">Deja en 0 para sin límite</p>
           </div>
         </div>
 
-        <div className="flex gap-3 p-6 border-t border-border">
-          <Button variant="outline" onClick={onClose} disabled={saving} className="flex-1 rounded-xl">
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={saving || !name.trim()} className="flex-1 rounded-xl">
+        <div className="flex gap-3 p-6 border-t border-border/50">
+          <Button variant="outline" onClick={onClose} disabled={saving} className="flex-1 rounded-xl">Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving || !name.trim()} className="flex-1 rounded-xl shadow-lg shadow-primary/20">
             {saving ? 'Guardando...' : 'Guardar'}
           </Button>
         </div>
@@ -176,7 +149,6 @@ const CategoryModal = ({ initial, title, onClose, onSave }: CategoryModalProps) 
   );
 };
 
-// ========== COMPONENTE PRINCIPAL ==========
 export const CategoriesSection = ({
   categories,
   expensesByCategory,
@@ -192,66 +164,72 @@ export const CategoriesSection = ({
 
   const totalBudget = uniqueCategories.reduce((sum, c) => sum + c.budget_limit, 0);
   const totalSpent = expensesByCategory.reduce((sum, s) => sum + s.total, 0);
+  const totalPct = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+  const isOverall = totalSpent > totalBudget;
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card/55 p-5 shadow-2xl shadow-background/30 backdrop-blur-xl">
-        <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-            Control visual
+      <div className="glass-card-elevated rounded-2xl p-5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative flex items-center justify-between">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              Control visual
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Organiza y controla tus gastos.</p>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Organiza y controla tus gastos.</p>
+          <Button onClick={() => setShowAddModal(true)} className="rounded-xl gap-2 shadow-lg shadow-primary/20">
+            <Plus className="h-4 w-4" />Nueva
+          </Button>
         </div>
-        <Button onClick={() => setShowAddModal(true)} className="rounded-xl gap-2 shadow-lg shadow-primary/20">
-          <Plus className="h-4 w-4" />
-          Nueva
-        </Button>
       </div>
 
       {/* Summary */}
       {totalBudget > 0 && (
-        <Card className="glass-card-elevated rounded-2xl">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <span className="font-semibold text-foreground">Resumen mensual</span>
+        <div className="glass-card rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                <TrendingUp className="h-4 w-4 text-primary" />
               </div>
-              <span className="text-sm text-muted-foreground">
-                {formatCurrencyCompact(totalSpent)} / {formatCurrencyCompact(totalBudget)}
-              </span>
+              <span className="font-semibold text-foreground">Resumen mensual</span>
             </div>
-            <Progress value={Math.min((totalSpent / totalBudget) * 100, 100)} className="h-2" />
-            <p className="text-xs text-muted-foreground mt-2">
-              {totalSpent > totalBudget
-                ? `⚠️ Excedido por ${formatCurrencyCompact(totalSpent - totalBudget)}`
-                : `Quedan ${formatCurrencyCompact(totalBudget - totalSpent)} disponibles`}
-            </p>
-          </CardContent>
-        </Card>
+            <span className={cn('text-sm font-medium', isOverall ? 'text-destructive' : 'text-muted-foreground')}>
+              {formatCurrencyCompact(totalSpent)} / {formatCurrencyCompact(totalBudget)}
+            </span>
+          </div>
+
+          {/* Barra de progreso custom */}
+          <div className="h-2.5 rounded-full overflow-hidden mb-2" style={{ background: 'hsl(200 35% 16%)' }}>
+            <div
+              className={cn('h-full rounded-full transition-all duration-700', isOverall ? 'bg-destructive' : 'bg-gradient-to-r from-primary to-primary/70')}
+              style={{ width: `${Math.min(totalPct, 100)}%` }}
+            />
+          </div>
+          <p className={cn('text-xs', isOverall ? 'text-destructive font-medium' : 'text-muted-foreground')}>
+            {isOverall
+              ? `⚠️ Excedido por ${formatCurrencyCompact(totalSpent - totalBudget)}`
+              : `Quedan ${formatCurrencyCompact(totalBudget - totalSpent)} disponibles este mes`}
+          </p>
+        </div>
       )}
 
       {/* Category grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(() => {
-          const withSpend = uniqueCategories.filter(cat => {
-            const stats = statsMap.get(cat.id);
-            return (stats?.total ?? 0) > 0;
-          });
+          const withSpend = uniqueCategories.filter(cat => (statsMap.get(cat.id)?.total ?? 0) > 0);
 
           if (withSpend.length === 0) {
             return (
-              <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
-                  <FolderOpen className="w-8 h-8 text-muted-foreground" />
+              <div className="col-span-full glass-card rounded-2xl py-14 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
+                  <FolderOpen className="w-8 h-8 text-muted-foreground/50" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-1">No hay gastos categorizados</h3>
-                <p className="text-sm text-muted-foreground max-w-sm">
-                  Asigna categorías a tus gastos para ver el seguimiento aquí.
-                </p>
+                <p className="text-sm text-muted-foreground max-w-sm">Asigna categorías a tus gastos para ver el seguimiento aquí.</p>
               </div>
             );
           }
@@ -263,91 +241,84 @@ export const CategoriesSection = ({
             const isOverBudget = stats?.isOverBudget ?? false;
             const isWarning = pct >= 80 && !isOverBudget;
 
-            const progressColor = isOverBudget
-              ? 'bg-destructive'
-              : isWarning
-              ? 'bg-expense'
-              : 'bg-income';
-
             return (
-              <Card key={cat.id} className="glass-card rounded-2xl transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                        style={{ backgroundColor: cat.color + '20' }}
-                      >
-                        {cat.icon}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-foreground leading-tight">{cat.name}</p>
-                        {cat.budget_limit > 0 && (
-                          <p className="text-xs text-muted-foreground">{formatCurrencyCompact(cat.budget_limit)}/mes</p>
-                        )}
-                      </div>
+              <div key={cat.id}
+                className="glass-card rounded-2xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-xl hover:shadow-primary/5 relative overflow-hidden">
+
+                {/* Glow de color de categoría */}
+                <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl opacity-20 pointer-events-none"
+                  style={{ backgroundColor: cat.color }} />
+
+                <div className="relative flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shadow-lg"
+                      style={{ backgroundColor: cat.color + '25', border: `1px solid ${cat.color}30` }}>
+                      {cat.icon}
                     </div>
-                    {/* ✅ Prompt 6: botones editar y eliminar */}
-                    <div className="flex items-center gap-1">
-                      {isOverBudget && <AlertTriangle className="h-4 w-4 text-destructive" />}
-                      <button
-                        onClick={() => setEditingCategory(cat)}
-                        className="p-1.5 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-lg transition-colors"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      {!cat.is_default && (
-                        <button
-                          onClick={() => onDeleteCategory(cat.id)}
-                          className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                    <div>
+                      <p className="font-semibold text-foreground leading-tight">{cat.name}</p>
+                      {cat.budget_limit > 0 && (
+                        <p className="text-xs text-muted-foreground">{formatCurrencyCompact(cat.budget_limit)}/mes</p>
                       )}
                     </div>
                   </div>
-
-                  <div className="flex items-baseline justify-between mb-2">
-                    <span className="text-lg font-bold text-foreground">{formatCurrencyCompact(spent)}</span>
-                    {cat.budget_limit > 0 && (
-                      <span className={cn(
-                        'text-xs font-medium',
-                        isOverBudget ? 'text-destructive' : isWarning ? 'text-yellow-600' : 'text-muted-foreground'
-                      )}>
-                        {Math.round(pct)}%
-                      </span>
+                  <div className="flex items-center gap-1">
+                    {isOverBudget && <AlertTriangle className="h-4 w-4 text-destructive" />}
+                    <button onClick={() => setEditingCategory(cat)}
+                      className="p-1.5 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-lg transition-colors">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    {!cat.is_default && (
+                      <button onClick={() => onDeleteCategory(cat.id)}
+                        className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     )}
                   </div>
+                </div>
 
+                <div className="flex items-baseline justify-between mb-2">
+                  <span className="text-2xl font-bold text-foreground">{formatCurrencyCompact(spent)}</span>
                   {cat.budget_limit > 0 && (
-                    <>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
-                        <div className={cn('h-full rounded-full transition-all', progressColor)} style={{ width: `${Math.min(pct, 100)}%` }} />
-                      </div>
-                      <p className={cn('text-xs', isOverBudget ? 'text-destructive font-medium' : 'text-muted-foreground')}>
-                        {isOverBudget
-                          ? `Excedido: +${formatCurrencyCompact(Math.abs(stats?.remaining ?? 0))}`
-                          : `Disponible: ${formatCurrencyCompact(Math.max(stats?.remaining ?? 0, 0))}`}
-                      </p>
-                    </>
+                    <span className={cn('text-sm font-bold',
+                      isOverBudget ? 'text-destructive' : isWarning ? 'text-yellow-400' : 'text-primary'
+                    )}>
+                      {Math.round(pct)}%
+                    </span>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+
+                {cat.budget_limit > 0 && (
+                  <>
+                    <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ background: 'hsl(200 35% 18%)' }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: `${Math.min(pct, 100)}%`,
+                          background: isOverBudget
+                            ? 'hsl(0 72% 51%)'
+                            : isWarning
+                            ? 'hsl(45 93% 47%)'
+                            : cat.color,
+                        }}
+                      />
+                    </div>
+                    <p className={cn('text-xs', isOverBudget ? 'text-destructive font-medium' : 'text-muted-foreground')}>
+                      {isOverBudget
+                        ? `⚠️ Excedido: +${formatCurrencyCompact(Math.abs(stats?.remaining ?? 0))}`
+                        : `Disponible: ${formatCurrencyCompact(Math.max(stats?.remaining ?? 0, 0))}`}
+                    </p>
+                  </>
+                )}
+              </div>
             );
           });
         })()}
       </div>
 
-      {/* Modal nueva categoría */}
       {showAddModal && (
-        <CategoryModal
-          title="Nueva Categoría"
-          onClose={() => setShowAddModal(false)}
-          onSave={onAddCategory}
-        />
+        <CategoryModal title="Nueva Categoría" onClose={() => setShowAddModal(false)} onSave={onAddCategory} />
       )}
-
-      {/* Modal editar categoría */}
       {editingCategory && (
         <CategoryModal
           title="Editar Categoría"
