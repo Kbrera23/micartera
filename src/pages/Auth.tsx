@@ -186,7 +186,33 @@ export default function Auth() {
             }}
           />
 
+          {/* Header */}
+          <div className="relative z-10 pt-10 pb-4 px-8 text-center">
+            <div
+              className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+              style={{
+                background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
+                transform: `translateX(${tilt.y * 2}px) translateY(${tilt.x * 2}px) translateZ(30px)`,
+                transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: '0 8px 32px hsl(186 100% 50% / 0.25)',
+              }}
+            >
+              <Wallet className="w-7 h-7" style={{ color: 'hsl(200 45% 8%)' }} />
+            </div>
+            <h1
+              className="text-2xl font-bold tracking-tight text-white mb-1"
+              style={{
+                transform: `translateX(${tilt.y * 0.5}px) translateY(${tilt.x * 0.5}px)`,
+                transition: 'transform 0.2s ease-out',
+              }}
+            >
+              MiCartera
+            </h1>
+            <p className="text-sm text-white/40">Control financiero inteligente</p>
+          </div>
+
           {/* Form content */}
+
           <div className="relative z-10 px-8 pb-8">
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6 bg-white/5 border border-white/5 rounded-xl h-11">
