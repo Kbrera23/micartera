@@ -341,4 +341,36 @@
     0%   { background-position: -200% center; }
     100% { background-position: 200% center; }
   }
+}/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  transition: background 0.3s ease;
+}
+
+/* Solo aparece al hacer hover en el contenedor */
+*:hover::-webkit-scrollbar-thumb {
+  background: hsl(186 100% 45% / 0.5);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(186 100% 45% / 0.8);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: hsl(186 100% 45% / 0.5) transparent;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { messaging, getToken, onMessage, VAPID_KEY } from '@/lib/firebase';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -63,7 +63,7 @@ export const useNotifications = () => {
     }
   };
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -100,7 +100,7 @@ export const useNotifications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const updateSettings = async (updates: Partial<NotificationSettings>) => {
     if (!user || !settings) return;
@@ -161,13 +161,13 @@ export const useNotifications = () => {
     return () => clearInterval(interval);
   }, [settings]);
 
+  // Load settings on mount and when user changes
   useEffect(() => {
     if (typeof Notification !== 'undefined') {
-      console.log('Permission on load:', Notification.permission);
       setPermission(Notification.permission);
     }
     loadSettings();
-  }, [user]);
+  }, [loadSettings]);
 
   return {
     permission,

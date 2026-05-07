@@ -77,7 +77,7 @@ export const AddExpenseForm = ({ onAddExpense }: AddExpenseFormProps) => {
               />
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between py-2">
             <div className="space-y-0.5">
               <Label htmlFor="recurring">Gasto recurrente</Label>

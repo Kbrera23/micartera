@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, ArrowRight, Wallet } from 'lucide-react';
+import { Loader2, ArrowRight, Wallet, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 
 const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'La contraseña debe tener al menos 6 caracteres');
 
-// Generate floating orbs data once
 const generateOrbs = () =>
   Array.from({ length: 5 }, (_, i) => ({
     id: i,
@@ -28,11 +28,13 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<'auth' | 'forgot'>('auth');
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const orbs = useMemo(generateOrbs, []);
 
-  // Mouse parallax state
   const containerRef = useRef<HTMLDivElement>(null);
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -42,13 +44,28 @@ export default function Auth() {
     if (user) navigate('/');
   }, [user, navigate]);
 
+  // Cleanup RAF on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     cancelAnimationFrame(rafRef.current);
+    // Capture values before the async RAF executes
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    const currentTarget = e.currentTarget;
+
     rafRef.current = requestAnimationFrame(() => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const mx = (e.clientX - rect.left) / rect.width;
-      const my = (e.clientY - rect.top) / rect.height;
-      const dx = (mx - 0.5) * 2; // -1 to 1
+      // Guard: element may have unmounted by the time RAF fires
+      if (!containerRef.current || !currentTarget) return;
+      const rect = currentTarget.getBoundingClientRect();
+      if (!rect) return;
+      const mx = (clientX - rect.left) / rect.width;
+      const my = (clientY - rect.top) / rect.height;
+      const dx = (mx - 0.5) * 2;
       const dy = (my - 0.5) * 2;
       setMouse({ x: mx, y: my });
       setTilt({ x: dy * 12, y: -dx * 12 });
@@ -97,15 +114,37 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      emailSchema.parse(forgotEmail);
+    } catch {
+      toast.error('Introduce un email válido');
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error('Error al enviar el email. Inténtalo de nuevo.');
+    } else {
+      setForgotSent(true);
+    }
+  };
+
+  const bgStyle = {
+    background: `radial-gradient(ellipse at 0% 0%, hsl(195 60% 16%) 0%, transparent 55%),
+                 radial-gradient(ellipse at 100% 100%, hsl(210 50% 12%) 0%, transparent 55%),
+                 hsl(200 45% 10%)`,
+  };
+
   return (
     <div
       ref={containerRef}
       className="min-h-screen flex items-center justify-center overflow-hidden relative"
-      style={{
-        background: `radial-gradient(ellipse at 0% 0%, hsl(195 60% 16%) 0%, transparent 55%),
-                     radial-gradient(ellipse at 100% 100%, hsl(210 50% 12%) 0%, transparent 55%),
-                     hsl(200 45% 10%)`,
-      }}
+      style={bgStyle}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -121,7 +160,7 @@ export default function Auth() {
         }}
       />
 
-      {/* Floating orbs that react to mouse */}
+      {/* Floating orbs */}
       {orbs.map((orb) => (
         <div
           key={orb.id}
@@ -150,7 +189,7 @@ export default function Auth() {
         }}
       />
 
-      {/* Card with 3D tilt */}
+      {/* Card */}
       <div
         className="relative z-10 w-full max-w-[420px] mx-4"
         style={{
@@ -160,7 +199,6 @@ export default function Auth() {
           transformStyle: 'preserve-3d',
         }}
       >
-        {/* Card glow border - animated conic cyan */}
         <div
           className="absolute -inset-[1px] rounded-3xl opacity-70"
           style={{
@@ -178,7 +216,6 @@ export default function Auth() {
             border: '1px solid hsl(186 60% 50% / 0.10)',
           }}
         >
-          {/* Inner cursor glow */}
           <div
             className="pointer-events-none absolute inset-0 rounded-3xl"
             style={{
@@ -208,12 +245,77 @@ export default function Auth() {
             >
               MiCartera
             </h1>
-            <p className="text-sm text-white/40">Control financiero inteligente</p>
+            <p className="text-sm text-white/40">
+              {view === 'forgot' ? 'Recupera tu acceso' : 'Control financiero inteligente'}
+            </p>
           </div>
 
-          {/* Form content */}
-
+          {/* Content */}
           <div className="relative z-10 px-8 pb-8">
+
+            {/* ===== VISTA RECUPERAR CONTRASEÑA ===== */}
+            {view === 'forgot' ? (
+              <div className="space-y-4">
+                {forgotSent ? (
+                  <div className="text-center space-y-4 py-4">
+                    <div className="text-4xl">📬</div>
+                    <p className="text-white/80 text-sm leading-relaxed">
+                      Te hemos enviado un enlace a <span className="text-white font-medium">{forgotEmail}</span>. Revisa tu bandeja de entrada.
+                    </p>
+                    <button
+                      onClick={() => { setView('auth'); setForgotSent(false); setForgotEmail(''); }}
+                      className="text-sm text-white/50 hover:text-white transition-colors flex items-center gap-1 mx-auto"
+                    >
+                      <ArrowLeft className="w-3 h-3" /> Volver al inicio de sesión
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-white/50 text-sm">
+                      Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.
+                    </p>
+                    <form onSubmit={handleForgotPassword} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="forgot-email" className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                          Email
+                        </Label>
+                        <Input
+                          id="forgot-email"
+                          type="email"
+                          placeholder="tu@email.com"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all"
+                          style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
+                          autoComplete="email"
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        className="w-full h-12 rounded-xl text-sm font-semibold"
+                        style={{
+                          background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
+                          boxShadow: '0 4px 24px hsl(186 100% 50% / 0.20)',
+                          color: 'hsl(200 45% 8%)',
+                        }}
+                        disabled={loading}
+                      >
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Enviar enlace'}
+                      </Button>
+                    </form>
+                    <button
+                      onClick={() => setView('auth')}
+                      className="text-sm text-white/50 hover:text-white transition-colors flex items-center gap-1 mx-auto"
+                    >
+                      <ArrowLeft className="w-3 h-3" /> Volver
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+
+            /* ===== VISTA LOGIN / REGISTRO ===== */
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6 bg-white/5 border border-white/5 rounded-xl h-11">
                 <TabsTrigger
@@ -240,7 +342,8 @@ export default function Auth() {
                       placeholder="tu@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all" style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
+                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all"
+                      style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
                       autoComplete="email"
                       required
                     />
@@ -253,17 +356,31 @@ export default function Auth() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all" style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
+                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all"
+                      style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
                       autoComplete="current-password"
                       required
                     />
                   </div>
+
+                  {/* Enlace recuperar contraseña */}
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => setView('forgot')}
+                      className="text-xs text-white/40 hover:text-white/70 transition-colors"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </button>
+                  </div>
+
                   <Button
                     type="submit"
                     className="w-full h-12 rounded-xl text-sm font-semibold group relative overflow-hidden"
                     style={{
                       background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
-                      boxShadow: '0 4px 24px hsl(186 100% 50% / 0.20)', color: 'hsl(200 45% 8%)',
+                      boxShadow: '0 4px 24px hsl(186 100% 50% / 0.20)',
+                      color: 'hsl(200 45% 8%)',
                     }}
                     disabled={loading}
                   >
@@ -289,7 +406,8 @@ export default function Auth() {
                       placeholder="tu@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all" style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
+                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all"
+                      style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
                       autoComplete="email"
                       required
                     />
@@ -302,7 +420,8 @@ export default function Auth() {
                       placeholder="Mínimo 6 caracteres"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all" style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
+                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all"
+                      style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
                       autoComplete="new-password"
                       required
                     />
@@ -312,7 +431,8 @@ export default function Auth() {
                     className="w-full h-12 rounded-xl text-sm font-semibold group relative overflow-hidden"
                     style={{
                       background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
-                      boxShadow: '0 4px 24px hsl(186 100% 50% / 0.20)', color: 'hsl(200 45% 8%)',
+                      boxShadow: '0 4px 24px hsl(186 100% 50% / 0.20)',
+                      color: 'hsl(200 45% 8%)',
                     }}
                     disabled={loading}
                   >
@@ -328,11 +448,11 @@ export default function Auth() {
                 </form>
               </TabsContent>
             </Tabs>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Bottom branding */}
       <p className="absolute bottom-6 text-[11px] text-white/15 tracking-widest uppercase font-medium">
         MiCartera · v3.0
       </p>

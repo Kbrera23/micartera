@@ -35,45 +35,37 @@ export const BankCSVImporter = () => {
   const detectBankFormat = (headers: string[]) => {
     const headersStr = headers.map(h => String(h || '').toUpperCase().trim()).join('|');
     
-    console.log('Detectando formato con headers:', headersStr);
     
     // Santander tiene estas columnas exactas
     if (headersStr.includes('FECHA OPERACIÓN') || headersStr.includes('FECHA OPERACION')) {
-      console.log('→ Formato SANTANDER detectado');
       return 'SANTANDER';
     }
     
     // BBVA
     if (headersStr.includes('FECHA') && headersStr.includes('IMPORTE') && !headersStr.includes('CONCEPTO')) {
-      console.log('→ Formato BBVA detectado');
       return 'BBVA';
     }
     
     // CaixaBank
     if (headersStr.includes('DATA') && headersStr.includes('IMPORT')) {
-      console.log('→ Formato CAIXABANK detectado');
       return 'CAIXABANK';
     }
     
     // ING
     if (headersStr.includes('NOMBRE / DESCRIPCIÓN') || headersStr.includes('DESCRIPTION')) {
-      console.log('→ Formato ING detectado');
       return 'ING';
     }
     
     // Revolut
     if (headersStr.includes('COMPLETED DATE')) {
-      console.log('→ Formato REVOLUT detectado');
       return 'REVOLUT';
     }
     
     // N26
     if (headersStr.includes('PAYEE') && headersStr.includes('AMOUNT (EUR)')) {
-      console.log('→ Formato N26 detectado');
       return 'N26';
     }
     
-    console.log('→ Formato GENERIC (intentará auto-detectar)');
     return 'GENERIC';
   };
 
@@ -84,8 +76,6 @@ export const BankCSVImporter = () => {
       let description = '';
       let amount = 0;
 
-      console.log(`\n--- Parseando fila ${rowIndex} (formato: ${format}) ---`);
-      console.log('Datos de la fila:', row);
 
       switch (format) {
         case 'SANTANDER':
@@ -96,7 +86,6 @@ export const BankCSVImporter = () => {
           const importeStr = String(santanderImporte).replace(' EUR', '').replace('€', '').trim();
           const hasDotAndComma = importeStr.includes('.') && importeStr.includes(',');
           amount = parseFloat(hasDotAndComma ? importeStr.replace(/\./g, '').replace(',', '.') : importeStr.replace(',', '.'));
-          console.log('Santander extraído:', { date, description, amount });
           break;
 
         case 'BBVA':
@@ -131,7 +120,6 @@ export const BankCSVImporter = () => {
 
         case 'GENERIC':
           const keys = Object.keys(row);
-          console.log('Keys disponibles:', keys);
           
           // Buscar fecha
           const dateKey = keys.find(k => {
@@ -158,7 +146,6 @@ export const BankCSVImporter = () => {
                    lower.includes('monto');
           }) || keys[keys.length - 2]; // Penúltima columna (antes del saldo) si no encuentra
           
-          console.log('Columnas auto-detectadas:', { dateKey, descKey, amountKey });
           
           if (dateKey) date = row[dateKey];
           if (descKey) description = row[descKey];
@@ -172,27 +159,23 @@ export const BankCSVImporter = () => {
             amount = parseFloat(amountStr);
           }
           
-          console.log('Valores auto-detectados:', { date, description, amount });
           break;
       }
 
       // Validar que tengamos datos mínimos
       if (!date || !description || isNaN(amount) || amount === 0) {
-        console.log('❌ Fila inválida (falta fecha, descripción o importe)');
         return null;
       }
 
       // Normalizar fecha
       const normalizedDate = normalizeDate(date);
       if (!normalizedDate) {
-        console.log('❌ Fecha inválida:', date);
         return null;
       }
 
       // Solo gastos (convertir todo a positivo)
       const finalAmount = Math.abs(amount);
 
-      console.log('✅ Transacción válida:', { normalizedDate, description, finalAmount });
 
       return {
         date: normalizedDate,
@@ -201,7 +184,7 @@ export const BankCSVImporter = () => {
         category: categorizeTransaction(description)
       };
     } catch (err) {
-      console.error('❌ Error parseando transacción:', err);
+      console.error('âŒ Error parseando transacción:', err);
       return null;
     }
   };
@@ -268,9 +251,6 @@ export const BankCSVImporter = () => {
         skipEmptyLines: true,
         complete: (results) => {
           try {
-            console.log('\n========== PROCESANDO CSV ==========');
-            console.log('Headers detectados:', results.meta.fields);
-            console.log('Total de filas:', results.data.length);
 
             const format = detectBankFormat(results.meta.fields || []);
             const transactions: Transaction[] = [];
@@ -282,8 +262,6 @@ export const BankCSVImporter = () => {
               }
             }
 
-            console.log('\n========== RESULTADO ==========');
-            console.log('Transacciones válidas encontradas:', transactions.length);
             resolve(transactions);
           } catch (error: any) {
             reject(new Error('Error procesando CSV: ' + error.message));
@@ -303,7 +281,6 @@ export const BankCSVImporter = () => {
       
       reader.onload = (e) => {
         try {
-          console.log('\n========== PROCESANDO EXCEL ==========');
           
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
@@ -316,8 +293,6 @@ export const BankCSVImporter = () => {
             raw: false  // Importante: convertir todo a strings
           });
 
-          console.log('Total de filas en el archivo:', rawData.length);
-          console.log('Primeras 10 filas:', rawData.slice(0, 10));
 
           // Buscar la fila de headers (debe contener FECHA, CONCEPTO, IMPORTE, etc.)
           let headerRowIndex = -1;
@@ -334,7 +309,6 @@ export const BankCSVImporter = () => {
                 (potentialHeaders.some(h => h.includes('CONCEPTO')) || potentialHeaders.some(h => h.includes('IMPORTE')))) {
               headerRowIndex = i;
               headers = row.map(cell => String(cell || ''));
-              console.log(`✅ HEADERS ENCONTRADOS en fila ${i}:`, headers);
               break;
             }
           }
@@ -355,8 +329,6 @@ export const BankCSVImporter = () => {
               return obj;
             });
 
-          console.log('\n========== PROCESANDO TRANSACCIONES ==========');
-          console.log('Total de filas de datos:', jsonData.length);
 
           const format = detectBankFormat(headers);
 
@@ -368,8 +340,6 @@ export const BankCSVImporter = () => {
             }
           }
 
-          console.log('\n========== RESULTADO ==========');
-          console.log('Transacciones válidas encontradas:', transactions.length);
 
           resolve(transactions);
         } catch (error: any) {
@@ -620,7 +590,7 @@ export const BankCSVImporter = () => {
               <h4 className="font-semibold text-green-900 mb-1">¡Importación completada!</h4>
               <div className="text-sm text-green-700 space-y-1">
                 <p>✅ {result.success} transacciones importadas correctamente</p>
-                {result.failed > 0 && <p>❌ {result.failed} transacciones fallidas</p>}
+                {result.failed > 0 && <p>âŒ {result.failed} transacciones fallidas</p>}
                 {result.duplicates > 0 && <p>⚠️ {result.duplicates} transacciones duplicadas omitidas</p>}
               </div>
             </div>

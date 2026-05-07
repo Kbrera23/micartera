@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+import ResetPassword from "./pages/ResetPassword";
 
 document.documentElement.classList.remove("dark");
 
@@ -36,6 +37,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/onboarding" element={
         <ProtectedRoute>
           <Onboarding />
