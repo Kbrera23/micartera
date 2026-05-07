@@ -101,16 +101,20 @@ export default function Auth() {
     <div
       ref={containerRef}
       className="min-h-screen flex items-center justify-center overflow-hidden relative"
-      style={{ background: 'hsl(222, 47%, 5%)' }}
+      style={{
+        background: `radial-gradient(ellipse at 0% 0%, hsl(195 60% 16%) 0%, transparent 55%),
+                     radial-gradient(ellipse at 100% 100%, hsl(210 50% 12%) 0%, transparent 55%),
+                     hsl(200 45% 10%)`,
+      }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       {/* Animated grid */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
-          backgroundImage: `linear-gradient(hsl(158 64% 48% / 0.5) 1px, transparent 1px),
-                            linear-gradient(90deg, hsl(158 64% 48% / 0.5) 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(hsl(186 100% 50% / 0.5) 1px, transparent 1px),
+                            linear-gradient(90deg, hsl(186 100% 50% / 0.5) 1px, transparent 1px)`,
           backgroundSize: '40px 40px',
           transform: `translate(${(mouse.x - 0.5) * -10}px, ${(mouse.y - 0.5) * -10}px)`,
           transition: 'transform 0.3s ease-out',
@@ -127,7 +131,7 @@ export default function Auth() {
             height: orb.size,
             left: `${orb.x}%`,
             top: `${orb.y}%`,
-            background: `radial-gradient(circle, hsl(${orb.hue} 70% 50% / 0.12), transparent 70%)`,
+            background: `radial-gradient(circle, hsl(${orb.hue} 80% 50% / 0.14), transparent 70%)`,
             transform: `translate(${(mouse.x - 0.5) * -(20 + orb.id * 8)}px, ${(mouse.y - 0.5) * -(20 + orb.id * 8)}px)`,
             transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
             animationDelay: `${orb.delay}s`,
@@ -140,8 +144,8 @@ export default function Auth() {
       <div
         className="pointer-events-none fixed inset-0"
         style={{
-          background: `radial-gradient(600px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.08), transparent 50%),
-                       radial-gradient(300px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.04), transparent 60%)`,
+          background: `radial-gradient(600px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(186 100% 50% / 0.10), transparent 50%),
+                       radial-gradient(300px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(195 90% 45% / 0.05), transparent 60%)`,
           transition: 'background 0.15s ease-out',
         }}
       />
@@ -156,48 +160,31 @@ export default function Auth() {
           transformStyle: 'preserve-3d',
         }}
       >
-        {/* Card glow border */}
+        {/* Card glow border - animated conic cyan */}
         <div
-          className="absolute -inset-[1px] rounded-3xl opacity-60"
+          className="absolute -inset-[1px] rounded-3xl opacity-70"
           style={{
-            background: `conic-gradient(from ${mouse.x * 360}deg at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.3), transparent 40%, hsl(234 89% 60% / 0.2), transparent 70%, hsl(158 64% 48% / 0.3))`,
+            background: `conic-gradient(from ${mouse.x * 360}deg at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(186 100% 50% / 0.45), transparent 35%, hsl(195 90% 50% / 0.30), transparent 70%, hsl(186 100% 50% / 0.45))`,
             transition: 'background 0.3s ease-out',
           }}
         />
 
-        <div className="relative rounded-3xl overflow-hidden" style={{ background: 'hsl(0 0% 6% / 0.9)', backdropFilter: 'blur(40px)' }}>
+        <div
+          className="relative rounded-3xl overflow-hidden"
+          style={{
+            background: 'hsl(200 40% 12% / 0.92)',
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)',
+            border: '1px solid hsl(186 60% 50% / 0.10)',
+          }}
+        >
           {/* Inner cursor glow */}
           <div
             className="pointer-events-none absolute inset-0 rounded-3xl"
             style={{
-              background: `radial-gradient(400px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(158 64% 48% / 0.05), transparent 60%)`,
+              background: `radial-gradient(400px circle at ${mouse.x * 100}% ${mouse.y * 100}%, hsl(186 100% 50% / 0.07), transparent 60%)`,
             }}
           />
-
-          {/* Header */}
-          <div className="relative z-10 pt-10 pb-4 px-8 text-center">
-            <div
-              className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
-              style={{
-                background: 'linear-gradient(135deg, hsl(158 64% 48%), hsl(158 64% 38%))',
-                transform: `translateX(${tilt.y * 2}px) translateY(${tilt.x * 2}px) translateZ(30px)`,
-                transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: '0 8px 32px hsl(158 64% 48% / 0.3)',
-              }}
-            >
-              <Wallet className="w-7 h-7 text-white" />
-            </div>
-            <h1
-              className="text-2xl font-bold tracking-tight text-white mb-1"
-              style={{
-                transform: `translateX(${tilt.y * 0.5}px) translateY(${tilt.x * 0.5}px)`,
-                transition: 'transform 0.2s ease-out',
-              }}
-            >
-              MiCartera
-            </h1>
-            <p className="text-sm text-white/40">Control financiero inteligente</p>
-          </div>
 
           {/* Form content */}
           <div className="relative z-10 px-8 pb-8">
