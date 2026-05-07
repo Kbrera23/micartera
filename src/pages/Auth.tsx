@@ -262,8 +262,8 @@ export default function Auth() {
                     type="submit"
                     className="w-full h-12 rounded-xl text-sm font-semibold group relative overflow-hidden"
                     style={{
-                      background: 'linear-gradient(135deg, hsl(158 64% 48%), hsl(158 64% 38%))',
-                      boxShadow: '0 4px 24px hsl(158 64% 48% / 0.25)',
+                      background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
+                      boxShadow: '0 4px 24px hsl(186 100% 50% / 0.20)', color: 'hsl(200 45% 8%)',
                     }}
                     disabled={loading}
                   >
@@ -311,8 +311,8 @@ export default function Auth() {
                     type="submit"
                     className="w-full h-12 rounded-xl text-sm font-semibold group relative overflow-hidden"
                     style={{
-                      background: 'linear-gradient(135deg, hsl(158 64% 48%), hsl(158 64% 38%))',
-                      boxShadow: '0 4px 24px hsl(158 64% 48% / 0.25)',
+                      background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
+                      boxShadow: '0 4px 24px hsl(186 100% 50% / 0.20)', color: 'hsl(200 45% 8%)',
                     }}
                     disabled={loading}
                   >
