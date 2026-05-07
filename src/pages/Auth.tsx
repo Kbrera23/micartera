@@ -240,7 +240,7 @@ export default function Auth() {
                       placeholder="tu@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 rounded-xl bg-white/5 border-white/8 text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all" style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
                       autoComplete="email"
                       required
                     />
@@ -253,7 +253,7 @@ export default function Auth() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 rounded-xl bg-white/5 border-white/8 text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all" style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
                       autoComplete="current-password"
                       required
                     />
@@ -289,7 +289,7 @@ export default function Auth() {
                       placeholder="tu@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 rounded-xl bg-white/5 border-white/8 text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all" style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
                       autoComplete="email"
                       required
                     />
@@ -302,7 +302,7 @@ export default function Auth() {
                       placeholder="Mínimo 6 caracteres"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 rounded-xl bg-white/5 border-white/8 text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                      className="h-12 rounded-xl text-white placeholder:text-white/25 focus:ring-2 focus:ring-primary/30 transition-all" style={{ background: "hsl(200 35% 16%)", border: "1px solid hsl(186 60% 50% / 0.12)" }}
                       autoComplete="new-password"
                       required
                     />
