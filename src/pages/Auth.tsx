@@ -21,7 +21,7 @@ const generateOrbs = () =>
     y: Math.random() * 100,
     delay: i * 1.2,
     duration: 8 + Math.random() * 6,
-    hue: [158, 234, 270, 158, 200][i],
+    hue: [186, 195, 200, 186, 195][i],
   }));
 
 export default function Auth() {
