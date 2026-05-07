@@ -98,21 +98,27 @@ export const MinimalBankCards = ({
 
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-      {activeBanks.map((bank) => (
+      {activeBanks.map((bank, idx) => (
         <div
           key={bank.id}
           className={cn(
-            'flex-shrink-0 rounded-2xl min-w-[150px] p-4 shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl',
+            'flex-shrink-0 rounded-2xl min-w-[150px] p-4 transition-all duration-300 ease-out',
+            'shadow-[0_8px_24px_-8px_hsl(200_45%_4%/0.6),0_2px_8px_-2px_hsl(200_45%_4%/0.4)]',
+            'hover:scale-[1.04] hover:-translate-y-1',
+            'hover:shadow-[0_20px_40px_-12px_hsl(200_45%_4%/0.7),0_8px_16px_-4px_hsl(186_100%_50%/0.15)]',
+            'animate-fade-in',
             bank.bgColor
           )}
+          style={{ animationDelay: `${idx * 60}ms` }}
         >
           <div className="mb-3 h-6 flex items-center">
             <BankLogo bankId={bank.id} />
           </div>
           <p className={cn(
             'text-xl font-bold font-mono tracking-tight',
-bank.id === 'revolut' ? 'text-gray-900' : 'text-white',
-bank.amount < 0 && 'text-red-500'          )}>
+            bank.id === 'revolut' ? 'text-gray-900' : 'text-white',
+            bank.amount < 0 && 'text-red-400'
+          )}>
             {formatCurrencyCompact(bank.amount)}
           </p>
         </div>
