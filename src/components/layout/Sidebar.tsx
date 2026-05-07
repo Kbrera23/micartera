@@ -79,10 +79,18 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
                     'w-full flex items-center gap-3 rounded-xl transition-all duration-200',
                     isCollapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-2.5',
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      ? 'glass-card text-foreground'
+                      : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
                   )}
-                  style={isActive ? { boxShadow: '0 6px 20px -8px hsl(var(--primary) / 0.45)' } : {}}
+                  style={
+                    isActive
+                      ? {
+                          color: 'hsl(186 100% 70%)',
+                          borderColor: 'hsl(186 100% 50% / 0.25)',
+                          boxShadow: '0 6px 20px -8px hsl(186 100% 50% / 0.35), inset 0 0 0 1px hsl(186 100% 50% / 0.15)',
+                        }
+                      : {}
+                  }
                 >
                   <Icon className="h-[18px] w-[18px] shrink-0" />
                   <span
