@@ -1,7 +1,11 @@
-import { useState } from 'react';
-import { LayoutDashboard, Receipt, Gift, User, Wallet, Tag } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { LayoutDashboard, Receipt, Gift, User as UserIcon, Wallet, Tag, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SidebarProps {
   currentSection: string;
