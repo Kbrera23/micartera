@@ -17,7 +17,7 @@ const navItems = [
   { id: 'gastos', label: 'Gastos', icon: Receipt },
   { id: 'objetivos', label: 'Objetivos', icon: Gift },
   { id: 'categorias', label: 'Categorías', icon: Tag },
-  { id: 'perfil', label: 'Perfil', icon: User },
+  { id: 'perfil', label: 'Perfil', icon: UserIcon },
 ];
 
 export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
