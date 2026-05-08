@@ -38,15 +38,49 @@ const categorizarGasto = (concepto: string): { categoria: CategoryName; auto: bo
   return { categoria: 'Otros', auto: false };
 };
 
+const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'en', 'a', 'y', 'es']);
+const capitalizeWords = (s: string) =>
+  s.toLowerCase().split(/\s+/).map((w, i) => {
+    if (!w) return w;
+    if (i > 0 && STOPWORDS.has(w)) return w;
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }).join(' ');
+
 const limpiarConcepto = (concepto: string): string => {
   let t = (concepto || '').trim();
+
+  // Bizum: extract person name
+  const bizumMatch = t.match(/bizum\s+(?:de|a|recibido de|enviado a)?\s*[:\-]?\s*([a-záéíóúñA-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{2,40})/i);
+  if (/bizum/i.test(t) && bizumMatch) {
+    const nombre = capitalizeWords(bizumMatch[1].trim().replace(/[,\.].*$/, '').trim());
+    return `Bizum ${nombre}`.slice(0, 35);
+  }
+
+  // Remove card refs
   t = t.replace(/,?\s*tarj\.?:?\s*\*?\d+/gi, '');
-  t = t.replace(/\b(pago movil en|pago móvil en|compra en|compra\s+|pago\s+en|recibo\s+de|recibo\s+)\b/gi, '');
-  t = t.replace(/\s{2,}/g, ' ').replace(/\s*,\s*/g, ', ').replace(/^[,\s]+|[,\s]+$/g, '');
-  t = t.toLowerCase().replace(/\b([a-záéíóúñ])/g, m => m.toUpperCase());
-  if (t.length > 40) t = t.slice(0, 39).trimEnd() + '…';
-  return t || concepto.slice(0, 40);
+  t = t.replace(/\btarj\s*\*?\d+/gi, '');
+
+  // Remove common bank prefixes
+  t = t.replace(/\b(pago\s+movil\s+en|pago\s+móvil\s+en|compra\s+en|pago\s+en|bizum\s+de|bizum\s+a|recibo\s+de|recibo|transferencia\s+a|transferencia\s+de|transferencia)\b/gi, '');
+
+  // Remove the word "concepto" and stray "es," city codes
+  t = t.replace(/\bconcepto\b[:\s]*/gi, '');
+  t = t.replace(/\bes\s*,/gi, ',');
+  t = t.replace(/\b[a-záéíóúñ]+\s+es\b\s*,?/gi, m => /,/.test(m) ? ',' : ' ');
+
+  // Cleanup separators
+  t = t.replace(/[,;]+/g, ' ');
+  t = t.replace(/\s{2,}/g, ' ').trim();
+  t = t.replace(/^[,\s\-]+|[,\s\-]+$/g, '');
+
+  if (!t) return concepto.slice(0, 35);
+
+  t = capitalizeWords(t);
+
+  if (t.length > 35) t = t.slice(0, 34).trimEnd() + '…';
+  return t;
 };
+
 
 interface Movimiento {
   id: string;
