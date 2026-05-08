@@ -36,25 +36,49 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
           boxShadow: '1px 0 32px -12px hsl(200 45% 4% / 0.6)',
         }}
       >
-        {/* Logo Header */}
+        {/* Logo Header - clickable to open Perfil */}
         <div className={cn('p-4 pb-6', !isCollapsed && 'p-6 pb-8')}>
-          <div className="flex items-center gap-3">
-            <div
-              className="p-2.5 rounded-2xl bg-primary text-primary-foreground shrink-0"
-              style={{ boxShadow: '0 6px 20px -6px hsl(var(--primary) / 0.45)' }}
-            >
-              <Wallet className="h-5 w-5" />
-            </div>
-            <div
-              className={cn(
-                'overflow-hidden transition-all duration-300',
-                isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
-              )}
-            >
-              <h1 className="text-base font-bold tracking-tight whitespace-nowrap text-foreground">MiCartera</h1>
-              <p className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">Gestión Financiera</p>
-            </div>
-          </div>
+          {(() => {
+            const logoButton = (
+              <button
+                onClick={() => onSectionChange('perfil')}
+                aria-label="Abrir Perfil y configuración"
+                className={cn(
+                  'w-full flex items-center gap-3 rounded-2xl transition-all duration-200 group',
+                  'hover:bg-white/5 active:scale-[0.98]',
+                  isCollapsed ? 'justify-center p-1' : 'p-1.5 -m-1.5',
+                  currentSection === 'perfil' && 'bg-white/5'
+                )}
+              >
+                <div
+                  className="p-2.5 rounded-2xl bg-primary text-primary-foreground shrink-0 transition-transform group-hover:scale-105"
+                  style={{ boxShadow: '0 6px 20px -6px hsl(var(--primary) / 0.45)' }}
+                >
+                  <Wallet className="h-5 w-5" />
+                </div>
+                <div
+                  className={cn(
+                    'overflow-hidden transition-all duration-300 text-left',
+                    isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+                  )}
+                >
+                  <h1 className="text-base font-bold tracking-tight whitespace-nowrap text-foreground">MiCartera</h1>
+                  <p className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">Gestión Financiera</p>
+                </div>
+              </button>
+            );
+
+            return isCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>{logoButton}</TooltipTrigger>
+                <TooltipContent side="right" className="font-medium">
+                  Perfil y configuración
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              logoButton
+            );
+          })()}
         </div>
 
         {/* Navigation */}
