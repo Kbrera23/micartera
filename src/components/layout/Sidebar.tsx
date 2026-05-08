@@ -1,7 +1,11 @@
-import { useState } from 'react';
-import { LayoutDashboard, Receipt, Gift, User, Wallet, Tag } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { LayoutDashboard, Receipt, Gift, User as UserIcon, Wallet, Tag, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SidebarProps {
   currentSection: string;
@@ -13,11 +17,39 @@ const navItems = [
   { id: 'gastos', label: 'Gastos', icon: Receipt },
   { id: 'objetivos', label: 'Objetivos', icon: Gift },
   { id: 'categorias', label: 'Categorías', icon: Tag },
-  { id: 'perfil', label: 'Perfil', icon: User },
+  { id: 'perfil', label: 'Perfil', icon: UserIcon },
 ];
 
 export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const { user, signOut } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+      });
+  }, [user]);
+
+  const metaName =
+    (user?.user_metadata?.full_name as string | undefined) ||
+    (user?.user_metadata?.name as string | undefined) ||
+    '';
+  const emailLocal = user?.email?.split('@')[0] ?? '';
+  const displayName = metaName || emailLocal || 'Usuario';
+  const initials = displayName
+    .split(/\s+/)
+    .map((s) => s[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'U';
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -36,49 +68,74 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
           boxShadow: '1px 0 32px -12px hsl(200 45% 4% / 0.6)',
         }}
       >
-        {/* Logo Header - clickable to open Perfil */}
-        <div className={cn('p-4 pb-6', !isCollapsed && 'p-6 pb-8')}>
-          {(() => {
-            const logoButton = (
+        {/* User Header - dropdown with profile / logout */}
+        <div className={cn('p-3', !isCollapsed && 'p-4')}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
-                onClick={() => onSectionChange('perfil')}
-                aria-label="Abrir Perfil y configuración"
+                aria-label="Abrir menú de usuario"
                 className={cn(
-                  'w-full flex items-center gap-3 rounded-2xl transition-all duration-200 group',
-                  'hover:bg-white/5 active:scale-[0.98]',
-                  isCollapsed ? 'justify-center p-1' : 'p-1.5 -m-1.5',
-                  currentSection === 'perfil' && 'bg-white/5'
+                  'w-full flex items-center gap-3 rounded-xl transition-all duration-200 group',
+                  'hover:bg-white/5 active:scale-[0.98] outline-none',
+                  isCollapsed ? 'justify-center p-1.5' : 'p-2'
                 )}
               >
-                <div
-                  className="p-2.5 rounded-2xl bg-primary text-primary-foreground shrink-0 transition-transform group-hover:scale-105"
-                  style={{ boxShadow: '0 6px 20px -6px hsl(var(--primary) / 0.45)' }}
-                >
-                  <Wallet className="h-5 w-5" />
-                </div>
+                <Avatar className="h-9 w-9 shrink-0 rounded-xl">
+                  <AvatarImage src={avatarUrl ?? undefined} alt={displayName} />
+                  <AvatarFallback
+                    className="rounded-xl text-xs font-semibold text-primary-foreground"
+                    style={{
+                      background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
+                    }}
+                  >
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
                 <div
                   className={cn(
-                    'overflow-hidden transition-all duration-300 text-left',
+                    'flex-1 min-w-0 text-left overflow-hidden transition-all duration-300',
                     isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
                   )}
                 >
-                  <h1 className="text-base font-bold tracking-tight whitespace-nowrap text-foreground">MiCartera</h1>
-                  <p className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">Gestión Financiera</p>
+                  <p className="text-sm font-semibold tracking-tight truncate text-foreground">
+                    {displayName}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium truncate">
+                    {user?.email ?? 'Usuario'}
+                  </p>
                 </div>
+                <ChevronsUpDown
+                  className={cn(
+                    'h-4 w-4 text-muted-foreground shrink-0 transition-all duration-300',
+                    isCollapsed ? 'w-0 opacity-0' : 'opacity-100'
+                  )}
+                />
               </button>
-            );
-
-            return isCollapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>{logoButton}</TooltipTrigger>
-                <TooltipContent side="right" className="font-medium">
-                  Perfil y configuración
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              logoButton
-            );
-          })()}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="right"
+              align="start"
+              sideOffset={12}
+              className="w-56 glass-card border-white/10"
+            >
+              <DropdownMenuItem onClick={() => onSectionChange('perfil')} className="cursor-pointer">
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Perfil</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSectionChange('perfil')} className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Configuración</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => signOut()}
+                className="cursor-pointer text-destructive focus:text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Cerrar Sesión</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Navigation */}
