@@ -34,7 +34,7 @@ const FREQUENCIES: { value: ExpenseFrequency; label: string }[] = [
 
 const SORT_OPTIONS = [
   { value: 'date', label: 'Fecha' },
-  { value: 'amount', label: 'Monto' },
+  { value: 'amount', label: 'Cantidad' },
   { value: 'name', label: 'Nombre' },
 ] as const;
 
