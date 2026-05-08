@@ -22,6 +22,34 @@ const navItems = [
 
 export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const { user, signOut } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+      });
+  }, [user]);
+
+  const metaName =
+    (user?.user_metadata?.full_name as string | undefined) ||
+    (user?.user_metadata?.name as string | undefined) ||
+    '';
+  const emailLocal = user?.email?.split('@')[0] ?? '';
+  const displayName = metaName || emailLocal || 'Usuario';
+  const initials = displayName
+    .split(/\s+/)
+    .map((s) => s[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'U';
 
   return (
     <TooltipProvider delayDuration={0}>
