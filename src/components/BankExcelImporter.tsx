@@ -82,6 +82,21 @@ const limpiarConcepto = (concepto: string): string => {
 };
 
 
+const parseImporte = (raw: string): number => {
+  if (!raw) return 0;
+  let str = String(raw).trim();
+  str = str.replace(/[€\s]/g, '');
+  if (str.includes(',')) {
+    str = str.replace(/\./g, '').replace(',', '.');
+  } else {
+    const parts = str.split('.');
+    if (parts.length === 2 && parts[1].length === 3) {
+      str = str.replace('.', '');
+    }
+  }
+  return parseFloat(str) || 0;
+};
+
 interface Movimiento {
   id: string;
   concepto: string;
