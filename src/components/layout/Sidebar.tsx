@@ -40,8 +40,6 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
           boxShadow: '1px 0 32px -12px hsl(200 45% 4% / 0.6)',
         }}
       >
-        {/* Logo Header - clickable to open Perfil */}
-        <div className={cn('p-4 pb-6', !isCollapsed && 'p-6 pb-8')}>
         {/* User Header - dropdown with profile / logout */}
         <div className={cn('p-3', !isCollapsed && 'p-4')}>
           <DropdownMenu>
