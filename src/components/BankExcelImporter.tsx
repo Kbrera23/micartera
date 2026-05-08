@@ -119,8 +119,8 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
     const concepto = String(row[conceptoIdx] || '').trim();
     const importeRaw = String(row[importeIdx] || '').trim();
     if (!concepto || !importeRaw) continue;
-    const cleaned = importeRaw.replace(/[€\s]/g, '').replace(/\./g, '').replace(',', '.');
-    const importe = parseFloat(cleaned);
+    const cleaned = parseImporte(importeRaw);
+    const importe = cleaned;
     if (isNaN(importe) || importe >= 0) continue;
 
     let fecha: string | null = null;
