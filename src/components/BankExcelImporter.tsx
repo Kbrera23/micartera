@@ -181,7 +181,7 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     if (!user || !movimientos.length) return;
     setSaving(true);
     try {
-      const rows = movimientos.map(m => ({ user_id: user.id, name: m.concepto, amount: m.importe, is_recurring: false, frequency: 'monthly' as const, bank: null, created_at: m.fecha || new Date().toISOString() }));
+      const rows = movimientos.map(m => ({ user_id: user.id, name: m.concepto, amount: m.importe, is_recurring: false, frequency: 'monthly' as const, bank: null, is_payment_record: true, created_at: m.fecha || new Date().toISOString() }));
       const { error } = await supabase.from('expenses').insert(rows);
       if (error) throw error;
       const autoCount = movimientos.filter(m => m.autoCategorized).length;
