@@ -111,6 +111,9 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-2">
           <p
             className={cn(
               'text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-3 transition-all duration-300 overflow-hidden whitespace-nowrap',
