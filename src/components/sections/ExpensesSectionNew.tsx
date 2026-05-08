@@ -34,9 +34,18 @@ export const ExpensesSection = ({
 }: ExpensesSectionProps) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
+  const visibleRecurring = useMemo(
+    () => recurringExpenses.filter(e => !e.is_payment_record),
+    [recurringExpenses]
+  );
+  const visibleOneTime = useMemo(
+    () => oneTimeExpenses.filter(e => !e.is_payment_record),
+    [oneTimeExpenses]
+  );
+
   const allExpenses = useMemo(
-    () => [...recurringExpenses, ...oneTimeExpenses],
-    [recurringExpenses, oneTimeExpenses]
+    () => [...visibleRecurring, ...visibleOneTime],
+    [visibleRecurring, visibleOneTime]
   );
 
   const { filters, setFilters, filteredExpenses, totalCount, filteredCount } = useExpenseFilters(allExpenses);
