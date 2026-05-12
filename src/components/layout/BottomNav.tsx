@@ -1,4 +1,4 @@
-import { LayoutDashboard, Receipt, Gift, User, Tag } from 'lucide-react';
+import { LayoutDashboard, Receipt, Gift, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BottomNavProps {
@@ -11,7 +11,6 @@ const navItems = [
   { id: 'gastos', label: 'Gastos', icon: Receipt },
   { id: 'objetivos', label: 'Metas', icon: Gift },
   { id: 'categorias', label: 'Categorías', icon: Tag },
-  { id: 'perfil', label: 'Perfil', icon: User },
 ];
 
 export const BottomNav = ({ currentSection, onSectionChange }: BottomNavProps) => {
