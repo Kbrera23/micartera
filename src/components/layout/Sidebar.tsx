@@ -121,7 +121,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Perfil</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSectionChange('perfil')} className="cursor-pointer">
+              <DropdownMenuItem onClick={() => onSectionChange('configuracion')} className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configuración</span>
               </DropdownMenuItem>

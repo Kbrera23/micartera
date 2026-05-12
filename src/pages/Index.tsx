@@ -5,7 +5,8 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { MinimalDashboard } from '@/components/sections/MinimalDashboard';
 import { ExpensesSection } from '@/components/sections/ExpensesSectionNew';
 import { GoalsSection } from '@/components/sections/GoalsSectionNew';
-import { MinimalProfileSection } from '@/components/sections/MinimalProfileSection';
+import { ProfileSection } from '@/components/sections/ProfileSection';
+import { SettingsSection } from '@/components/sections/SettingsSection';
 import { CategoriesSection } from '@/components/sections/CategoriesSection';
 import { Loader2, AlertCircle } from 'lucide-react';
 
@@ -284,11 +285,13 @@ const Index = () => {
       case 'categorias':
         return <CategoriesSection {...categoriesProps} />;
       case 'perfil':
-        return <MinimalProfileSection {...profileProps} />;
+        return <ProfileSection onBack={() => setCurrentSection('dashboard')} />;
+      case 'configuracion':
+        return <SettingsSection {...profileProps} onBack={() => setCurrentSection('dashboard')} />;
       default:
         return null;
     }
-  }, [currentSection, dashboardProps, expensesProps, goalsProps, profileProps]);
+  }, [currentSection, dashboardProps, expensesProps, goalsProps, categoriesProps, profileProps]);
 
   // ========== MANEJO DE ESTADOS ==========
   
