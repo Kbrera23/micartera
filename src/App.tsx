@@ -1,4 +1,5 @@
-import { Toaster } from "@/components/ui/toaster";
+// ✅ CORREGIDO: eliminado import de Toaster (shadcn/ui) — sistema duplicado.
+//    Solo se usa Sonner como sistema de notificaciones.
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -57,7 +58,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <Toaster />
+        {/* ✅ Solo Sonner — eliminado <Toaster /> de shadcn/ui */}
         <Sonner />
         <BrowserRouter>
           <AppRoutes />

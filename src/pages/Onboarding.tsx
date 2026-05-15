@@ -9,8 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Loader2, Wallet, Building2, Flame, Star, Zap, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
+// ✅ CORREGIDO: BankType importado del hook en lugar de redefinirlo localmente.
+//    Así si se añade un banco nuevo al hook, el Onboarding lo recoge automáticamente.
+import { BankType } from '@/hooks/useSupabaseFinances';
 
-type BankType = 'santander' | 'lacaixa' | 'ing' | 'revolut' | 'bbva';
+// ✅ ELIMINADO: type BankType = 'santander' | 'lacaixa' | 'ing' | 'revolut' | 'bbva';
 
 const BANKS: { id: BankType; name: string; color: string; icon: typeof Building2 }[] = [
   { id: 'santander', name: 'Santander', color: 'bg-[#EC0000]', icon: Flame },
@@ -52,7 +55,7 @@ export default function Onboarding() {
     
     setLoading(true);
     try {
-      // Create profile
+      // Crear perfil
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -63,7 +66,7 @@ export default function Onboarding() {
 
       if (profileError) throw profileError;
 
-      // Create bank entries
+      // Crear entradas de bancos
       if (selectedBanks.length > 0) {
         const bankEntries = selectedBanks.map(bank => ({
           user_id: user.id,
@@ -164,6 +167,14 @@ export default function Onboarding() {
                   );
                 })}
               </div>
+
+              {/* ✅ AÑADIDO: mensaje de ayuda cuando no hay ningún banco seleccionado */}
+              {selectedBanks.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center">
+                  Selecciona al menos un banco para continuar
+                </p>
+              )}
+
               <div className="flex gap-3">
                 <Button 
                   variant="outline"

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Receipt, Gift, User as UserIcon, Wallet, Tag, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
+import { LayoutDashboard, Receipt, Gift, Tag, ChevronsUpDown, LogOut, Settings, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -23,25 +23,80 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const { user, signOut } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>('Usuario');
 
+  // ✅ Cargar y escuchar cambios en el perfil
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from('profiles')
-      .select('avatar_url')
-      .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.avatar_url) setAvatarUrl(data.avatar_url);
-      });
+
+    // Función para cargar datos del perfil
+    const loadProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('avatar_url, full_name')
+          .eq('id', user.id)  // ✅ CORREGIDO: usar 'id' no 'user_id'
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error cargando perfil:', error);
+          return;
+        }
+
+        if (data) {
+          // Actualizar avatar
+          if (data.avatar_url) {
+            setAvatarUrl(data.avatar_url);
+          }
+          
+          // Actualizar nombre (prioridad: BD > metadata > email)
+          const profileName = data.full_name || 
+                            user.user_metadata?.full_name || 
+                            user.user_metadata?.name || 
+                            user.email?.split('@')[0] || 
+                            'Usuario';
+          setDisplayName(profileName);
+        } else {
+          // Si no hay perfil en BD, usar metadata
+          const metaName = user.user_metadata?.full_name || 
+                          user.user_metadata?.name || 
+                          user.email?.split('@')[0] || 
+                          'Usuario';
+          setDisplayName(metaName);
+        }
+      } catch (error) {
+        console.error('Error en loadProfile:', error);
+      }
+    };
+
+    // Cargar inmediatamente
+    loadProfile();
+
+    // ✅ Escuchar cambios en tiempo real
+    const channel = supabase
+      .channel('profile_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,  // ✅ CORREGIDO: usar 'id' no 'user_id'
+        },
+        (payload) => {
+          console.log('✅ Perfil actualizado:', payload);
+          loadProfile();
+        }
+      )
+      .subscribe();
+
+    // Cleanup
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
-  const metaName =
-    (user?.user_metadata?.full_name as string | undefined) ||
-    (user?.user_metadata?.name as string | undefined) ||
-    '';
-  const emailLocal = user?.email?.split('@')[0] ?? '';
-  const displayName = metaName || emailLocal || 'Usuario';
+  // Calcular iniciales del nombre actualizado
   const initials = displayName
     .split(/\s+/)
     .map((s) => s[0])
@@ -67,7 +122,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
           boxShadow: '1px 0 32px -12px hsl(200 45% 4% / 0.6)',
         }}
       >
-        {/* User Header - dropdown with profile / logout */}
+        {/* User Header */}
         <div className={cn('p-3', !isCollapsed && 'p-4')}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -80,7 +135,9 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
                 )}
               >
                 <Avatar className="h-9 w-9 shrink-0 rounded-xl">
-                  <AvatarImage src={avatarUrl ?? undefined} alt={displayName} />
+                  {avatarUrl ? (
+                    <AvatarImage src={avatarUrl} alt={displayName} />
+                  ) : null}
                   <AvatarFallback
                     className="rounded-xl text-xs font-semibold text-primary-foreground"
                     style={{

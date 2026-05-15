@@ -41,9 +41,12 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
       .select('avatar_url, display_name')
       .eq('user_id', user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('Error cargando perfil:', error);
         if (data?.avatar_url) setAvatarUrl(data.avatar_url);
-        setDisplayName(data?.display_name ?? (user.user_metadata?.full_name as string) ?? '');
+        // ✅ Leer display_name de profiles primero, luego fallback al email
+        const name = (data as any)?.display_name || user.email?.split('@')[0] || '';
+        setDisplayName(name);
       });
   }, [user]);
 
@@ -73,7 +76,9 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
       await supabase.from('profiles').update({ avatar_url: url }).eq('user_id', user.id);
       setAvatarUrl(url);
       toast.success('Foto actualizada');
-    } catch { toast.error('Error al subir la imagen'); }
+    } catch (err: any) {
+      toast.error('Error al subir la imagen: ' + (err.message || ''));
+    }
     finally { setUploadingAvatar(false); e.target.value = ''; }
   };
 
@@ -86,14 +91,20 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
     }
     setSavingName(true);
     try {
+      // ✅ upsert en lugar de update — funciona aunque display_name sea null
       const { error } = await supabase
         .from('profiles')
-        .update({ display_name: trimmed })
-        .eq('user_id', user.id);
+        .upsert(
+          { user_id: user.id, display_name: trimmed },
+          { onConflict: 'user_id' }
+        );
       if (error) throw error;
       toast.success('Nombre actualizado');
-    } catch { toast.error('No se pudo guardar el nombre'); }
-    finally { setSavingName(false); }
+    } catch (err: any) {
+      toast.error('No se pudo guardar el nombre: ' + (err.message || ''));
+    } finally {
+      setSavingName(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -109,7 +120,6 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
     }
     setSavingPassword(true);
     try {
-      // Reauth check
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: currentPassword,
@@ -133,13 +143,7 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
     <div className="space-y-5 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="rounded-xl h-10 w-10 p-0"
-          aria-label="Volver"
-        >
+        <Button variant="ghost" size="sm" onClick={onBack} className="rounded-xl h-10 w-10 p-0" aria-label="Volver">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
@@ -149,24 +153,19 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
       </div>
 
       {/* Avatar + Nombre */}
-      <div
-        className="rounded-3xl p-6 space-y-6"
-        style={{
-          background: 'hsl(200 40% 12% / 0.92)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-          border: '1px solid hsl(186 60% 50% / 0.12)',
-          boxShadow: '0 20px 60px -20px hsl(200 45% 4% / 0.7)',
-        }}
-      >
+      <div className="rounded-3xl p-6 space-y-6" style={{
+        background: 'hsl(200 40% 12% / 0.92)',
+        backdropFilter: 'blur(40px)',
+        WebkitBackdropFilter: 'blur(40px)',
+        border: '1px solid hsl(186 60% 50% / 0.12)',
+        boxShadow: '0 20px 60px -20px hsl(200 45% 4% / 0.7)',
+      }}>
         <div className="flex items-center gap-5">
           <div className="relative shrink-0">
             <Avatar className="w-20 h-20 rounded-2xl">
               <AvatarImage src={avatarUrl ?? undefined} />
-              <AvatarFallback
-                className="rounded-2xl text-xl font-bold text-primary-foreground"
-                style={{ background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))' }}
-              >
+              <AvatarFallback className="rounded-2xl text-xl font-bold text-primary-foreground"
+                style={{ background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))' }}>
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -180,25 +179,14 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
               }}
               aria-label="Cambiar foto"
             >
-              {uploadingAvatar
-                ? <Loader2 className="w-4 h-4 animate-spin text-white" />
-                : <Camera className="w-4 h-4 text-white" />}
+              {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Camera className="w-4 h-4 text-white" />}
             </button>
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-            />
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
-            <button
-              onClick={() => avatarInputRef.current?.click()}
-              className="text-xs font-medium mt-1"
-              style={{ color: 'hsl(186 100% 70%)' }}
-            >
+            <button onClick={() => avatarInputRef.current?.click()} className="text-xs font-medium mt-1"
+              style={{ color: 'hsl(186 100% 70%)' }}>
               Cambiar foto
             </button>
           </div>
@@ -215,6 +203,7 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
                 id="display-name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                 placeholder="Tu nombre"
                 maxLength={60}
                 className="pl-10 h-11 rounded-xl text-sm font-medium"
@@ -225,15 +214,11 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
                 }}
               />
             </div>
-            <Button
-              onClick={handleSaveName}
-              disabled={savingName}
-              className="rounded-xl h-11 px-4 font-semibold"
+            <Button onClick={handleSaveName} disabled={savingName} className="rounded-xl h-11 px-4 font-semibold"
               style={{
                 background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
                 color: 'white',
-              }}
-            >
+              }}>
               {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             </Button>
           </div>
@@ -241,24 +226,19 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
       </div>
 
       {/* Cambiar contraseña */}
-      <div
-        className="rounded-3xl p-6 space-y-4"
-        style={{
-          background: 'hsl(200 40% 12% / 0.92)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-          border: '1px solid hsl(186 60% 50% / 0.12)',
-          boxShadow: '0 20px 60px -20px hsl(200 45% 4% / 0.7)',
-        }}
-      >
+      <div className="rounded-3xl p-6 space-y-4" style={{
+        background: 'hsl(200 40% 12% / 0.92)',
+        backdropFilter: 'blur(40px)',
+        WebkitBackdropFilter: 'blur(40px)',
+        border: '1px solid hsl(186 60% 50% / 0.12)',
+        boxShadow: '0 20px 60px -20px hsl(200 45% 4% / 0.7)',
+      }}>
         <div className="flex items-center gap-2">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
             style={{
               background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
               boxShadow: '0 8px 24px hsl(186 100% 50% / 0.25)',
-            }}
-          >
+            }}>
             <Lock className="w-4 h-4 text-white" />
           </div>
           <div>
@@ -268,64 +248,35 @@ export const ProfileSection = ({ onBack }: ProfileSectionProps) => {
         </div>
 
         <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="current-pass" className="text-xs text-muted-foreground">Contraseña actual</Label>
-            <Input
-              id="current-pass"
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="h-11 rounded-xl text-sm"
-              style={{
-                background: 'hsl(200 35% 16%)',
-                border: '1px solid hsl(186 60% 50% / 0.12)',
-                color: 'white',
-              }}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="new-pass" className="text-xs text-muted-foreground">Nueva contraseña</Label>
-            <Input
-              id="new-pass"
-              type="password"
-              autoComplete="new-password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="h-11 rounded-xl text-sm"
-              style={{
-                background: 'hsl(200 35% 16%)',
-                border: '1px solid hsl(186 60% 50% / 0.12)',
-                color: 'white',
-              }}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="confirm-pass" className="text-xs text-muted-foreground">Confirmar nueva contraseña</Label>
-            <Input
-              id="confirm-pass"
-              type="password"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="h-11 rounded-xl text-sm"
-              style={{
-                background: 'hsl(200 35% 16%)',
-                border: '1px solid hsl(186 60% 50% / 0.12)',
-                color: 'white',
-              }}
-            />
-          </div>
-          <Button
-            onClick={handleChangePassword}
-            disabled={savingPassword}
+          {[
+            { id: 'current-pass', label: 'Contraseña actual', value: currentPassword, onChange: setCurrentPassword, autoComplete: 'current-password' },
+            { id: 'new-pass', label: 'Nueva contraseña', value: newPassword, onChange: setNewPassword, autoComplete: 'new-password' },
+            { id: 'confirm-pass', label: 'Confirmar nueva contraseña', value: confirmPassword, onChange: setConfirmPassword, autoComplete: 'new-password' },
+          ].map(({ id, label, value, onChange, autoComplete }) => (
+            <div key={id} className="space-y-1.5">
+              <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
+              <Input
+                id={id}
+                type="password"
+                autoComplete={autoComplete}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="h-11 rounded-xl text-sm"
+                style={{
+                  background: 'hsl(200 35% 16%)',
+                  border: '1px solid hsl(186 60% 50% / 0.12)',
+                  color: 'white',
+                }}
+              />
+            </div>
+          ))}
+          <Button onClick={handleChangePassword} disabled={savingPassword}
             className="w-full rounded-xl h-11 font-semibold mt-2"
             style={{
               background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
               color: 'white',
               boxShadow: '0 8px 24px hsl(186 100% 50% / 0.25)',
-            }}
-          >
+            }}>
             {savingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
             Guardar contraseña
           </Button>
