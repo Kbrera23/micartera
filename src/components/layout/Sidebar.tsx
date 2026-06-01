@@ -34,8 +34,8 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('avatar_url, full_name')
-          .eq('id', user.id)  // ✅ CORREGIDO: usar 'id' no 'user_id'
+          .select('avatar_url, display_name')
+          .eq('user_id', user.id)
           .maybeSingle();
 
         if (error) {
@@ -50,7 +50,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
           }
           
           // Actualizar nombre (prioridad: BD > metadata > email)
-          const profileName = data.full_name || 
+          const profileName = data.display_name || 
                             user.user_metadata?.full_name || 
                             user.user_metadata?.name || 
                             user.email?.split('@')[0] || 
