@@ -51,6 +51,28 @@ const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null
   }
 };
 
+const isInIframe = () => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+};
+
+const readPermission = async (): Promise<NotificationPermission> => {
+  // navigator.permissions is more reliable than Notification.permission inside iframes
+  try {
+    if (navigator.permissions && (navigator.permissions as any).query) {
+      const status = await navigator.permissions.query({ name: 'notifications' as PermissionName });
+      console.log('[notifications] navigator.permissions =', status.state, '| Notification.permission =', Notification.permission);
+      return status.state as NotificationPermission;
+    }
+  } catch (e) {
+    console.warn('[notifications] permissions.query failed:', e);
+  }
+  return Notification.permission;
+};
+
 export const useNotifications = () => {
   const { user } = useAuth();
   const [permission, setPermission] = useState<NotificationPermission>('default');
