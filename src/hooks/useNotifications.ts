@@ -51,6 +51,28 @@ const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null
   }
 };
 
+const isInIframe = () => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+};
+
+const readPermission = async (): Promise<NotificationPermission> => {
+  // navigator.permissions is more reliable than Notification.permission inside iframes
+  try {
+    if (navigator.permissions && (navigator.permissions as any).query) {
+      const status = await navigator.permissions.query({ name: 'notifications' as PermissionName });
+      console.log('[notifications] navigator.permissions =', status.state, '| Notification.permission =', Notification.permission);
+      return status.state as NotificationPermission;
+    }
+  } catch (e) {
+    console.warn('[notifications] permissions.query failed:', e);
+  }
+  return Notification.permission;
+};
+
 export const useNotifications = () => {
   const { user } = useAuth();
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -122,9 +144,14 @@ export const useNotifications = () => {
       return 'denied' as NotificationPermission;
     }
 
-    const current = Notification.permission;
+    const current = await readPermission();
+    console.log('[notifications] requestPermission start | current =', current, '| iframe =', isInIframe());
     if (current === 'denied') {
-      toast.error('Notificaciones bloqueadas. Desbloquéalas en la configuración del navegador');
+      if (isInIframe()) {
+        toast.error('El preview está en un iframe sin permiso de notificaciones. Abre la app en una pestaña nueva.');
+      } else {
+        toast.error('Notificaciones bloqueadas. Desbloquéalas en la configuración del navegador');
+      }
       setPermission('denied');
       return current;
     }
@@ -265,15 +292,41 @@ export const useNotifications = () => {
   // Mount: detect support + permission, register SW eagerly if granted
   useEffect(() => {
     if (!isNotificationSupported()) {
+      console.warn('[notifications] API not supported in this environment');
       setSupported(false);
       setLoading(false);
       return;
     }
-    setPermission(Notification.permission);
-    if (Notification.permission === 'granted' && user) {
-      fetchAndStoreToken(user.id);
-    }
+
+    let permStatus: PermissionStatus | null = null;
+    const sync = async () => {
+      const p = await readPermission();
+      setPermission(p);
+      console.log('[notifications] sync | permission =', p, '| iframe =', isInIframe(), '| user =', !!user);
+      if (p === 'granted' && user) fetchAndStoreToken(user.id);
+    };
+
+    sync();
     loadSettings();
+
+    (async () => {
+      try {
+        if (navigator.permissions) {
+          permStatus = await navigator.permissions.query({ name: 'notifications' as PermissionName });
+          permStatus.onchange = () => {
+            console.log('[notifications] permission changed →', permStatus?.state);
+            sync();
+          };
+        }
+      } catch {}
+    })();
+
+    const onFocus = () => sync();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      if (permStatus) permStatus.onchange = null;
+    };
   }, [loadSettings, user, fetchAndStoreToken]);
 
   return {
