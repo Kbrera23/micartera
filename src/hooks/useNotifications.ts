@@ -292,15 +292,41 @@ export const useNotifications = () => {
   // Mount: detect support + permission, register SW eagerly if granted
   useEffect(() => {
     if (!isNotificationSupported()) {
+      console.warn('[notifications] API not supported in this environment');
       setSupported(false);
       setLoading(false);
       return;
     }
-    setPermission(Notification.permission);
-    if (Notification.permission === 'granted' && user) {
-      fetchAndStoreToken(user.id);
-    }
+
+    let permStatus: PermissionStatus | null = null;
+    const sync = async () => {
+      const p = await readPermission();
+      setPermission(p);
+      console.log('[notifications] sync | permission =', p, '| iframe =', isInIframe(), '| user =', !!user);
+      if (p === 'granted' && user) fetchAndStoreToken(user.id);
+    };
+
+    sync();
     loadSettings();
+
+    (async () => {
+      try {
+        if (navigator.permissions) {
+          permStatus = await navigator.permissions.query({ name: 'notifications' as PermissionName });
+          permStatus.onchange = () => {
+            console.log('[notifications] permission changed →', permStatus?.state);
+            sync();
+          };
+        }
+      } catch {}
+    })();
+
+    const onFocus = () => sync();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      if (permStatus) permStatus.onchange = null;
+    };
   }, [loadSettings, user, fetchAndStoreToken]);
 
   return {
