@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
-import { Bell, BellOff, BellRing } from 'lucide-react';
+import { Bell, BellOff, BellRing, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -21,10 +22,55 @@ const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   </button>
 );
 
-export const NotificationSettings = () => {
-  const { permission, settings, loading, requestPermission, updateSettings } = useNotifications();
+const detectBrowser = () => {
+  const ua = navigator.userAgent;
+  if (/Edg\//.test(ua)) return 'edge';
+  if (/Chrome\//.test(ua)) return 'chrome';
+  if (/Firefox\//.test(ua)) return 'firefox';
+  if (/Safari\//.test(ua)) return 'safari';
+  return 'other';
+};
 
-  console.log('Render - permission:', permission);
+const UnblockInstructions = () => {
+  const browser = useMemo(detectBrowser, []);
+  const steps: Record<string, string[]> = {
+    chrome: [
+      'Haz click en el icono 🔒 junto a la URL',
+      'Busca "Notificaciones" y cámbialo a "Permitir"',
+      'Recarga esta página',
+    ],
+    edge: [
+      'Haz click en el icono 🔒 junto a la URL',
+      'Permisos del sitio → Notificaciones → Permitir',
+      'Recarga esta página',
+    ],
+    firefox: [
+      'Haz click en el icono 🔒 junto a la URL',
+      'Borra el permiso bloqueado de Notificaciones',
+      'Recarga y vuelve a pulsar Activar',
+    ],
+    safari: [
+      'Safari → Ajustes → Sitios web → Notificaciones',
+      'Cambia este sitio a "Permitir"',
+      'Recarga esta página',
+    ],
+    other: [
+      'Abre la configuración de permisos de tu navegador',
+      'Permite notificaciones para este sitio',
+      'Recarga la página',
+    ],
+  };
+  return (
+    <ol className="mt-2 space-y-1 text-xs text-destructive/90 list-decimal list-inside">
+      {steps[browser].map((s, i) => (
+        <li key={i}>{s}</li>
+      ))}
+    </ol>
+  );
+};
+
+export const NotificationSettings = () => {
+  const { permission, settings, loading, supported, lastUpdated, requestPermission, updateSettings } = useNotifications();
 
   if (loading) {
     return (
@@ -44,36 +90,61 @@ export const NotificationSettings = () => {
             <Bell className="w-5 h-5 text-primary" />
             Notificaciones
           </div>
-          {permission !== 'granted' && (
-            <Button
-              size="sm"
-              onClick={requestPermission}
-              className="rounded-xl h-8 px-4 text-xs gap-1"
-            >
+          {!supported ? (
+            <span className="text-xs font-normal text-muted-foreground">No soportado</span>
+          ) : permission === 'granted' ? (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 text-xs font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Activado
+            </span>
+          ) : permission !== 'denied' ? (
+            <Button size="sm" onClick={requestPermission} className="rounded-xl h-8 px-4 text-xs gap-1">
               <BellRing className="w-3.5 h-3.5" />
               Activar
             </Button>
-          )}
+          ) : null}
         </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {permission === 'denied' && (
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-destructive/10 border border-destructive/20">
-            <BellOff className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
-            <p className="text-sm text-destructive">
-              Las notificaciones están bloqueadas. Actívalas en la configuración de tu navegador.
+        {!supported && (
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/40 border border-border">
+            <AlertTriangle className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              Tu navegador no soporta notificaciones. Prueba con Chrome, Firefox, Edge o Safari actualizado.
             </p>
           </div>
         )}
 
-        {permission === 'default' && (
+        {supported && permission === 'denied' && (
+          <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+            <div className="flex items-start gap-3">
+              <BellOff className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm text-destructive font-medium">
+                  Notificaciones bloqueadas
+                </p>
+                <p className="text-xs text-destructive/80 mt-0.5">
+                  Para activarlas debes desbloquearlas en la configuración del navegador:
+                </p>
+                <UnblockInstructions />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {supported && permission === 'default' && (
           <p className="text-sm text-muted-foreground">
             Activa las notificaciones para recibir recordatorios y alertas de presupuesto.
           </p>
         )}
 
-        {permission === 'granted' && settings && (
+        {supported && permission === 'granted' && lastUpdated && (
+          <p className="text-xs text-muted-foreground">
+            Última actualización: {new Date(lastUpdated).toLocaleString('es-ES')}
+          </p>
+        )}
+
+        {supported && permission === 'granted' && settings && (
           <div className="space-y-4">
             {/* Daily reminder */}
             <div className="space-y-2">
