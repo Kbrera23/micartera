@@ -144,9 +144,14 @@ export const useNotifications = () => {
       return 'denied' as NotificationPermission;
     }
 
-    const current = Notification.permission;
+    const current = await readPermission();
+    console.log('[notifications] requestPermission start | current =', current, '| iframe =', isInIframe());
     if (current === 'denied') {
-      toast.error('Notificaciones bloqueadas. Desbloquéalas en la configuración del navegador');
+      if (isInIframe()) {
+        toast.error('El preview está en un iframe sin permiso de notificaciones. Abre la app en una pestaña nueva.');
+      } else {
+        toast.error('Notificaciones bloqueadas. Desbloquéalas en la configuración del navegador');
+      }
       setPermission('denied');
       return current;
     }
