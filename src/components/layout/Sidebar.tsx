@@ -172,17 +172,21 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
             <DropdownMenuContent
               side="right"
               align="start"
-              sideOffset={12}
+              sideOffset={-4}
+              alignOffset={0}
+              collisionPadding={16}
+              forceMount
               className="w-56 glass-card border-white/10"
             >
               <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault();
+                  setIsMenuOpen(false);
                   setIsCollapsed(true);
-                  setTimeout(() => {
+                  requestAnimationFrame(() => {
                     document.body.style.pointerEvents = '';
                     onSectionChange('perfil');
-                  }, 0);
+                  });
                 }}
                 className="cursor-pointer"
               >
@@ -192,11 +196,12 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
               <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault();
+                  setIsMenuOpen(false);
                   setIsCollapsed(true);
-                  setTimeout(() => {
+                  requestAnimationFrame(() => {
                     document.body.style.pointerEvents = '';
                     onSectionChange('configuracion');
-                  }, 0);
+                  });
                 }}
                 className="cursor-pointer"
               >
@@ -205,7 +210,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => signOut()}
+                onSelect={() => { setIsMenuOpen(false); signOut(); }}
                 className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <LogOut className="mr-2 h-4 w-4" />
