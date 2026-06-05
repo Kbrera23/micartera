@@ -125,7 +125,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
       >
         {/* User Header */}
         <div className={cn('p-3', !isCollapsed && 'p-4')}>
-          <DropdownMenu>
+          <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <button
                 aria-label="Abrir menú de usuario"
