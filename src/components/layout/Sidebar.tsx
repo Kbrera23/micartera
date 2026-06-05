@@ -21,6 +21,7 @@ const navItems = [
 
 export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('Usuario');
