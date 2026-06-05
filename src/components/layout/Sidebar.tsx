@@ -110,7 +110,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
     <TooltipProvider delayDuration={0}>
       <aside
         onMouseEnter={() => setIsCollapsed(false)}
-        onMouseLeave={() => setIsCollapsed(true)}
+        onMouseLeave={() => { if (!isMenuOpen) setIsCollapsed(true); }}
         className={cn(
           'min-h-screen flex flex-col transition-all duration-300 ease-out overflow-hidden',
           isCollapsed ? 'w-[76px]' : 'w-[260px]'
