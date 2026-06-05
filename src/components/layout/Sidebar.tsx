@@ -21,6 +21,7 @@ const navItems = [
 
 export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('Usuario');
@@ -109,7 +110,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
     <TooltipProvider delayDuration={0}>
       <aside
         onMouseEnter={() => setIsCollapsed(false)}
-        onMouseLeave={() => setIsCollapsed(true)}
+        onMouseLeave={() => { if (!isMenuOpen) setIsCollapsed(true); }}
         className={cn(
           'min-h-screen flex flex-col transition-all duration-300 ease-out overflow-hidden',
           isCollapsed ? 'w-[76px]' : 'w-[260px]'
@@ -124,7 +125,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
       >
         {/* User Header */}
         <div className={cn('p-3', !isCollapsed && 'p-4')}>
-          <DropdownMenu>
+          <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <button
                 aria-label="Abrir menú de usuario"
@@ -171,17 +172,21 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
             <DropdownMenuContent
               side="right"
               align="start"
-              sideOffset={12}
+              sideOffset={-4}
+              alignOffset={0}
+              collisionPadding={16}
+              forceMount
               className="w-56 glass-card border-white/10"
             >
               <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault();
+                  setIsMenuOpen(false);
                   setIsCollapsed(true);
-                  setTimeout(() => {
+                  requestAnimationFrame(() => {
                     document.body.style.pointerEvents = '';
                     onSectionChange('perfil');
-                  }, 0);
+                  });
                 }}
                 className="cursor-pointer"
               >
@@ -191,11 +196,12 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
               <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault();
+                  setIsMenuOpen(false);
                   setIsCollapsed(true);
-                  setTimeout(() => {
+                  requestAnimationFrame(() => {
                     document.body.style.pointerEvents = '';
                     onSectionChange('configuracion');
-                  }, 0);
+                  });
                 }}
                 className="cursor-pointer"
               >
@@ -204,7 +210,7 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => signOut()}
+                onSelect={() => { setIsMenuOpen(false); signOut(); }}
                 className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <LogOut className="mr-2 h-4 w-4" />
