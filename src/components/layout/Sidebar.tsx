@@ -170,10 +170,9 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              side="right"
-              align="start"
-              sideOffset={-4}
-              alignOffset={0}
+              side="bottom"
+              align="center"
+              sideOffset={8}
               collisionPadding={16}
               forceMount
               className="w-56 glass-card border-white/10"
