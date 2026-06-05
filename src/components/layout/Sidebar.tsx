@@ -174,11 +174,31 @@ export const Sidebar = ({ currentSection, onSectionChange }: SidebarProps) => {
               sideOffset={12}
               className="w-56 glass-card border-white/10"
             >
-              <DropdownMenuItem onClick={() => onSectionChange('perfil')} className="cursor-pointer">
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsCollapsed(true);
+                  setTimeout(() => {
+                    document.body.style.pointerEvents = '';
+                    onSectionChange('perfil');
+                  }, 0);
+                }}
+                className="cursor-pointer"
+              >
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Perfil</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSectionChange('configuracion')} className="cursor-pointer">
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsCollapsed(true);
+                  setTimeout(() => {
+                    document.body.style.pointerEvents = '';
+                    onSectionChange('configuracion');
+                  }, 0);
+                }}
+                className="cursor-pointer"
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configuración</span>
               </DropdownMenuItem>
