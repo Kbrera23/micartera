@@ -1,0 +1,3 @@
+CREATE POLICY "Users can update own payment tracking" ON public.monthly_payments_tracking FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own payment tracking" ON public.monthly_payments_tracking FOR DELETE TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own reminder completions" ON public.monthly_reminders_completed FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
