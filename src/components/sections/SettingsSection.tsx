@@ -99,6 +99,8 @@ export const SettingsSection = ({
   const [savings, setSavings] = useState('');
   const [rentValue, setRentValue] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showFinanzas, setShowFinanzas] = useState(true);
+  const [showBancos, setShowBancos] = useState(true);
   const [bankBalances, setBankBalances] = useState<Record<BankType, string>>({
     santander: '', lacaixa: '', ing: '', revolut: '', bbva: '',
   });
