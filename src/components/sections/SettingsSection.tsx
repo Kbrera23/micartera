@@ -142,25 +142,37 @@ export const SettingsSection = ({
       </div>
 
       {/* Finanzas */}
-      <div className="rounded-3xl p-6" style={cardStyle}>
-        <div className="flex items-center gap-2 mb-4">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
-              boxShadow: '0 8px 24px hsl(186 100% 50% / 0.25)',
-            }}
-          >
-            <Wallet className="w-4 h-4 text-white" />
+      <div className="rounded-3xl overflow-hidden" style={cardStyle}>
+        <button
+          onClick={() => setShowFinanzas((v) => !v)}
+          className="w-full flex items-center justify-between px-6 py-4 text-left"
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
+                boxShadow: '0 8px 24px hsl(186 100% 50% / 0.25)',
+              }}
+            >
+              <Wallet className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold">Finanzas</h2>
+              <p className="text-xs text-muted-foreground">Ingresos y gastos fijos mensuales</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base font-semibold">Finanzas</h2>
-            <p className="text-xs text-muted-foreground">Ingresos y gastos fijos mensuales</p>
+          {showFinanzas
+            ? <ChevronUp className="w-5 h-5 text-muted-foreground" />
+            : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+        </button>
+        {showFinanzas && (
+          <div className="px-6 pb-6 border-t border-white/5">
+            <FieldRow label="Nómina mensual" value={income} onChange={setIncome} onSave={() => onUpdateProfile({ monthly_income: parseValue(income) })} />
+            <FieldRow label="Ahorro mensual" value={savings} onChange={setSavings} onSave={() => onUpdateProfile({ savings_goal: parseValue(savings) })} />
+            <FieldRow label="Alquiler / Hipoteca" value={rentValue} onChange={setRentValue} onSave={() => onUpdateProfile({ rent: parseValue(rentValue) })} />
           </div>
-        </div>
-        <FieldRow label="Nómina mensual" value={income} onChange={setIncome} onSave={() => onUpdateProfile({ monthly_income: parseValue(income) })} />
-        <FieldRow label="Ahorro mensual" value={savings} onChange={setSavings} onSave={() => onUpdateProfile({ savings_goal: parseValue(savings) })} />
-        <FieldRow label="Alquiler / Hipoteca" value={rentValue} onChange={setRentValue} onSave={() => onUpdateProfile({ rent: parseValue(rentValue) })} />
+        )}
       </div>
 
       {/* Bancos */}
