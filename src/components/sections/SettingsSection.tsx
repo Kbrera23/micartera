@@ -176,102 +176,113 @@ export const SettingsSection = ({
       </div>
 
       {/* Bancos */}
-      <div className="rounded-3xl p-6" style={cardStyle}>
-        <div className="flex items-center gap-2 mb-4">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
-              boxShadow: '0 8px 24px hsl(186 100% 50% / 0.25)',
-            }}
-          >
-            <Building2 className="w-4 h-4 text-white" />
+      <div className="rounded-3xl overflow-hidden" style={cardStyle}>
+        <button
+          onClick={() => setShowBancos((v) => !v)}
+          className="w-full flex items-center justify-between px-6 py-4 text-left"
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
+                boxShadow: '0 8px 24px hsl(186 100% 50% / 0.25)',
+              }}
+            >
+              <Building2 className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold">Mis Bancos</h2>
+              <p className="text-xs text-muted-foreground">Activa los bancos que utilizas</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base font-semibold">Mis Bancos</h2>
-            <p className="text-xs text-muted-foreground">Activa los bancos que utilizas</p>
-          </div>
-        </div>
-
-        <div className="flex gap-2 flex-wrap">
-          {BANKS.map((bank) => {
-            const isActive = activeBankIds.includes(bank.id);
-            const logo = BANK_LOGOS[bank.id];
-            return (
-              <button
-                key={bank.id}
-                onClick={() => onToggleBank(bank.id)}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-2 rounded-xl border transition-all text-sm font-medium',
-                  isActive
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-                style={
-                  isActive
-                    ? {
-                        background: 'hsl(186 30% 16%)',
-                        borderColor: 'hsl(186 100% 50% / 0.30)',
-                        boxShadow: '0 0 12px -4px hsl(186 100% 50% / 0.30)',
-                      }
-                    : { background: 'hsl(200 35% 14%)', borderColor: 'hsl(186 60% 50% / 0.12)' }
-                }
-              >
-                <div className={cn('w-5 h-5 rounded-md flex items-center justify-center', bank.color)}>
-                  {logo ? (
-                    <img src={logo} alt={bank.name} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
-                  ) : (
-                    <Building2 className="w-3 h-3 text-white" />
-                  )}
-                </div>
-                {bank.name}
-              </button>
-            );
-          })}
-        </div>
-
-        {activeBankIds.length > 0 && (
-          <div className="mt-5 pt-4 border-t border-white/5">
-            <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider font-semibold">
-              Saldos iniciales
-            </p>
-            {BANKS.filter((b) => activeBankIds.includes(b.id)).map((bank) => {
-              const logo = BANK_LOGOS[bank.id];
-              return (
-                <div key={bank.id} className="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
-                  <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
-                    {logo ? (
-                      <img src={logo} alt={bank.name} className="w-4 h-4 object-contain brightness-0 invert" />
-                    ) : (
-                      <Building2 className="w-3.5 h-3.5 text-white" />
+          {showBancos
+            ? <ChevronUp className="w-5 h-5 text-muted-foreground" />
+            : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+        </button>
+        {showBancos && (
+          <div className="px-6 pb-6 border-t border-white/5">
+            <div className="flex gap-2 flex-wrap">
+              {BANKS.map((bank) => {
+                const isActive = activeBankIds.includes(bank.id);
+                const logo = BANK_LOGOS[bank.id];
+                return (
+                  <button
+                    key={bank.id}
+                    onClick={() => onToggleBank(bank.id)}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-2 rounded-xl border transition-all text-sm font-medium',
+                      isActive
+                        ? 'text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
                     )}
-                  </div>
-                  <span className="text-sm text-muted-foreground w-24 shrink-0">{bank.name}</span>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0"
-                    value={bankBalances[bank.id]}
-                    onChange={(e) => setBankBalances((prev) => ({ ...prev, [bank.id]: formatInputCurrency(e.target.value) }))}
-                    onBlur={() => onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}
-                    onKeyDown={(e) => e.key === 'Enter' && onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}
-                    className="h-9 rounded-xl text-sm flex-1"
-                    style={inputStyle}
-                  />
-                  <Button
-                    size="sm"
-                    onClick={() => onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}
-                    className="rounded-xl h-9 w-9 p-0 shrink-0"
-                    style={{
-                      background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
-                      color: 'white',
-                    }}
+                    style={
+                      isActive
+                        ? {
+                            background: 'hsl(186 30% 16%)',
+                            borderColor: 'hsl(186 100% 50% / 0.30)',
+                            boxShadow: '0 0 12px -4px hsl(186 100% 50% / 0.30)',
+                          }
+                        : { background: 'hsl(200 35% 14%)', borderColor: 'hsl(186 60% 50% / 0.12)' }
+                    }
                   >
-                    <Check className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              );
-            })}
+                    <div className={cn('w-5 h-5 rounded-md flex items-center justify-center', bank.color)}>
+                      {logo ? (
+                        <img src={logo} alt={bank.name} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
+                      ) : (
+                        <Building2 className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                    {bank.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {activeBankIds.length > 0 && (
+              <div className="mt-5 pt-4 border-t border-white/5">
+                <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider font-semibold">
+                  Saldos iniciales
+                </p>
+                {BANKS.filter((b) => activeBankIds.includes(b.id)).map((bank) => {
+                  const logo = BANK_LOGOS[bank.id];
+                  return (
+                    <div key={bank.id} className="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
+                      <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
+                        {logo ? (
+                          <img src={logo} alt={bank.name} className="w-4 h-4 object-contain brightness-0 invert" />
+                        ) : (
+                          <Building2 className="w-3.5 h-3.5 text-white" />
+                        )}
+                      </div>
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">{bank.name}</span>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0"
+                        value={bankBalances[bank.id]}
+                        onChange={(e) => setBankBalances((prev) => ({ ...prev, [bank.id]: formatInputCurrency(e.target.value) }))}
+                        onBlur={() => onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}
+                        onKeyDown={(e) => e.key === 'Enter' && onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}
+                        className="h-9 rounded-xl text-sm flex-1"
+                        style={inputStyle}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}
+                        className="rounded-xl h-9 w-9 p-0 shrink-0"
+                        style={{
+                          background: 'linear-gradient(135deg, hsl(186 100% 45%), hsl(195 80% 35%))',
+                          color: 'white',
+                        }}
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
