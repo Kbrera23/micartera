@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { BankType } from '@/hooks/useSupabaseFinances';
-import { formatInputCurrency } from '@/lib/currency';
+import { formatInputCurrency, parseInputCurrency } from '@/lib/currency';
 import { toast } from 'sonner';
 import { LogOut, Building2, Camera, Loader2, ChevronDown, ChevronUp, Bell } from 'lucide-react';
 import { NotificationSettings } from '@/components/NotificationSettings';
