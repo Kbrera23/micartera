@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { BankType } from '@/hooks/useSupabaseFinances';
 import { formatInputCurrency } from '@/lib/currency';
 import { NotificationSettings } from '@/components/NotificationSettings';
+import { BankLogo } from '@/components/dashboard/MinimalBankCards';
 import { cn } from '@/lib/utils';
 
 interface SettingsSectionProps {
