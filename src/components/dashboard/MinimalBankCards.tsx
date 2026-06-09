@@ -27,7 +27,7 @@ const BANK_TEXT_COLOR: Record<BankType, string> = {
   bbva: 'white',
 };
 
-const BankLogo = ({ bankId }: { bankId: BankType }) => {
+export const BankLogo = ({ bankId }: { bankId: BankType }) => {
   const color = BANK_TEXT_COLOR[bankId];
   switch (bankId) {
     case 'santander':
