@@ -227,12 +227,8 @@ export const SettingsSection = ({
                         : { background: 'hsl(200 35% 14%)', borderColor: 'hsl(186 60% 50% / 0.12)' }
                     }
                   >
-                    <div className={cn('w-5 h-5 rounded-md flex items-center justify-center', bank.color)}>
-                      {logo ? (
-                        <img src={logo} alt={bank.name} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
-                      ) : (
-                        <Building2 className="w-3 h-3 text-white" />
-                      )}
+                    <div className={cn('h-5 flex items-center justify-center px-1.5 rounded-md', bank.color)}>
+                      <BankLogo bankId={bank.id} />
                     </div>
                     {bank.name}
                   </button>
