@@ -250,7 +250,7 @@ export const SettingsSection = ({
                       <Input
                         type="text"
                         inputMode="decimal"
-                        placeholder="0"
+                        placeholder="ej: 814,25"
                         value={bankBalances[bank.id]}
                         onChange={(e) => setBankBalances((prev) => ({ ...prev, [bank.id]: formatInputCurrency(e.target.value) }))}
                         onBlur={() => onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}
