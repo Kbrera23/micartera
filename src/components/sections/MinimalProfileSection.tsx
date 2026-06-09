@@ -108,7 +108,7 @@ export const MinimalProfileSection = ({
       .then(({ data }) => { if (data?.avatar_url) setAvatarUrl(data.avatar_url); });
   }, [user]);
 
-  const parseValue = (v: string) => Number(v.replace(/[^\d]/g, '')) || 0;
+  const parseValue = (v: string) => parseInputCurrency(v);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
