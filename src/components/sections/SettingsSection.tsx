@@ -3,7 +3,7 @@ import { ArrowLeft, Check, Building2, Bell, Wallet, ChevronDown, ChevronUp } fro
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BankType } from '@/hooks/useSupabaseFinances';
-import { formatInputCurrency } from '@/lib/currency';
+import { formatInputCurrency, parseInputCurrency } from '@/lib/currency';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { BankLogo } from '@/components/dashboard/MinimalBankCards';
 import { cn } from '@/lib/utils';
