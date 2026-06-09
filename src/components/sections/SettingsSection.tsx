@@ -120,7 +120,7 @@ export const SettingsSection = ({
     setBankBalances(nb);
   }, [userBanks]);
 
-  const parseValue = (v: string) => Number(v.replace(/[^\d]/g, '')) || 0;
+  const parseValue = (v: string) => parseInputCurrency(v);
   const activeBankIds = userBanks.map((b) => b.bank);
 
   return (
