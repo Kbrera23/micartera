@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { BankType } from '@/hooks/useSupabaseFinances';
-import { formatInputCurrency } from '@/lib/currency';
+import { formatInputCurrency, parseInputCurrency } from '@/lib/currency';
 import { toast } from 'sonner';
 import { LogOut, Building2, Camera, Loader2, ChevronDown, ChevronUp, Bell } from 'lucide-react';
 import { NotificationSettings } from '@/components/NotificationSettings';
@@ -108,7 +108,7 @@ export const MinimalProfileSection = ({
       .then(({ data }) => { if (data?.avatar_url) setAvatarUrl(data.avatar_url); });
   }, [user]);
 
-  const parseValue = (v: string) => Number(v.replace(/[^\d]/g, '')) || 0;
+  const parseValue = (v: string) => parseInputCurrency(v);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -225,7 +225,7 @@ export const MinimalProfileSection = ({
                   <Input
                     type="text"
                     inputMode="decimal"
-                    placeholder="0"
+                    placeholder="ej: 814,25"
                     value={bankBalances[bank.id]}
                     onChange={(e) => setBankBalances(prev => ({ ...prev, [bank.id]: formatInputCurrency(e.target.value) }))}
                     onBlur={() => onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}

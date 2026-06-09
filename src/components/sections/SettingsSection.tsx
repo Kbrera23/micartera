@@ -3,7 +3,7 @@ import { ArrowLeft, Check, Building2, Bell, Wallet, ChevronDown, ChevronUp } fro
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BankType } from '@/hooks/useSupabaseFinances';
-import { formatInputCurrency } from '@/lib/currency';
+import { formatInputCurrency, parseInputCurrency } from '@/lib/currency';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { BankLogo } from '@/components/dashboard/MinimalBankCards';
 import { cn } from '@/lib/utils';
@@ -120,7 +120,7 @@ export const SettingsSection = ({
     setBankBalances(nb);
   }, [userBanks]);
 
-  const parseValue = (v: string) => Number(v.replace(/[^\d]/g, '')) || 0;
+  const parseValue = (v: string) => parseInputCurrency(v);
   const activeBankIds = userBanks.map((b) => b.bank);
 
   return (
@@ -250,7 +250,7 @@ export const SettingsSection = ({
                       <Input
                         type="text"
                         inputMode="decimal"
-                        placeholder="0"
+                        placeholder="ej: 814,25"
                         value={bankBalances[bank.id]}
                         onChange={(e) => setBankBalances((prev) => ({ ...prev, [bank.id]: formatInputCurrency(e.target.value) }))}
                         onBlur={() => onUpdateBankBalance(bank.id, parseValue(bankBalances[bank.id]))}
