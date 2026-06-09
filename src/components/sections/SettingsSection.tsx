@@ -230,7 +230,6 @@ export const SettingsSection = ({
                     <div className={cn('h-5 flex items-center justify-center px-1.5 rounded-md', bank.color)}>
                       <BankLogo bankId={bank.id} />
                     </div>
-                    {bank.name}
                   </button>
                 );
               })}
@@ -245,10 +244,9 @@ export const SettingsSection = ({
                   const logo = BANK_LOGOS[bank.id];
                   return (
                     <div key={bank.id} className="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
-                      <div className={cn('h-7 px-2 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
-                        <BankLogo bankId={bank.id} />
-                      </div>
-                      <span className="text-sm text-muted-foreground w-24 shrink-0">{bank.name}</span>
+                    <div className={cn('h-7 px-2 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
+                      <BankLogo bankId={bank.id} />
+                    </div>
                       <Input
                         type="text"
                         inputMode="decimal"
