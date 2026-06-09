@@ -245,12 +245,8 @@ export const SettingsSection = ({
                   const logo = BANK_LOGOS[bank.id];
                   return (
                     <div key={bank.id} className="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
-                      <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
-                        {logo ? (
-                          <img src={logo} alt={bank.name} className="w-4 h-4 object-contain brightness-0 invert" />
-                        ) : (
-                          <Building2 className="w-3.5 h-3.5 text-white" />
-                        )}
+                      <div className={cn('h-7 px-2 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
+                        <BankLogo bankId={bank.id} />
                       </div>
                       <span className="text-sm text-muted-foreground w-24 shrink-0">{bank.name}</span>
                       <Input
