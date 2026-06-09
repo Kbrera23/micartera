@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { BankType } from '@/hooks/useSupabaseFinances';
 import { formatInputCurrency } from '@/lib/currency';
 import { NotificationSettings } from '@/components/NotificationSettings';
+import { BankLogo } from '@/components/dashboard/MinimalBankCards';
 import { cn } from '@/lib/utils';
 
 interface SettingsSectionProps {
@@ -226,12 +227,8 @@ export const SettingsSection = ({
                         : { background: 'hsl(200 35% 14%)', borderColor: 'hsl(186 60% 50% / 0.12)' }
                     }
                   >
-                    <div className={cn('w-5 h-5 rounded-md flex items-center justify-center', bank.color)}>
-                      {logo ? (
-                        <img src={logo} alt={bank.name} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
-                      ) : (
-                        <Building2 className="w-3 h-3 text-white" />
-                      )}
+                    <div className={cn('h-5 flex items-center justify-center px-1.5 rounded-md', bank.color)}>
+                      <BankLogo bankId={bank.id} />
                     </div>
                     {bank.name}
                   </button>
@@ -248,12 +245,8 @@ export const SettingsSection = ({
                   const logo = BANK_LOGOS[bank.id];
                   return (
                     <div key={bank.id} className="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
-                      <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
-                        {logo ? (
-                          <img src={logo} alt={bank.name} className="w-4 h-4 object-contain brightness-0 invert" />
-                        ) : (
-                          <Building2 className="w-3.5 h-3.5 text-white" />
-                        )}
+                      <div className={cn('h-7 px-2 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
+                        <BankLogo bankId={bank.id} />
                       </div>
                       <span className="text-sm text-muted-foreground w-24 shrink-0">{bank.name}</span>
                       <Input
