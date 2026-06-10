@@ -5,15 +5,17 @@ export const formatCurrency = (value: number): string => {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value);
+    maximumFractionDigits: 2,
+    useGrouping: 'always',
+  } as Intl.NumberFormatOptions).format(value);
 };
 
 export const formatCurrencyCompact = (value: number): string => {
   return `${new Intl.NumberFormat('es-ES', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value)}€`;
+    maximumFractionDigits: 2,
+    useGrouping: 'always',
+  } as Intl.NumberFormatOptions).format(value)}€`;
 };
 
 export const parseSpanishCurrency = (value: string): number => {
