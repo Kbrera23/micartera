@@ -55,3 +55,16 @@ export const parseInputCurrency = (value: string): number => {
   const n = parseFloat(cleaned);
   return Number.isFinite(n) ? n : 0;
 };
+
+// Convert a JS number (e.g. 814.25) into the European display format ("814,25")
+// suitable for use inside the input field. Use this when loading numeric values
+// from the DB — do NOT pass `num.toString()` through formatInputCurrency, because
+// the JS dot would be misread as a thousands separator.
+export const numberToInputCurrency = (value: number): string => {
+  if (!value || !Number.isFinite(value)) return '';
+  const hasDecimals = value % 1 !== 0;
+  return new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(value);
+};

@@ -3,7 +3,7 @@ import { ArrowLeft, Check, Building2, Bell, Wallet, ChevronDown, ChevronUp } fro
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BankType } from '@/hooks/useSupabaseFinances';
-import { formatInputCurrency, parseInputCurrency } from '@/lib/currency';
+import { formatInputCurrency, parseInputCurrency, numberToInputCurrency } from '@/lib/currency';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { BankLogo } from '@/components/dashboard/MinimalBankCards';
 import { cn } from '@/lib/utils';
@@ -107,15 +107,15 @@ export const SettingsSection = ({
   });
 
   useEffect(() => {
-    setIncome(monthlyIncome > 0 ? formatInputCurrency(monthlyIncome.toString()) : '');
-    setSavings(savingsGoal > 0 ? formatInputCurrency(savingsGoal.toString()) : '');
-    setRentValue(rent > 0 ? formatInputCurrency(rent.toString()) : '');
+    setIncome(monthlyIncome > 0 ? numberToInputCurrency(monthlyIncome) : '');
+    setSavings(savingsGoal > 0 ? numberToInputCurrency(savingsGoal) : '');
+    setRentValue(rent > 0 ? numberToInputCurrency(rent) : '');
   }, [monthlyIncome, savingsGoal, rent]);
 
   useEffect(() => {
     const nb: Record<BankType, string> = { santander: '', lacaixa: '', ing: '', revolut: '', bbva: '' };
     userBanks.forEach((b) => {
-      if (b.initial_balance > 0) nb[b.bank] = formatInputCurrency(b.initial_balance.toString());
+      if (b.initial_balance > 0) nb[b.bank] = numberToInputCurrency(b.initial_balance);
     });
     setBankBalances(nb);
   }, [userBanks]);
