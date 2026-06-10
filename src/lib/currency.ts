@@ -23,25 +23,26 @@ export const parseSpanishCurrency = (value: string): number => {
 };
 
 export const formatInputCurrency = (value: string): string => {
-  // Accept Spanish/European decimal format: digits and a single comma with up to 2 decimals.
-  // Treat a dot as a comma (user convenience), then strip everything else.
-  const cleaned = value.replace(/\./g, ',').replace(/[^\d,]/g, '');
+  // European format: '.' = thousands separator, ',' = decimal separator.
+  // Strip everything except digits, dots and commas.
+  const cleaned = value.replace(/[^\d.,]/g, '');
   if (!cleaned) return '';
 
-  // Keep only the first comma; drop the rest.
+  // Split on the FIRST comma → decimals. Everything before = integer part (may contain dots as thousands).
   const firstComma = cleaned.indexOf(',');
-  let intPart = '';
+  let intRaw = '';
   let decPart = '';
   if (firstComma === -1) {
-    intPart = cleaned;
+    intRaw = cleaned;
   } else {
-    intPart = cleaned.slice(0, firstComma);
-    decPart = cleaned.slice(firstComma + 1).replace(/,/g, '').slice(0, 2);
+    intRaw = cleaned.slice(0, firstComma);
+    // Drop any further commas/dots in decimal portion, keep max 2 digits.
+    decPart = cleaned.slice(firstComma + 1).replace(/[^\d]/g, '').slice(0, 2);
   }
 
-  // Strip leading zeros on integer part but keep at least one digit.
-  intPart = intPart.replace(/^0+(?=\d)/, '');
-  const intFormatted = intPart ? new Intl.NumberFormat('es-ES').format(Number(intPart)) : '0';
+  // Remove dots from integer part (they were just thousand separators) and strip leading zeros.
+  const intDigits = intRaw.replace(/\./g, '').replace(/^0+(?=\d)/, '');
+  const intFormatted = intDigits ? new Intl.NumberFormat('es-ES').format(Number(intDigits)) : '0';
 
   if (firstComma === -1) return intFormatted;
   return `${intFormatted},${decPart}`;
@@ -49,6 +50,7 @@ export const formatInputCurrency = (value: string): string => {
 
 export const parseInputCurrency = (value: string): number => {
   if (!value) return 0;
+  // Remove currency symbols/spaces, drop dots (thousands), convert comma → dot.
   const cleaned = value.replace(/[€\s]/g, '').replace(/\./g, '').replace(',', '.');
   const n = parseFloat(cleaned);
   return Number.isFinite(n) ? n : 0;
