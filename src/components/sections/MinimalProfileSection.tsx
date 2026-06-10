@@ -89,15 +89,15 @@ export const MinimalProfileSection = ({
   });
 
   useEffect(() => {
-    setIncome(monthlyIncome > 0 ? formatInputCurrency(monthlyIncome.toString()) : '');
-    setSavings(savingsGoal > 0 ? formatInputCurrency(savingsGoal.toString()) : '');
-    setRentValue(rent > 0 ? formatInputCurrency(rent.toString()) : '');
+    setIncome(monthlyIncome > 0 ? numberToInputCurrency(monthlyIncome) : '');
+    setSavings(savingsGoal > 0 ? numberToInputCurrency(savingsGoal) : '');
+    setRentValue(rent > 0 ? numberToInputCurrency(rent) : '');
   }, [monthlyIncome, savingsGoal, rent]);
 
   useEffect(() => {
     const nb: Record<BankType, string> = { santander: '', lacaixa: '', ing: '', revolut: '', bbva: '' };
     userBanks.forEach(b => {
-      if (b.initial_balance > 0) nb[b.bank] = formatInputCurrency(b.initial_balance.toString());
+      if (b.initial_balance > 0) nb[b.bank] = numberToInputCurrency(b.initial_balance);
     });
     setBankBalances(nb);
   }, [userBanks]);
