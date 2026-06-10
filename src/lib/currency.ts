@@ -1,21 +1,21 @@
 // Spanish currency formatting utilities
 
 export const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('es-ES', {
+  return new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-    useGrouping: 'always',
-  } as Intl.NumberFormatOptions).format(value);
+  }).format(value);
 };
 
 export const formatCurrencyCompact = (value: number): string => {
-  return `${new Intl.NumberFormat('es-ES', {
+  // Use de-DE locale: same '.'/',' convention as Spanish but always groups thousands
+  // (es-ES Intl skips the separator for 4-digit numbers, producing "1107,00" instead of "1.107,00").
+  return `${new Intl.NumberFormat('de-DE', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-    useGrouping: 'always',
-  } as Intl.NumberFormatOptions).format(value)}€`;
+  }).format(value)}€`;
 };
 
 export const parseSpanishCurrency = (value: string): number => {
