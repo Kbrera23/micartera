@@ -25,7 +25,11 @@ interface MinimalDashboardProps {
   oneTimeExpenses: Expense[];
   expenses: Expense[];
   categories: Category[];
+  savingsByBank: Record<string, number>;
+  monthlySavings: MonthlySaving[];
   onAddExpense: (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency, bank: BankType | null) => Promise<void>;
+  onAddMonthlySaving: (year: number, month: number, bank: BankType, amount: number, note?: string | null) => Promise<void> | void;
+  onRemoveMonthlySaving: (id: string) => Promise<void> | void;
   refetch: () => void;
 }
 
