@@ -73,7 +73,8 @@ export const MinimalBankCards = ({
   savingsGoal,
   totalSubscriptions,
   reserveFund,
-  rent
+  rent,
+  savingsByBank = {},
 }: MinimalBankCardsProps) => {
   const getInitialBalance = (bankId: BankType) => {
     const bank = userBanks.find(b => b.bank === bankId);
@@ -84,12 +85,14 @@ export const MinimalBankCards = ({
   const lacaixaBalance = savingsGoal + getInitialBalance('lacaixa');
   const revolutBalance = reserveFund + getInitialBalance('revolut');
 
+  const withSavings = (id: BankType, base: number) => base + (savingsByBank[id] || 0);
+
   const allBanks: BankData[] = [
-    { id: 'santander', name: 'Santander', amount: santanderBalance, bgColor: 'bg-santander' },
-    { id: 'lacaixa', name: 'La Caixa', amount: lacaixaBalance, bgColor: 'bg-lacaixa' },
-    { id: 'ing', name: 'ING', amount: totalSubscriptions, bgColor: 'bg-ing' },
-    { id: 'revolut', name: 'Revolut', amount: revolutBalance, bgColor: 'bg-revolut' },
-    { id: 'bbva', name: 'BBVA', amount: getInitialBalance('bbva'), bgColor: 'bg-bbva' },
+    { id: 'santander', name: 'Santander', amount: withSavings('santander', santanderBalance), bgColor: 'bg-santander' },
+    { id: 'lacaixa', name: 'La Caixa', amount: withSavings('lacaixa', lacaixaBalance), bgColor: 'bg-lacaixa' },
+    { id: 'ing', name: 'ING', amount: withSavings('ing', totalSubscriptions), bgColor: 'bg-ing' },
+    { id: 'revolut', name: 'Revolut', amount: withSavings('revolut', revolutBalance), bgColor: 'bg-revolut' },
+    { id: 'bbva', name: 'BBVA', amount: withSavings('bbva', getInitialBalance('bbva')), bgColor: 'bg-bbva' },
   ];
 
   const activeBankIds = userBanks.map(b => b.bank);
