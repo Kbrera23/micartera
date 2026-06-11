@@ -560,6 +560,12 @@ export const useSupabaseFinances = () => {
       })
       .filter(item => item.total > 0 || item.category.budget_limit > 0);
 
+    // Ahorros mensuales acumulados por banco (todos los registros, todos los meses)
+    const savingsByBank = monthlySavings.reduce<Record<string, number>>((acc, s) => {
+      acc[s.bank] = (acc[s.bank] || 0) + Number(s.amount || 0);
+      return acc;
+    }, {});
+
     return {
       monthlyIncome, savingsGoal, rent, totalFixedExpenses, reserveFund,
       quarterlyProvision, annualProvision, dineroLibre, dineroLibrePercent,
@@ -567,9 +573,9 @@ export const useSupabaseFinances = () => {
       totalPurchaseGoalQuotas, goalsWithQuotas, recurringExpenses,
       monthlyRecurring, quarterlyRecurring, annualRecurring,
       hasInsufficientFunds, subscriptions, lacaixaBalance, revolutBalance,
-      monthlyRevolutProvision, expensesByCategory,
+      monthlyRevolutProvision, expensesByCategory, savingsByBank,
     };
-  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth]);
+  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings]);
 
   return {
     profile,
@@ -577,6 +583,7 @@ export const useSupabaseFinances = () => {
     categories,
     purchaseGoals,
     userBanks,
+    monthlySavings,
     loading,
     error,
     hasProfile,
@@ -594,6 +601,8 @@ export const useSupabaseFinances = () => {
     toggleGoalStatus,
     toggleBank,
     updateBankBalance,
+    addMonthlySaving,
+    removeMonthlySaving,
     refetch: fetchData,
   };
 };
