@@ -160,6 +160,42 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_savings: {
+        Row: {
+          amount: number
+          bank: string
+          created_at: string
+          id: string
+          month: number
+          note: string | null
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          bank: string
+          created_at?: string
+          id?: string
+          month: number
+          note?: string | null
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          bank?: string
+          created_at?: string
+          id?: string
+          month?: number
+          note?: string | null
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       notification_settings: {
         Row: {
           budget_alerts: boolean

@@ -4,7 +4,8 @@ import { UpcomingLargePayments } from '@/components/dashboard/UpcomingLargePayme
 import { RecentExpenses } from '@/components/dashboard/RecentExpenses';
 import { MonthlyReminder } from '@/components/dashboard/MonthlyReminder';
 import { MonthlySummaryCard } from '@/components/dashboard/MonthlySummaryCard';
-import { BankType, Expense, ExpenseFrequency, Category } from '@/hooks/useSupabaseFinances';
+import { RegisterMonthlySaving } from '@/components/dashboard/RegisterMonthlySaving';
+import { BankType, Expense, ExpenseFrequency, Category, MonthlySaving } from '@/hooks/useSupabaseFinances';
 
 interface MinimalDashboardProps {
   userBanks: { bank: BankType; initial_balance: number }[];
@@ -24,7 +25,11 @@ interface MinimalDashboardProps {
   oneTimeExpenses: Expense[];
   expenses: Expense[];
   categories: Category[];
+  savingsByBank: Record<string, number>;
+  monthlySavings: MonthlySaving[];
   onAddExpense: (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency, bank: BankType | null) => Promise<void>;
+  onAddMonthlySaving: (year: number, month: number, bank: BankType, amount: number, note?: string | null) => Promise<void> | void;
+  onRemoveMonthlySaving: (id: string) => Promise<void> | void;
   refetch: () => void;
 }
 
@@ -46,7 +51,11 @@ export const MinimalDashboard = ({
   oneTimeExpenses,
   expenses,
   categories,
+  savingsByBank,
+  monthlySavings,
   onAddExpense,
+  onAddMonthlySaving,
+  onRemoveMonthlySaving,
   refetch,
 }: MinimalDashboardProps) => {
   const hasRevolut = userBanks.some(b => b.bank === 'revolut');
@@ -73,8 +82,20 @@ export const MinimalDashboard = ({
           totalSubscriptions={totalSubscriptions}
           reserveFund={reserveFund}
           rent={rent}
+          savingsByBank={savingsByBank}
         />
       </div>
+
+      {/* Registrar ahorro mensual */}
+      <div style={{ animationDelay: '150ms' }} className="animate-fade-in">
+        <RegisterMonthlySaving
+          userBanks={userBanks}
+          monthlySavings={monthlySavings}
+          onAddSaving={onAddMonthlySaving}
+          onRemoveSaving={onRemoveMonthlySaving}
+        />
+      </div>
+
 
       {/* Revolut Reminder */}
       {hasRevolut && (

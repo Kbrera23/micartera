@@ -40,6 +40,8 @@ const Index = () => {
     quarterlyProvision,
     categories,
     expensesByCategory,
+    savingsByBank,
+    monthlySavings,
     addExpense,
     removeExpense,
     updateExpense,
@@ -52,6 +54,8 @@ const Index = () => {
     updateProfile,
     toggleBank,
     updateBankBalance,
+    addMonthlySaving,
+    removeMonthlySaving,
     refetch,
   } = useSupabaseFinances();
 
@@ -183,7 +187,11 @@ const Index = () => {
     oneTimeExpenses,
     expenses,
     categories,
+    savingsByBank,
+    monthlySavings,
     onAddExpense: addExpense,
+    onAddMonthlySaving: addMonthlySaving,
+    onRemoveMonthlySaving: removeMonthlySaving,
     refetch,
   }), [
     userBanks,
@@ -203,7 +211,11 @@ const Index = () => {
     oneTimeExpenses,
     expenses,
     categories,
+    savingsByBank,
+    monthlySavings,
     addExpense,
+    addMonthlySaving,
+    removeMonthlySaving,
     refetch,
   ]);
 

@@ -65,6 +65,17 @@ export interface UserBank {
   initial_balance: number;
 }
 
+export interface MonthlySaving {
+  id: string;
+  user_id: string;
+  year: number;
+  month: number;
+  bank: BankType;
+  amount: number;
+  note: string | null;
+  created_at: string;
+}
+
 // ✅ CORREGIDO: encoding de emojis y tildes corregido
 const DEFAULT_CATEGORIES = [
   { name: 'Alimentación', color: '#10b981', icon: '🛒', budget_limit: 500, is_default: true },
@@ -110,6 +121,7 @@ export const useSupabaseFinances = () => {
   const [hasProfile, setHasProfile]       = useState<boolean | null>(null);
   const [error, setError]                 = useState<Error | null>(null);
   const [paidThisMonth, setPaidThisMonth] = useState(0);
+  const [monthlySavings, setMonthlySavings] = useState<MonthlySaving[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!user) {
@@ -124,7 +136,7 @@ export const useSupabaseFinances = () => {
 
       // ✅ CORREGIDO: eliminados @ts-ignore y "as any" — categories ya está en los tipos
       //    de Supabase (Database). monthly_payments_tracking también.
-      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes] =
+      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes, savingsRes] =
         await Promise.all([
           supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('expenses').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -132,7 +144,9 @@ export const useSupabaseFinances = () => {
           supabase.from('user_banks').select('*').eq('user_id', user.id),
           supabase.from('categories').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
           supabase.from('monthly_payments_tracking').select('amount').eq('user_id', user.id).eq('month', currentMonth).eq('year', currentYear),
+          supabase.from('monthly_savings').select('*').eq('user_id', user.id).order('year', { ascending: false }).order('month', { ascending: false }).order('created_at', { ascending: false }),
         ]);
+
 
       if (profileRes.data) {
         setProfile(profileRes.data);
@@ -166,6 +180,15 @@ export const useSupabaseFinances = () => {
         0
       );
       setPaidThisMonth(totalPaid);
+
+      setMonthlySavings(
+        (savingsRes.data || []).map(s => ({
+          ...s,
+          bank: s.bank as BankType,
+          amount: Number(s.amount || 0),
+        }))
+      );
+
 
       // Categorías: crear defaults si no existe ninguna, siempre deduplicar
       // ✅ CORREGIDO: eliminado "as unknown as Category[]" y "(supabase as any)"
@@ -421,6 +444,41 @@ export const useSupabaseFinances = () => {
     }
   };
 
+  // ─── Ahorros mensuales registrados ─────────────────────────────────────────
+  const addMonthlySaving = async (
+    year: number,
+    month: number,
+    bank: BankType,
+    amount: number,
+    note?: string | null
+  ) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('monthly_savings')
+      .insert({ user_id: user.id, year, month, bank, amount, note: note || null })
+      .select()
+      .single();
+    if (error) {
+      toast.error('Error al registrar el ahorro');
+    } else if (data) {
+      setMonthlySavings(prev => [
+        { ...data, bank: data.bank as BankType, amount: Number(data.amount || 0) },
+        ...prev,
+      ]);
+      toast.success('Ahorro registrado');
+    }
+  };
+
+  const removeMonthlySaving = async (id: string) => {
+    const { error } = await supabase.from('monthly_savings').delete().eq('id', id);
+    if (error) {
+      toast.error('Error al eliminar el ahorro');
+    } else {
+      setMonthlySavings(prev => prev.filter(s => s.id !== id));
+      toast.success('Ahorro eliminado');
+    }
+  };
+
   // ─── Cálculos derivados ────────────────────────────────────────────────────
   const calculations = useMemo(() => {
     const monthlyIncome = profile?.monthly_income || 0;
@@ -502,6 +560,12 @@ export const useSupabaseFinances = () => {
       })
       .filter(item => item.total > 0 || item.category.budget_limit > 0);
 
+    // Ahorros mensuales acumulados por banco (todos los registros, todos los meses)
+    const savingsByBank = monthlySavings.reduce<Record<string, number>>((acc, s) => {
+      acc[s.bank] = (acc[s.bank] || 0) + Number(s.amount || 0);
+      return acc;
+    }, {});
+
     return {
       monthlyIncome, savingsGoal, rent, totalFixedExpenses, reserveFund,
       quarterlyProvision, annualProvision, dineroLibre, dineroLibrePercent,
@@ -509,9 +573,9 @@ export const useSupabaseFinances = () => {
       totalPurchaseGoalQuotas, goalsWithQuotas, recurringExpenses,
       monthlyRecurring, quarterlyRecurring, annualRecurring,
       hasInsufficientFunds, subscriptions, lacaixaBalance, revolutBalance,
-      monthlyRevolutProvision, expensesByCategory,
+      monthlyRevolutProvision, expensesByCategory, savingsByBank,
     };
-  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth]);
+  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings]);
 
   return {
     profile,
@@ -519,6 +583,7 @@ export const useSupabaseFinances = () => {
     categories,
     purchaseGoals,
     userBanks,
+    monthlySavings,
     loading,
     error,
     hasProfile,
@@ -536,6 +601,8 @@ export const useSupabaseFinances = () => {
     toggleGoalStatus,
     toggleBank,
     updateBankBalance,
+    addMonthlySaving,
+    removeMonthlySaving,
     refetch: fetchData,
   };
 };
