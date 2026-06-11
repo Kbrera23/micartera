@@ -16,6 +16,7 @@ interface MinimalBankCardsProps {
   totalSubscriptions: number;
   reserveFund: number;
   rent: number;
+  savingsByBank?: Record<string, number>;
 }
 
 // SVGs inline para cada banco — sin dependencia de URLs externas
