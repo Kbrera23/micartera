@@ -40,6 +40,8 @@ const Index = () => {
     quarterlyProvision,
     categories,
     expensesByCategory,
+    savingsByBank,
+    monthlySavings,
     addExpense,
     removeExpense,
     updateExpense,
@@ -52,6 +54,8 @@ const Index = () => {
     updateProfile,
     toggleBank,
     updateBankBalance,
+    addMonthlySaving,
+    removeMonthlySaving,
     refetch,
   } = useSupabaseFinances();
 
