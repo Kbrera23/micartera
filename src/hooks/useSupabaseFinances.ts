@@ -444,6 +444,41 @@ export const useSupabaseFinances = () => {
     }
   };
 
+  // ─── Ahorros mensuales registrados ─────────────────────────────────────────
+  const addMonthlySaving = async (
+    year: number,
+    month: number,
+    bank: BankType,
+    amount: number,
+    note?: string | null
+  ) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('monthly_savings')
+      .insert({ user_id: user.id, year, month, bank, amount, note: note || null })
+      .select()
+      .single();
+    if (error) {
+      toast.error('Error al registrar el ahorro');
+    } else if (data) {
+      setMonthlySavings(prev => [
+        { ...data, bank: data.bank as BankType, amount: Number(data.amount || 0) },
+        ...prev,
+      ]);
+      toast.success('Ahorro registrado');
+    }
+  };
+
+  const removeMonthlySaving = async (id: string) => {
+    const { error } = await supabase.from('monthly_savings').delete().eq('id', id);
+    if (error) {
+      toast.error('Error al eliminar el ahorro');
+    } else {
+      setMonthlySavings(prev => prev.filter(s => s.id !== id));
+      toast.success('Ahorro eliminado');
+    }
+  };
+
   // ─── Cálculos derivados ────────────────────────────────────────────────────
   const calculations = useMemo(() => {
     const monthlyIncome = profile?.monthly_income || 0;
