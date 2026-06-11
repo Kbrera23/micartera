@@ -4,7 +4,8 @@ import { UpcomingLargePayments } from '@/components/dashboard/UpcomingLargePayme
 import { RecentExpenses } from '@/components/dashboard/RecentExpenses';
 import { MonthlyReminder } from '@/components/dashboard/MonthlyReminder';
 import { MonthlySummaryCard } from '@/components/dashboard/MonthlySummaryCard';
-import { BankType, Expense, ExpenseFrequency, Category } from '@/hooks/useSupabaseFinances';
+import { RegisterMonthlySaving } from '@/components/dashboard/RegisterMonthlySaving';
+import { BankType, Expense, ExpenseFrequency, Category, MonthlySaving } from '@/hooks/useSupabaseFinances';
 
 interface MinimalDashboardProps {
   userBanks: { bank: BankType; initial_balance: number }[];
