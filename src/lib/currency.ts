@@ -44,7 +44,8 @@ export const formatInputCurrency = (value: string): string => {
 
   // Remove dots from integer part (they were just thousand separators) and strip leading zeros.
   const intDigits = intRaw.replace(/\./g, '').replace(/^0+(?=\d)/, '');
-  const intFormatted = intDigits ? new Intl.NumberFormat('es-ES').format(Number(intDigits)) : '0';
+  // Use de-DE: same '.'/',' convention but always groups thousands (es-ES skips it for 4-digit numbers).
+  const intFormatted = intDigits ? new Intl.NumberFormat('de-DE').format(Number(intDigits)) : '0';
 
   if (firstComma === -1) return intFormatted;
   return `${intFormatted},${decPart}`;
