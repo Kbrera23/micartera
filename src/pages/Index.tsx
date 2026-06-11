@@ -187,7 +187,11 @@ const Index = () => {
     oneTimeExpenses,
     expenses,
     categories,
+    savingsByBank,
+    monthlySavings,
     onAddExpense: addExpense,
+    onAddMonthlySaving: addMonthlySaving,
+    onRemoveMonthlySaving: removeMonthlySaving,
     refetch,
   }), [
     userBanks,
@@ -207,7 +211,11 @@ const Index = () => {
     oneTimeExpenses,
     expenses,
     categories,
+    savingsByBank,
+    monthlySavings,
     addExpense,
+    addMonthlySaving,
+    removeMonthlySaving,
     refetch,
   ]);
 
