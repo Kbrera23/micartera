@@ -121,6 +121,7 @@ export const useSupabaseFinances = () => {
   const [hasProfile, setHasProfile]       = useState<boolean | null>(null);
   const [error, setError]                 = useState<Error | null>(null);
   const [paidThisMonth, setPaidThisMonth] = useState(0);
+  const [monthlySavings, setMonthlySavings] = useState<MonthlySaving[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!user) {
@@ -135,7 +136,7 @@ export const useSupabaseFinances = () => {
 
       // ✅ CORREGIDO: eliminados @ts-ignore y "as any" — categories ya está en los tipos
       //    de Supabase (Database). monthly_payments_tracking también.
-      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes] =
+      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes, savingsRes] =
         await Promise.all([
           supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('expenses').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -143,7 +144,9 @@ export const useSupabaseFinances = () => {
           supabase.from('user_banks').select('*').eq('user_id', user.id),
           supabase.from('categories').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
           supabase.from('monthly_payments_tracking').select('amount').eq('user_id', user.id).eq('month', currentMonth).eq('year', currentYear),
+          supabase.from('monthly_savings').select('*').eq('user_id', user.id).order('year', { ascending: false }).order('month', { ascending: false }).order('created_at', { ascending: false }),
         ]);
+
 
       if (profileRes.data) {
         setProfile(profileRes.data);
