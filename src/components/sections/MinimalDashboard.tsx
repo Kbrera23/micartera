@@ -51,7 +51,11 @@ export const MinimalDashboard = ({
   oneTimeExpenses,
   expenses,
   categories,
+  savingsByBank,
+  monthlySavings,
   onAddExpense,
+  onAddMonthlySaving,
+  onRemoveMonthlySaving,
   refetch,
 }: MinimalDashboardProps) => {
   const hasRevolut = userBanks.some(b => b.bank === 'revolut');
@@ -78,8 +82,20 @@ export const MinimalDashboard = ({
           totalSubscriptions={totalSubscriptions}
           reserveFund={reserveFund}
           rent={rent}
+          savingsByBank={savingsByBank}
         />
       </div>
+
+      {/* Registrar ahorro mensual */}
+      <div style={{ animationDelay: '150ms' }} className="animate-fade-in">
+        <RegisterMonthlySaving
+          userBanks={userBanks}
+          monthlySavings={monthlySavings}
+          onAddSaving={onAddMonthlySaving}
+          onRemoveSaving={onRemoveMonthlySaving}
+        />
+      </div>
+
 
       {/* Revolut Reminder */}
       {hasRevolut && (
