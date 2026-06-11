@@ -65,6 +65,17 @@ export interface UserBank {
   initial_balance: number;
 }
 
+export interface MonthlySaving {
+  id: string;
+  user_id: string;
+  year: number;
+  month: number;
+  bank: BankType;
+  amount: number;
+  note: string | null;
+  created_at: string;
+}
+
 // ✅ CORREGIDO: encoding de emojis y tildes corregido
 const DEFAULT_CATEGORIES = [
   { name: 'Alimentación', color: '#10b981', icon: '🛒', budget_limit: 500, is_default: true },
