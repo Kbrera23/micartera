@@ -66,7 +66,7 @@ export const parseInputCurrency = (value: string): number => {
 export const numberToInputCurrency = (value: number): string => {
   if (!value || !Number.isFinite(value)) return '';
   const hasDecimals = value % 1 !== 0;
-  return new Intl.NumberFormat('es-ES', {
+  return new Intl.NumberFormat('de-DE', {
     minimumFractionDigits: hasDecimals ? 2 : 0,
     maximumFractionDigits: 2,
   }).format(value);
