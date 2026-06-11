@@ -181,6 +181,15 @@ export const useSupabaseFinances = () => {
       );
       setPaidThisMonth(totalPaid);
 
+      setMonthlySavings(
+        (savingsRes.data || []).map(s => ({
+          ...s,
+          bank: s.bank as BankType,
+          amount: Number(s.amount || 0),
+        }))
+      );
+
+
       // Categorías: crear defaults si no existe ninguna, siempre deduplicar
       // ✅ CORREGIDO: eliminado "as unknown as Category[]" y "(supabase as any)"
       const cats = dedupeCategories((categoriesRes.data || []) as Category[]);
