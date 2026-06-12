@@ -4,7 +4,7 @@ import { UpcomingLargePayments } from '@/components/dashboard/UpcomingLargePayme
 import { RecentExpenses } from '@/components/dashboard/RecentExpenses';
 import { MonthlyReminder } from '@/components/dashboard/MonthlyReminder';
 import { MonthlySummaryCard } from '@/components/dashboard/MonthlySummaryCard';
-import { RegisterMonthlySaving } from '@/components/dashboard/RegisterMonthlySaving';
+import { EditMonthlyFinances } from '@/components/dashboard/EditMonthlyFinances';
 import { BankType, Expense, ExpenseFrequency, Category, MonthlySaving } from '@/hooks/useSupabaseFinances';
 
 interface MinimalDashboardProps {
@@ -30,6 +30,7 @@ interface MinimalDashboardProps {
   onAddExpense: (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency, bank: BankType | null) => Promise<void>;
   onAddMonthlySaving: (year: number, month: number, bank: BankType, amount: number, note?: string | null) => Promise<void> | void;
   onRemoveMonthlySaving: (id: string) => Promise<void> | void;
+  onUpdateProfile: (data: { monthly_income?: number; savings_goal?: number; rent?: number }) => Promise<void> | void;
   refetch: () => void;
 }
 
@@ -56,6 +57,7 @@ export const MinimalDashboard = ({
   onAddExpense,
   onAddMonthlySaving,
   onRemoveMonthlySaving,
+  onUpdateProfile,
   refetch,
 }: MinimalDashboardProps) => {
   const hasRevolut = userBanks.some(b => b.bank === 'revolut');
@@ -86,15 +88,16 @@ export const MinimalDashboard = ({
         />
       </div>
 
-      {/* Registrar ahorro mensual */}
+      {/* Editar finanzas del mes */}
       <div style={{ animationDelay: '150ms' }} className="animate-fade-in">
-        <RegisterMonthlySaving
-          userBanks={userBanks}
-          monthlySavings={monthlySavings}
-          onAddSaving={onAddMonthlySaving}
-          onRemoveSaving={onRemoveMonthlySaving}
+        <EditMonthlyFinances
+          monthlyIncome={monthlyIncome}
+          savingsGoal={savingsGoal}
+          rent={rent}
+          onUpdateProfile={onUpdateProfile}
         />
       </div>
+
 
 
       {/* Revolut Reminder */}
