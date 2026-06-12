@@ -160,6 +160,7 @@ export const CategoriesSection = ({
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
+  monthlySavings = [],
 }: CategoriesSectionProps) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
