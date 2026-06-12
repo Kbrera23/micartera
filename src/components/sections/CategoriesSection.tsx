@@ -23,6 +23,7 @@ interface CategoriesSectionProps {
   onAddCategory: (name: string, color: string, icon: string, budgetLimit: number) => Promise<void>;
   onUpdateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
+  monthlySavings?: MonthlySaving[];
 }
 
 const PRESET_COLORS = [
