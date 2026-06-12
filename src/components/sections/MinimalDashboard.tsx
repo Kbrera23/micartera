@@ -88,15 +88,16 @@ export const MinimalDashboard = ({
         />
       </div>
 
-      {/* Registrar ahorro mensual */}
+      {/* Editar finanzas del mes */}
       <div style={{ animationDelay: '150ms' }} className="animate-fade-in">
-        <RegisterMonthlySaving
-          userBanks={userBanks}
-          monthlySavings={monthlySavings}
-          onAddSaving={onAddMonthlySaving}
-          onRemoveSaving={onRemoveMonthlySaving}
+        <EditMonthlyFinances
+          monthlyIncome={monthlyIncome}
+          savingsGoal={savingsGoal}
+          rent={rent}
+          onUpdateProfile={onUpdateProfile}
         />
       </div>
+
 
 
       {/* Revolut Reminder */}
