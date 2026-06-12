@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles, Pencil } from 'lucide-react';
+import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles, Pencil, PiggyBank } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Category } from '@/hooks/useSupabaseFinances';
+import { Category, MonthlySaving, BankType } from '@/hooks/useSupabaseFinances';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
+
+const MONTHS_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const BANK_LABELS: Record<BankType, string> = { santander:'Santander', lacaixa:'La Caixa', ing:'ING', revolut:'Revolut', bbva:'BBVA' };
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 interface CategoryWithStats {
   category: Category;
