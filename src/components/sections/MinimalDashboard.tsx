@@ -57,6 +57,7 @@ export const MinimalDashboard = ({
   onAddExpense,
   onAddMonthlySaving,
   onRemoveMonthlySaving,
+  onUpdateProfile,
   refetch,
 }: MinimalDashboardProps) => {
   const hasRevolut = userBanks.some(b => b.bank === 'revolut');
