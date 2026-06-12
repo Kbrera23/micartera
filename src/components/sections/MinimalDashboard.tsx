@@ -30,6 +30,7 @@ interface MinimalDashboardProps {
   onAddExpense: (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency, bank: BankType | null) => Promise<void>;
   onAddMonthlySaving: (year: number, month: number, bank: BankType, amount: number, note?: string | null) => Promise<void> | void;
   onRemoveMonthlySaving: (id: string) => Promise<void> | void;
+  onUpdateProfile: (data: { monthly_income?: number; savings_goal?: number; rent?: number }) => Promise<void> | void;
   refetch: () => void;
 }
 
