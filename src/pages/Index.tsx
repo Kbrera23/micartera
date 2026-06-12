@@ -217,6 +217,7 @@ const Index = () => {
     addExpense,
     addMonthlySaving,
     removeMonthlySaving,
+    updateProfile,
     refetch,
   ]);
 
