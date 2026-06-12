@@ -322,6 +322,38 @@ export const CategoriesSection = ({
         })()}
       </div>
 
+      {/* Ahorros mensuales */}
+      <div className="glass-card-elevated rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
+            <PiggyBank className="h-4 w-4 text-primary" />
+          </div>
+          <h2 className="font-semibold text-foreground">Ahorros mensuales</h2>
+        </div>
+        {monthlySavings.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aún no has registrado ahorros mensuales.</p>
+        ) : (
+          <ul className="space-y-2">
+            {monthlySavings.map(s => (
+              <li key={s.id} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 bg-white/5">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {capitalize(MONTHS_ES[s.month - 1])} {s.year}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {BANK_LABELS[s.bank] || s.bank}
+                  </p>
+                </div>
+                <span className="font-mono text-sm font-semibold text-primary">
+                  +{formatCurrencyCompact(Number(s.amount || 0))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+
       {showAddModal && (
         <CategoryModal title="Nueva Categoría" onClose={() => setShowAddModal(false)} onSave={onAddCategory} />
       )}
