@@ -190,47 +190,6 @@ export const RegisterMonthlySaving = ({
         </div>
       </div>
 
-      {monthlySavings.length > 0 && (
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-            Histórico de ahorros
-          </p>
-          <ul className="space-y-2">
-            {monthlySavings.slice(0, 8).map((s) => (
-              <li
-                key={s.id}
-                className={cn(
-                  'flex items-center justify-between gap-3 rounded-lg',
-                  'px-3 py-2 bg-white/5 hover:bg-white/10 transition-colors',
-                )}
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {capitalize(MONTHS_ES[s.month - 1])} {s.year}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {BANK_LABELS[s.bank] || s.bank}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="font-mono text-sm font-semibold">
-                    +{formatCurrencyCompact(Number(s.amount || 0))}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => onRemoveSaving(s.id)}
-                    aria-label="Eliminar ahorro"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 };

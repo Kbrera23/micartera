@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles, Pencil } from 'lucide-react';
+import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles, Pencil, PiggyBank } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Category } from '@/hooks/useSupabaseFinances';
+import { Category, MonthlySaving, BankType } from '@/hooks/useSupabaseFinances';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
+
+const MONTHS_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const BANK_LABELS: Record<BankType, string> = { santander:'Santander', lacaixa:'La Caixa', ing:'ING', revolut:'Revolut', bbva:'BBVA' };
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 interface CategoryWithStats {
   category: Category;
@@ -19,6 +23,7 @@ interface CategoriesSectionProps {
   onAddCategory: (name: string, color: string, icon: string, budgetLimit: number) => Promise<void>;
   onUpdateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
+  monthlySavings?: MonthlySaving[];
 }
 
 const PRESET_COLORS = [
@@ -155,6 +160,7 @@ export const CategoriesSection = ({
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
+  monthlySavings = [],
 }: CategoriesSectionProps) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -315,6 +321,38 @@ export const CategoriesSection = ({
           });
         })()}
       </div>
+
+      {/* Ahorros mensuales */}
+      <div className="glass-card-elevated rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
+            <PiggyBank className="h-4 w-4 text-primary" />
+          </div>
+          <h2 className="font-semibold text-foreground">Ahorros mensuales</h2>
+        </div>
+        {monthlySavings.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aún no has registrado ahorros mensuales.</p>
+        ) : (
+          <ul className="space-y-2">
+            {monthlySavings.map(s => (
+              <li key={s.id} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 bg-white/5">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {capitalize(MONTHS_ES[s.month - 1])} {s.year}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {BANK_LABELS[s.bank] || s.bank}
+                  </p>
+                </div>
+                <span className="font-mono text-sm font-semibold text-primary">
+                  +{formatCurrencyCompact(Number(s.amount || 0))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
 
       {showAddModal && (
         <CategoryModal title="Nueva Categoría" onClose={() => setShowAddModal(false)} onSave={onAddCategory} />

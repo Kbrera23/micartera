@@ -283,7 +283,8 @@ const Index = () => {
   onAddCategory: addCategory,
   onUpdateCategory: updateCategory,
   onDeleteCategory: deleteCategory,
-}), [categories, expensesByCategory, addCategory, updateCategory, deleteCategory]);
+  monthlySavings,
+}), [categories, expensesByCategory, addCategory, updateCategory, deleteCategory, monthlySavings]);
 
   // ========== RENDER MEMOIZADO ==========
   const renderSection = useMemo(() => {
