@@ -192,6 +192,7 @@ const Index = () => {
     onAddExpense: addExpense,
     onAddMonthlySaving: addMonthlySaving,
     onRemoveMonthlySaving: removeMonthlySaving,
+    onUpdateProfile: updateProfile,
     refetch,
   }), [
     userBanks,
