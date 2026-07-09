@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.prevent_profile_user_id_change() FROM PUBLIC, anon, authenticated;
