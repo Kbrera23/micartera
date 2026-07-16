@@ -15,26 +15,46 @@ import { formatCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 
 const CATEGORIES = [
-  { name: 'Alimentación', icon: '🛒', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-  { name: 'Transporte',   icon: '🚌', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-  { name: 'Suscripciones',icon: '📺', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-  { name: 'Salud',        icon: '💊', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
-  { name: 'Ocio',         icon: '🎮', color: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
-  { name: 'Ropa',         icon: '👕', color: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
-  { name: 'Otros',        icon: '📁', color: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
+  { name: 'Alimentación',   icon: '🛒', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+  { name: 'Suplementación', icon: '💪', color: 'bg-lime-500/20 text-lime-300 border-lime-500/30' },
+  { name: 'Transporte',     icon: '🚌', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
+  { name: 'Suscripción',    icon: '📺', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+  { name: 'Viajes',         icon: '✈️', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
+  { name: 'Salud',          icon: '💊', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
+  { name: 'Ocio',           icon: '🎮', color: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
+  { name: 'Vivienda',       icon: '🏠', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
+  { name: 'Servicios',      icon: '💡', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
+  { name: 'Compras',        icon: '🛍️', color: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30' },
+  { name: 'Ropa',           icon: '👕', color: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
+  { name: 'Otros',          icon: '📁', color: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
 ] as const;
 
 type CategoryName = typeof CATEGORIES[number]['name'];
 const getCategoryMeta = (name: string) => CATEGORIES.find(c => c.name === name) ?? CATEGORIES[CATEGORIES.length - 1];
 
+const CATEGORY_KEYWORDS: Record<Exclude<CategoryName, 'Otros'>, string[]> = {
+  'Alimentación':   ['mercadona', 'alimentacion', 'alimentación', 'dia, s.a', 'dia,s.a', 'uber eats', 'ubereats', 'glovo', 'just eat', 'carrefour', 'lidl', 'aldi', 'supermercado', 'panaderia', 'panadería', 'fruteria', 'frutería'],
+  'Suplementación': ['m i nutrition', 'mi nutrition', 'myprotein', 'prozis', 'suplementos', 'suplementacion', 'suplementación', 'nutricion', 'nutrición'],
+  'Transporte':     ['gasolina', 'moeve', 'repsol', 'cepsa', 'shell', 'galp', 'gasolinera', 'combustible', 'repostaje', 'taxi', 'metro', 'renfe', 'cabify', 'villargordo cab', 'bolt'],
+  'Suscripción':    ['netflix', 'crunchyroll', 'disney', 'spotify', 'hbo', 'prime video', 'apple tv', 'youtube premium', 'streaming'],
+  'Viajes':         ['nuitee', 'booking', 'airbnb', 'hotel', 'trivago', 'expedia', 'iberia', 'ryanair', 'vueling'],
+  'Salud':          ['farmacia', 'clinica', 'clínica', 'medico', 'médico', 'hospital', 'dentista', 'salud'],
+  'Ocio':           ['acorde cafe', 'acorde café', 'cafe', 'café', 'duo barbers', 'barbers', 'barberia', 'barbería', 'peluqueria', 'peluquería', 'cine', 'teatro', 'concierto', 'gym', 'gimnasio', 'decathlon'],
+  'Vivienda':       ['alquiler', 'hipoteca', 'arrendamientos', 'arrendamiento', 'recibo ay', 'comunidad propietarios'],
+  'Servicios':      ['internet', 'movistar', 'vodafone', 'orange ', 'telefonica', 'telefónica', 'endesa', 'iberdrola', 'naturgy', 'aguas', 'canal isabel', 'cetelem', 'recibo ', ' luz ', ' gas ', ' agua '],
+  'Compras':        ['amazon', 'ebay', 'aliexpress', 'fnac', 'mediamarkt'],
+  'Ropa':           ['zara', 'zalando', 'shein', 'mango', 'primark', 'h&m', 'pull&bear', 'bershka'],
+};
+
 const categorizarGasto = (concepto: string): { categoria: CategoryName; auto: boolean } => {
-  const t = (concepto || '').toLowerCase();
-  if (/mercadona|lidl|carrefour|alimentacion|alimentación|supermercado|\bdia\b|aldi/.test(t)) return { categoria: 'Alimentación', auto: true };
-  if (/uber|cabify|renfe|taxi|gasolina|repsol|\bbp\b|cepsa|shell|galp|gasolinera/.test(t)) return { categoria: 'Transporte', auto: true };
-  if (/netflix|spotify|\bhbo\b|disney|amazon/.test(t)) return { categoria: 'Suscripciones', auto: true };
-  if (/farmacia|clinica|clínica|medico|médico|salud|hospital/.test(t)) return { categoria: 'Salud', auto: true };
-  if (/\bgym\b|gimnasio|decathlon/.test(t)) return { categoria: 'Ocio', auto: true };
-  if (/zara|mango|primark|ropa|h&m|hm\b/.test(t)) return { categoria: 'Ropa', auto: true };
+  const raw = ` ${(concepto || '').toLowerCase()} `;
+  // Guardas específicas: "Uber Eats" gana a "Uber"
+  if (/uber\s*eats|uber-eats|ubereats/.test(raw)) return { categoria: 'Alimentación', auto: true };
+  // "Uber" solo (sin eats) → Transporte
+  if (/\buber\b/.test(raw) && !/eats/.test(raw)) return { categoria: 'Transporte', auto: true };
+  for (const [cat, kws] of Object.entries(CATEGORY_KEYWORDS) as [CategoryName, string[]][]) {
+    if (kws.some(k => raw.includes(k))) return { categoria: cat, auto: true };
+  }
   return { categoria: 'Otros', auto: false };
 };
 
