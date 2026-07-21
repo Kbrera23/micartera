@@ -216,13 +216,22 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     if (!user || !movimientos.length) return;
     setSaving(true);
     try {
-      const rows = movimientos.map(m => ({ user_id: user.id, name: m.concepto, amount: m.importe, is_recurring: false, frequency: 'monthly' as const, bank: null, is_payment_record: false, created_at: m.fecha || new Date().toISOString() }));
-      const { error } = await supabase.from('expenses').insert(rows);
-      if (error) throw error;
-      const autoCount = movimientos.filter(m => m.autoCategorized).length;
-      toast.success(`${movimientos.length} gastos importados, ${autoCount} categorizados automáticamente`);
-      onImported?.(); handleClose(false);
-    } catch (err: any) { toast.error('Error al guardar los movimientos'); }
+      const payload = {
+        fileName: file?.name || 'Archivo bancario',
+        createdAt: new Date().toISOString(),
+        movimientos: movimientos.map(m => ({
+          concepto: m.concepto,
+          importe: m.importe,
+          fecha: m.fecha,
+          categoria: m.categoria,
+          autoCategorized: m.autoCategorized,
+        })),
+      };
+      localStorage.setItem(`pending_import_${user.id}`, JSON.stringify(payload));
+      toast.success(`${movimientos.length} movimientos listos — confírmalos en el Dashboard`);
+      onImported?.();
+      handleClose(false);
+    } catch (err: any) { toast.error('Error al preparar la importación'); }
     finally { setSaving(false); }
   };
 
