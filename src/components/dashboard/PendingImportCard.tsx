@@ -27,6 +27,22 @@ interface Props {
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
+const CATEGORY_DEFAULTS: Record<string, { icon: string; color: string }> = {
+  'Alimentación':   { icon: '🛒', color: '#10b981' },
+  'Suplementación': { icon: '💪', color: '#84cc16' },
+  'Transporte':     { icon: '🚌', color: '#3b82f6' },
+  'Suscripción':    { icon: '📺', color: '#f59e0b' },
+  'Viajes':         { icon: '✈️', color: '#06b6d4' },
+  'Salud':          { icon: '💊', color: '#ef4444' },
+  'Ocio':           { icon: '🎮', color: '#8b5cf6' },
+  'Vivienda':       { icon: '🏠', color: '#f97316' },
+  'Servicios':      { icon: '💡', color: '#eab308' },
+  'Compras':        { icon: '🛍️', color: '#ec4899' },
+  'Ropa':           { icon: '👕', color: '#f472b6' },
+  'Otros':          { icon: '📁', color: '#6b7280' },
+};
+const norm = (s: string) => s.trim().toLocaleLowerCase('es-ES');
+
 export const PendingImportCard = ({ refetch }: Props) => {
   const { user } = useAuth();
   const [pending, setPending] = useState<PendingImport | null>(null);
@@ -68,7 +84,31 @@ export const PendingImportCard = ({ refetch }: Props) => {
   const handleAccept = async () => {
     setSaving(true);
     try {
-      const rows = pending.movimientos.map(m => ({
+      // 1) Get existing categories for user
+      const { data: existingCats, error: catErr } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('user_id', user.id);
+      if (catErr) throw catErr;
+
+      const catMap = new Map<string, string>();
+      (existingCats || []).forEach((c: any) => catMap.set(norm(c.name), c.id));
+
+      // 2) Create missing categories
+      const neededNames = Array.from(new Set(pending.movimientos.map(m => m.categoria).filter(Boolean)));
+      const toCreate = neededNames.filter(n => !catMap.has(norm(n)));
+      if (toCreate.length) {
+        const rows = toCreate.map(name => {
+          const def = CATEGORY_DEFAULTS[name] || CATEGORY_DEFAULTS['Otros'];
+          return { user_id: user.id, name, color: def.color, icon: def.icon, budget_limit: 0, is_default: false };
+        });
+        const { data: created, error: cErr } = await supabase.from('categories').insert(rows).select('id, name');
+        if (cErr) throw cErr;
+        (created || []).forEach((c: any) => catMap.set(norm(c.name), c.id));
+      }
+
+      // 3) Insert expenses with category_id
+      const expenseRows = pending.movimientos.map(m => ({
         user_id: user.id,
         name: m.concepto,
         amount: m.importe,
@@ -76,13 +116,14 @@ export const PendingImportCard = ({ refetch }: Props) => {
         frequency: 'monthly' as const,
         bank: null,
         is_payment_record: false,
+        category_id: catMap.get(norm(m.categoria)) || null,
         created_at: m.fecha || new Date().toISOString(),
       }));
-      const { error } = await supabase.from('expenses').insert(rows);
+      const { error } = await supabase.from('expenses').insert(expenseRows);
       if (error) throw error;
       localStorage.removeItem(storageKey);
       setPending(null);
-      toast.success(`✓ ${rows.length} gastos importados correctamente`);
+      toast.success(`✓ ${expenseRows.length} gastos importados y categorizados`);
       refetch();
     } catch (err) {
       console.error(err);
