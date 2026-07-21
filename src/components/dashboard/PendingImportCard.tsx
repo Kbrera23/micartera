@@ -27,6 +27,22 @@ interface Props {
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
+const CATEGORY_DEFAULTS: Record<string, { icon: string; color: string }> = {
+  'Alimentación':   { icon: '🛒', color: '#10b981' },
+  'Suplementación': { icon: '💪', color: '#84cc16' },
+  'Transporte':     { icon: '🚌', color: '#3b82f6' },
+  'Suscripción':    { icon: '📺', color: '#f59e0b' },
+  'Viajes':         { icon: '✈️', color: '#06b6d4' },
+  'Salud':          { icon: '💊', color: '#ef4444' },
+  'Ocio':           { icon: '🎮', color: '#8b5cf6' },
+  'Vivienda':       { icon: '🏠', color: '#f97316' },
+  'Servicios':      { icon: '💡', color: '#eab308' },
+  'Compras':        { icon: '🛍️', color: '#ec4899' },
+  'Ropa':           { icon: '👕', color: '#f472b6' },
+  'Otros':          { icon: '📁', color: '#6b7280' },
+};
+const norm = (s: string) => s.trim().toLocaleLowerCase('es-ES');
+
 export const PendingImportCard = ({ refetch }: Props) => {
   const { user } = useAuth();
   const [pending, setPending] = useState<PendingImport | null>(null);
