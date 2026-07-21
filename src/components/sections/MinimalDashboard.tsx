@@ -101,6 +101,11 @@ export const MinimalDashboard = ({
 
 
 
+      {/* Pending bank import */}
+      <div style={{ animationDelay: '170ms' }} className="animate-fade-in">
+        <PendingImportCard refetch={refetch} />
+      </div>
+
       {/* Revolut Reminder */}
       {hasRevolut && (
         <div style={{ animationDelay: '180ms' }} className="animate-fade-in">
