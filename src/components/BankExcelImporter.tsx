@@ -228,6 +228,7 @@ export const BankExcelImporter = ({ onImported }: Props) => {
         })),
       };
       localStorage.setItem(`pending_import_${user.id}`, JSON.stringify(payload));
+      window.dispatchEvent(new Event('pending-import-updated'));
       toast.success(`${movimientos.length} movimientos listos — confírmalos en el Dashboard`);
       onImported?.();
       handleClose(false);
