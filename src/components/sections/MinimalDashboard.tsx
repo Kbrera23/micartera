@@ -3,6 +3,7 @@ import { KPICards } from '@/components/dashboard/KPICards';
 import { UpcomingLargePayments } from '@/components/dashboard/UpcomingLargePayments';
 import { RecentExpenses } from '@/components/dashboard/RecentExpenses';
 import { MonthlyReminder } from '@/components/dashboard/MonthlyReminder';
+import { PendingImportCard } from '@/components/dashboard/PendingImportCard';
 import { MonthlySummaryCard } from '@/components/dashboard/MonthlySummaryCard';
 import { EditMonthlyFinances } from '@/components/dashboard/EditMonthlyFinances';
 import { BankType, Expense, ExpenseFrequency, Category, MonthlySaving } from '@/hooks/useSupabaseFinances';
@@ -99,6 +100,11 @@ export const MinimalDashboard = ({
       </div>
 
 
+
+      {/* Pending bank import */}
+      <div style={{ animationDelay: '170ms' }} className="animate-fade-in">
+        <PendingImportCard refetch={refetch} />
+      </div>
 
       {/* Revolut Reminder */}
       {hasRevolut && (
