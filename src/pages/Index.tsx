@@ -371,6 +371,11 @@ const Index = () => {
   // ========== RENDER PRINCIPAL ==========
   return (
     <AppLayout currentSection={currentSection} onSectionChange={setCurrentSection}>
+      <SEO
+        title="Panel — MiCartera"
+        description="Panel principal de MiCartera con nómina, gastos, ahorro y distribución bancaria."
+        path="https://micartera.lovable.app/"
+      />
       {renderSection}
     </AppLayout>
   );
