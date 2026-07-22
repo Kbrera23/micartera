@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Loader2, ArrowRight, Wallet, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { SEO } from '@/components/SEO';
 
 const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'La contraseña debe tener al menos 6 caracteres');
@@ -456,6 +457,6 @@ export default function Auth() {
       <p className="absolute bottom-6 text-[11px] text-white/15 tracking-widest uppercase font-medium">
         MiCartera · v3.0
       </p>
-    </div>
+    </main>
   );
 }
