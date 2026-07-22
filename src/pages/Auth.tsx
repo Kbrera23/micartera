@@ -243,7 +243,7 @@ export default function Auth() {
                 transition: 'transform 0.2s ease-out',
               }}
             >
-              MiCartera
+              MiCartera — Control financiero inteligente
             </h1>
             <p className="text-sm text-white/40">
               {view === 'forgot' ? 'Recupera tu acceso' : 'Control financiero inteligente'}

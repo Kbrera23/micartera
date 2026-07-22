@@ -1,0 +1,8 @@
+# MiCartera
+
+> MiCartera es una aplicación web para gestionar finanzas personales: nómina, gastos fijos y variables, ahorro, categorías presupuestarias, objetivos de compra y distribución bancaria.
+
+## Pages
+
+- [Inicio](/): Presentación y acceso a la aplicación de gestión financiera personal.
+- [Acceso](/auth): Inicio de sesión y registro de cuenta.

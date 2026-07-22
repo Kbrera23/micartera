@@ -45,7 +45,7 @@ export const BankCard = ({
               {BANK_LOGOS[name] ? (
                 <img
                   src={BANK_LOGOS[name]}
-                  alt={`${displayName} logo`}
+                  alt={`Banco ${displayName}`}
                   className="w-5 h-5 object-contain brightness-0 invert"
                 />
               ) : (
