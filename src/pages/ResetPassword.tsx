@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Wallet, Eye, EyeOff } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -46,7 +47,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <div
+    <main
       className="min-h-screen flex items-center justify-center p-4"
       style={{
         background: `radial-gradient(ellipse at 0% 0%, hsl(195 60% 16%) 0%, transparent 55%),
@@ -54,6 +55,11 @@ export default function ResetPassword() {
                      hsl(200 45% 10%)`,
       }}
     >
+      <SEO
+        title="Restablecer contraseña — MiCartera"
+        description="Define una nueva contraseña para tu cuenta de MiCartera."
+        path="https://micartera.lovable.app/reset-password"
+      />
       <div className="w-full max-w-[420px]">
         <div
           className="rounded-3xl overflow-hidden"
