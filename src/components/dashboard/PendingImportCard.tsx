@@ -48,6 +48,7 @@ export const PendingImportCard = ({ refetch }: Props) => {
   const [pending, setPending] = useState<PendingImport | null>(null);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   const storageKey = user ? `pending_import_${user.id}` : null;
 
