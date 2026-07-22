@@ -9,6 +9,7 @@ import { ProfileSection } from '@/components/sections/ProfileSection';
 import { SettingsSection } from '@/components/sections/SettingsSection';
 import { CategoriesSection } from '@/components/sections/CategoriesSection';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 // ========== iOS OPTIMIZATIONS ==========
 const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
@@ -370,6 +371,11 @@ const Index = () => {
   // ========== RENDER PRINCIPAL ==========
   return (
     <AppLayout currentSection={currentSection} onSectionChange={setCurrentSection}>
+      <SEO
+        title="Panel — MiCartera"
+        description="Panel principal de MiCartera con nómina, gastos, ahorro y distribución bancaria."
+        path="https://micartera.lovable.app/"
+      />
       {renderSection}
     </AppLayout>
   );

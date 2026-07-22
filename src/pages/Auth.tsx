@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Loader2, ArrowRight, Wallet, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { SEO } from '@/components/SEO';
 
 const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'La contraseña debe tener al menos 6 caracteres');
@@ -141,13 +142,18 @@ export default function Auth() {
   };
 
   return (
-    <div
-      ref={containerRef}
+    <main
+      ref={containerRef as React.RefObject<HTMLElement>}
       className="min-h-screen flex items-center justify-center overflow-hidden relative"
       style={bgStyle}
-      onMouseMove={handleMouseMove}
+      onMouseMove={handleMouseMove as unknown as React.MouseEventHandler<HTMLElement>}
       onMouseLeave={handleMouseLeave}
     >
+      <SEO
+        title="Iniciar sesión — MiCartera"
+        description="Accede a MiCartera para gestionar tu nómina, gastos, ahorro y objetivos financieros."
+        path="https://micartera.lovable.app/auth"
+      />
       {/* Animated grid */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -243,7 +249,7 @@ export default function Auth() {
                 transition: 'transform 0.2s ease-out',
               }}
             >
-              MiCartera
+              MiCartera — Control financiero inteligente
             </h1>
             <p className="text-sm text-white/40">
               {view === 'forgot' ? 'Recupera tu acceso' : 'Control financiero inteligente'}
@@ -456,6 +462,6 @@ export default function Auth() {
       <p className="absolute bottom-6 text-[11px] text-white/15 tracking-widest uppercase font-medium">
         MiCartera · v3.0
       </p>
-    </div>
+    </main>
   );
 }

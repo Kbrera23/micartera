@@ -195,7 +195,7 @@ export const MinimalProfileSection = ({
               >
                 <div className={cn('w-5 h-5 rounded-md flex items-center justify-center', bank.color)}>
                   {logo ? (
-                    <img src={logo} alt={bank.name} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
+                    <img src={logo} alt={`Banco ${bank.name}`} className="w-3.5 h-3.5 object-contain brightness-0 invert" />
                   ) : (
                     <Building2 className="w-3 h-3 text-white" />
                   )}
@@ -216,7 +216,7 @@ export const MinimalProfileSection = ({
                 <div key={bank.id} className="flex items-center gap-3 py-2 border-b border-border/40 last:border-0">
                   <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center shrink-0', bank.color)}>
                     {logo ? (
-                      <img src={logo} alt={bank.name} className="w-4 h-4 object-contain brightness-0 invert" />
+                      <img src={logo} alt={`Banco ${bank.name}`} className="w-4 h-4 object-contain brightness-0 invert" />
                     ) : (
                       <Building2 className="w-3 h-3 text-white" />
                     )}
