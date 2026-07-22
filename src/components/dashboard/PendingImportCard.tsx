@@ -77,18 +77,19 @@ export const PendingImportCard = ({ refetch }: Props) => {
     return () => clearInterval(t);
   }, [load]);
 
-  if (accepted || !pending || !user || !storageKey) return null;
-
-  const total = pending.movimientos.reduce((s, m) => s + m.importe, 0);
-  const sinCategoria = pending.movimientos.filter(m => !m.autoCategorized).length;
-  const mesNombre = MESES[new Date(pending.createdAt).getMonth()];
-
   const clearPending = useCallback(() => {
     if (storageKey) localStorage.removeItem(storageKey);
     setPending(null);
     setAccepted(true);
     window.dispatchEvent(new Event('pending-import-updated'));
   }, [storageKey]);
+
+  if (accepted || !pending || !user || !storageKey) return null;
+
+  const total = pending.movimientos.reduce((s, m) => s + m.importe, 0);
+  const sinCategoria = pending.movimientos.filter(m => !m.autoCategorized).length;
+  const mesNombre = MESES[new Date(pending.createdAt).getMonth()];
+
 
   const handleAccept = async () => {
     setSaving(true);
