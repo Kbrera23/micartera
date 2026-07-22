@@ -149,6 +149,11 @@ export default function Auth() {
       onMouseMove={handleMouseMove as unknown as React.MouseEventHandler<HTMLElement>}
       onMouseLeave={handleMouseLeave}
     >
+      <SEO
+        title="Iniciar sesión — MiCartera"
+        description="Accede a MiCartera para gestionar tu nómina, gastos, ahorro y objetivos financieros."
+        path="https://micartera.lovable.app/auth"
+      />
       {/* Animated grid */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
