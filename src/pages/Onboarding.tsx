@@ -5,10 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2, Wallet, Building2, Flame, Star, Zap, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SEO } from '@/components/SEO';
 // ✅ CORREGIDO: BankType importado del hook en lugar de redefinirlo localmente.
 //    Así si se añade un banco nuevo al hook, el Onboarding lo recoge automáticamente.
 import { BankType } from '@/hooks/useSupabaseFinances';
@@ -91,15 +92,20 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <main className="min-h-screen flex items-center justify-center bg-background p-4">
+      <SEO
+        title="Configura tu cuenta — MiCartera"
+        description="Configura tu nómina, objetivo de ahorro y bancos para empezar a usar MiCartera."
+        path="https://micartera.lovable.app/onboarding"
+      />
       <Card className="w-full max-w-md border-none shadow-2xl rounded-3xl">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
             <Wallet className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold">
             {step === 1 ? 'Configura tu Nómina' : 'Selecciona tus Bancos'}
-          </CardTitle>
+          </h1>
           <CardDescription>
             {step === 1 
               ? 'Define tus ingresos mensuales y objetivo de ahorro'
@@ -201,6 +207,6 @@ export default function Onboarding() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }
