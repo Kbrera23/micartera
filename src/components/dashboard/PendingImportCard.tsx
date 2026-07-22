@@ -81,20 +81,27 @@ export const PendingImportCard = ({ refetch }: Props) => {
   const sinCategoria = pending.movimientos.filter(m => !m.autoCategorized).length;
   const mesNombre = MESES[new Date(pending.createdAt).getMonth()];
 
+  const clearPending = useCallback(() => {
+    if (storageKey) localStorage.removeItem(storageKey);
+    setPending(null);
+    setAccepted(true);
+    window.dispatchEvent(new Event('pending-import-updated'));
+  }, [storageKey]);
+
   const handleAccept = async () => {
     setSaving(true);
+    let expensesInserted = false;
     try {
       // 1) Get existing categories for user
-      const { data: existingCats, error: catErr } = await supabase
+      const { data: existingCats } = await supabase
         .from('categories')
         .select('id, name')
         .eq('user_id', user.id);
-      if (catErr) throw catErr;
 
       const catMap = new Map<string, string>();
       (existingCats || []).forEach((c: any) => catMap.set(norm(c.name), c.id));
 
-      // 2) Create missing categories
+      // 2) Create missing categories (best-effort, ignore errors)
       const neededNames = Array.from(new Set(pending.movimientos.map(m => m.categoria).filter(Boolean)));
       const toCreate = neededNames.filter(n => !catMap.has(norm(n)));
       if (toCreate.length) {
@@ -102,8 +109,7 @@ export const PendingImportCard = ({ refetch }: Props) => {
           const def = CATEGORY_DEFAULTS[name] || CATEGORY_DEFAULTS['Otros'];
           return { user_id: user.id, name, color: def.color, icon: def.icon, budget_limit: 0, is_default: false };
         });
-        const { data: created, error: cErr } = await supabase.from('categories').insert(rows).select('id, name');
-        if (cErr) throw cErr;
+        const { data: created } = await supabase.from('categories').insert(rows).select('id, name');
         (created || []).forEach((c: any) => catMap.set(norm(c.name), c.id));
       }
 
@@ -121,13 +127,17 @@ export const PendingImportCard = ({ refetch }: Props) => {
       }));
       const { error } = await supabase.from('expenses').insert(expenseRows);
       if (error) throw error;
-      localStorage.removeItem(storageKey);
-      setPending(null);
+      expensesInserted = true;
+      clearPending();
       toast.success(`✓ ${expenseRows.length} gastos importados y categorizados`);
-      refetch();
+      try { refetch(); } catch (e) { console.error(e); }
     } catch (err) {
       console.error(err);
-      toast.error('Error al guardar los movimientos');
+      if (expensesInserted) {
+        clearPending();
+      } else {
+        toast.error('Error al guardar los movimientos');
+      }
     } finally {
       setSaving(false);
     }
