@@ -141,11 +141,11 @@ export default function Auth() {
   };
 
   return (
-    <div
-      ref={containerRef}
+    <main
+      ref={containerRef as React.RefObject<HTMLElement>}
       className="min-h-screen flex items-center justify-center overflow-hidden relative"
       style={bgStyle}
-      onMouseMove={handleMouseMove}
+      onMouseMove={handleMouseMove as unknown as React.MouseEventHandler<HTMLElement>}
       onMouseLeave={handleMouseLeave}
     >
       {/* Animated grid */}
