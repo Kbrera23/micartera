@@ -54,10 +54,11 @@ export const PendingImportCard = ({ refetch }: Props) => {
 
   const load = useCallback(() => {
     if (!storageKey) return;
+    if (accepted) { setPending(null); return; }
     const raw = localStorage.getItem(storageKey);
     if (!raw) { setPending(null); return; }
     try { setPending(JSON.parse(raw)); } catch { setPending(null); }
-  }, [storageKey]);
+  }, [storageKey, accepted]);
 
   useEffect(() => {
     load();
