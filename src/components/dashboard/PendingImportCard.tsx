@@ -77,7 +77,7 @@ export const PendingImportCard = ({ refetch }: Props) => {
     return () => clearInterval(t);
   }, [load]);
 
-  if (!pending || !user || !storageKey) return null;
+  if (accepted || !pending || !user || !storageKey) return null;
 
   const total = pending.movimientos.reduce((s, m) => s + m.importe, 0);
   const sinCategoria = pending.movimientos.filter(m => !m.autoCategorized).length;
