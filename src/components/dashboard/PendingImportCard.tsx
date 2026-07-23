@@ -48,17 +48,15 @@ export const PendingImportCard = ({ refetch }: Props) => {
   const [pending, setPending] = useState<PendingImport | null>(null);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [accepted, setAccepted] = useState(false);
 
   const storageKey = user ? `pending_import_${user.id}` : null;
 
   const load = useCallback(() => {
     if (!storageKey) return;
-    if (accepted) { setPending(null); return; }
     const raw = localStorage.getItem(storageKey);
     if (!raw) { setPending(null); return; }
     try { setPending(JSON.parse(raw)); } catch { setPending(null); }
-  }, [storageKey, accepted]);
+  }, [storageKey]);
 
   useEffect(() => {
     load();
@@ -71,20 +69,13 @@ export const PendingImportCard = ({ refetch }: Props) => {
     };
   }, [load]);
 
-  // Poll to catch same-tab updates from importer
-  useEffect(() => {
-    const t = setInterval(load, 1500);
-    return () => clearInterval(t);
-  }, [load]);
-
   const clearPending = useCallback(() => {
     if (storageKey) localStorage.removeItem(storageKey);
     setPending(null);
-    setAccepted(true);
     window.dispatchEvent(new Event('pending-import-updated'));
   }, [storageKey]);
 
-  if (accepted || !pending || !user || !storageKey) return null;
+  if (!pending || !user || !storageKey) return null;
 
   const total = pending.movimientos.reduce((s, m) => s + m.importe, 0);
   const sinCategoria = pending.movimientos.filter(m => !m.autoCategorized).length;

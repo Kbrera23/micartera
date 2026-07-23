@@ -127,6 +127,13 @@ interface Movimiento {
   autoCategorized: boolean;
 }
 
+const toSafeISODate = (d: Date): string => {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T12:00:00.000Z`;
+};
+
 const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
   const data = await file.arrayBuffer();
   const wb = XLSX.read(data, { type: 'array', cellDates: true });
@@ -161,10 +168,10 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
     let fecha: string | null = null;
     if (fechaIdx !== -1) {
       const f = row[fechaIdx];
-      if (f instanceof Date && !isNaN(f.getTime())) { fecha = f.toISOString(); }
+      if (f instanceof Date && !isNaN(f.getTime())) { fecha = toSafeISODate(f); }
       else if (typeof f === 'string' && f) {
         const m = f.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-        if (m) { const yr = m[3].length === 2 ? `20${m[3]}` : m[3]; const d = new Date(`${yr}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`); if (!isNaN(d.getTime())) fecha = d.toISOString(); }
+        if (m) { const yr = m[3].length === 2 ? `20${m[3]}` : m[3]; const dia = m[1]; const mes = m[2]; const d = new Date(Number(yr), Number(mes) - 1, Number(dia)); if (!isNaN(d.getTime())) fecha = toSafeISODate(d); }
       }
     }
     const cat = categorizarGasto(concepto);
