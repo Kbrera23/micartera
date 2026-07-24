@@ -79,6 +79,8 @@ interface Movimiento {
   fecha: string | null;
   categoria: CategoryName;
   autoCategorized: boolean;
+  duplicado: boolean;
+  incluir: boolean;
 }
 
 const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
