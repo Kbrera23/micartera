@@ -362,9 +362,9 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                     <table className="w-full text-sm">
                       <thead className="sticky top-0 z-10" style={{ background: 'hsl(200 40% 13%)' }}>
                         <tr className="text-left text-muted-foreground">
+                          <th className="px-3 py-3 font-medium w-10"></th>
                           <th className="px-4 py-3 font-medium">Concepto</th>
                           <th className="px-4 py-3 font-medium whitespace-nowrap">Fecha</th>
-
                           <th className="px-4 py-3 font-medium text-right">Importe</th>
                           <th className="px-4 py-3 font-medium">Categoría</th>
                           <th className="px-4 py-3 w-10"></th>
@@ -373,11 +373,32 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                       <tbody>
                         {movimientos.map((m, i) => {
                           const meta = getCategoryMeta(m.categoria);
+                          const baseBg = i % 2 === 0 ? 'hsl(200 40% 11%)' : 'hsl(200 35% 13%)';
                           return (
                             <tr key={m.id}
-                              className="border-t transition-colors hover:bg-white/3"
-                              style={{ borderColor: 'hsl(200 30% 17%)', background: i % 2 === 0 ? 'hsl(200 40% 11%)' : 'hsl(200 35% 13%)' }}>
-                              <td className="px-4 py-3 text-foreground max-w-xs truncate" title={m.concepto}>{m.concepto}</td>
+                              className={cn(
+                                'border-t transition-colors hover:bg-white/3',
+                                m.duplicado && 'bg-amber-500/10',
+                                !m.incluir && 'opacity-60'
+                              )}
+                              style={{ borderColor: 'hsl(200 30% 17%)', background: m.duplicado ? undefined : baseBg }}>
+                              <td className="px-3 py-3">
+                                <Checkbox
+                                  checked={m.incluir}
+                                  onCheckedChange={() => toggleIncluir(m.id)}
+                                  aria-label="Incluir movimiento"
+                                />
+                              </td>
+                              <td className="px-4 py-3 text-foreground max-w-xs" title={m.concepto}>
+                                <div className="flex items-center gap-2">
+                                  <span className="truncate">{m.concepto}</span>
+                                  {m.duplicado && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 text-amber-400 bg-amber-500/10 shrink-0">
+                                      Ya existe
+                                    </Badge>
+                                  )}
+                                </div>
+                              </td>
                               <td className={cn('px-4 py-3 font-mono whitespace-nowrap', m.fecha ? 'text-muted-foreground' : 'text-amber-400')}>
                                 {m.fecha ? formatFechaES(m.fecha) : 'Sin fecha'}
                               </td>
