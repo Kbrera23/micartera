@@ -292,6 +292,8 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                       <thead className="sticky top-0 z-10" style={{ background: 'hsl(200 40% 13%)' }}>
                         <tr className="text-left text-muted-foreground">
                           <th className="px-4 py-3 font-medium">Concepto</th>
+                          <th className="px-4 py-3 font-medium whitespace-nowrap">Fecha</th>
+
                           <th className="px-4 py-3 font-medium text-right">Importe</th>
                           <th className="px-4 py-3 font-medium">Categoría</th>
                           <th className="px-4 py-3 w-10"></th>
