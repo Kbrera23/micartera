@@ -163,22 +163,79 @@ export const BankExcelImporter = ({ onImported }: Props) => {
   const handleProcess = async () => {
     if (!file) return;
     setProcessing(true);
-    try { const movs = await parseExcelFile(file); setMovimientos(movs); toast.success(`${movs.length} movimientos detectados`); }
+    try {
+      const movs = await parseExcelFile(file);
+
+      // Marcar duplicados dentro del propio archivo
+      for (let i = 0; i < movs.length; i++) {
+        if (movs[i].duplicado) continue;
+        for (let j = i + 1; j < movs.length; j++) {
+          if (movs[j].duplicado) continue;
+          if (esMismoMovimiento(movs[i], movs[j])) {
+            movs[j].duplicado = true;
+            movs[j].incluir = false;
+          }
+        }
+      }
+
+      // Comprobar duplicados contra la BD
+      if (user) {
+        try {
+          const fechas = movs.map(m => m.fecha).filter((f): f is string => !!f).sort();
+          if (fechas.length) {
+            const minDate = new Date(fechas[0]);
+            const maxDate = new Date(fechas[fechas.length - 1]);
+            minDate.setDate(minDate.getDate() - 1);
+            maxDate.setDate(maxDate.getDate() + 1);
+            const { data, error } = await supabase
+              .from('expenses')
+              .select('name, amount, created_at')
+              .eq('user_id', user.id)
+              .gte('created_at', minDate.toISOString())
+              .lte('created_at', maxDate.toISOString());
+            if (error) throw error;
+            const existentes = (data || []).map(e => ({
+              concepto: e.name as string,
+              importe: Number(e.amount),
+              fecha: e.created_at as string,
+            }));
+            for (const m of movs) {
+              if (m.duplicado) continue;
+              if (existentes.some(e => esMismoMovimiento(m, e))) {
+                m.duplicado = true;
+                m.incluir = false;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error comprobando duplicados', err);
+        }
+      }
+
+      setMovimientos(movs);
+      toast.success(`${movs.length} movimientos detectados`);
+    }
     catch (err: any) { toast.error(err.message || 'Error al procesar el archivo'); }
     finally { setProcessing(false); }
   };
 
   const updateCategoria = (id: string, categoria: CategoryName) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, categoria } : m));
+  const toggleIncluir = (id: string) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, incluir: !m.incluir } : m));
   const removeRow = (id: string) => setMovimientos(prev => prev.filter(m => m.id !== id));
 
   const handleConfirmar = async () => {
     if (!user || !movimientos.length) return;
+    const seleccionados = movimientos.filter(m => m.incluir);
+    if (!seleccionados.length) {
+      toast.warning('No hay movimientos seleccionados para importar');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
         fileName: file?.name || 'Archivo bancario',
         createdAt: new Date().toISOString(),
-        movimientos: movimientos.map(m => ({
+        movimientos: seleccionados.map(m => ({
           concepto: m.concepto,
           importe: m.importe,
           fecha: m.fecha,
@@ -188,15 +245,17 @@ export const BankExcelImporter = ({ onImported }: Props) => {
       };
       localStorage.setItem(`pending_import_${user.id}`, JSON.stringify(payload));
       window.dispatchEvent(new Event('pending-import-updated'));
-      toast.success(`${movimientos.length} movimientos listos — confírmalos en el Dashboard`);
+      toast.success(`${seleccionados.length} movimientos listos — confírmalos en el Dashboard`);
       onImported?.();
       handleClose(false);
     } catch (err: any) { toast.error('Error al preparar la importación'); }
     finally { setSaving(false); }
   };
 
-  const total = movimientos.reduce((s, m) => s + m.importe, 0);
-  const sinFecha = movimientos.filter(m => !m.fecha).length;
+  const incluidos = movimientos.filter(m => m.incluir);
+  const total = incluidos.reduce((s, m) => s + m.importe, 0);
+  const sinFecha = incluidos.filter(m => !m.fecha).length;
+  const duplicadosCount = movimientos.filter(m => m.duplicado).length;
 
   const formatFechaES = (iso: string | null): string => {
     if (!iso) return '';
