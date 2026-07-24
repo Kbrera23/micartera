@@ -68,9 +68,15 @@ const limpiarConcepto = (concepto: string): string => {
   return t;
 };
 
-
-
-const toSafeISODate = null as never;
+interface Movimiento {
+  id: string;
+  concepto: string;
+  conceptoOriginal: string;
+  importe: number;
+  fecha: string | null;
+  categoria: CategoryName;
+  autoCategorized: boolean;
+}
 
 const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
   const data = await file.arrayBuffer();
@@ -104,9 +110,21 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
 
     const fecha = fechaIdx !== -1 ? parseFechaCelda(row[fechaIdx]) : null;
 
+    const cat = categorizarGasto(concepto);
+    movimientos.push({
+      id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
+      concepto: limpiarConcepto(concepto),
+      conceptoOriginal: concepto,
+      importe: Math.abs(importe),
+      fecha,
+      categoria: cat.categoria,
+      autoCategorized: cat.auto,
+    });
+  }
   if (!movimientos.length) throw new Error('El archivo no contiene movimientos');
   return movimientos;
 };
+
 
 interface Props { onImported?: () => void; }
 
