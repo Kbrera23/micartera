@@ -189,6 +189,14 @@ export const BankExcelImporter = ({ onImported }: Props) => {
   };
 
   const total = movimientos.reduce((s, m) => s + m.importe, 0);
+  const sinFecha = movimientos.filter(m => !m.fecha).length;
+
+  const formatFechaES = (iso: string | null): string => {
+    if (!iso) return '';
+    const [y, mo, d] = iso.slice(0, 10).split('-');
+    return `${d}/${mo}/${y}`;
+  };
+
 
   return (
     <>
