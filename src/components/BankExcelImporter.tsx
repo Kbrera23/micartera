@@ -124,6 +124,8 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
       fecha,
       categoria: cat.categoria,
       autoCategorized: cat.auto,
+      duplicado: false,
+      incluir: true,
     });
   }
   if (!movimientos.length) throw new Error('El archivo no contiene movimientos');
