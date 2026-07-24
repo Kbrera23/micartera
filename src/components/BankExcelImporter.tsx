@@ -13,6 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 
 import {
   CATEGORIES,
@@ -23,6 +25,7 @@ import {
   parseFechaCelda,
   esGasto,
 } from '@/lib/bankParsing';
+import { esMismoMovimiento } from '@/lib/duplicateDetection';
 
 
 const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'en', 'a', 'y', 'es']);
@@ -76,6 +79,8 @@ interface Movimiento {
   fecha: string | null;
   categoria: CategoryName;
   autoCategorized: boolean;
+  duplicado: boolean;
+  incluir: boolean;
 }
 
 const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
@@ -119,6 +124,8 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
       fecha,
       categoria: cat.categoria,
       autoCategorized: cat.auto,
+      duplicado: false,
+      incluir: true,
     });
   }
   if (!movimientos.length) throw new Error('El archivo no contiene movimientos');
@@ -156,22 +163,79 @@ export const BankExcelImporter = ({ onImported }: Props) => {
   const handleProcess = async () => {
     if (!file) return;
     setProcessing(true);
-    try { const movs = await parseExcelFile(file); setMovimientos(movs); toast.success(`${movs.length} movimientos detectados`); }
+    try {
+      const movs = await parseExcelFile(file);
+
+      // Marcar duplicados dentro del propio archivo
+      for (let i = 0; i < movs.length; i++) {
+        if (movs[i].duplicado) continue;
+        for (let j = i + 1; j < movs.length; j++) {
+          if (movs[j].duplicado) continue;
+          if (esMismoMovimiento(movs[i], movs[j])) {
+            movs[j].duplicado = true;
+            movs[j].incluir = false;
+          }
+        }
+      }
+
+      // Comprobar duplicados contra la BD
+      if (user) {
+        try {
+          const fechas = movs.map(m => m.fecha).filter((f): f is string => !!f).sort();
+          if (fechas.length) {
+            const minDate = new Date(fechas[0]);
+            const maxDate = new Date(fechas[fechas.length - 1]);
+            minDate.setDate(minDate.getDate() - 1);
+            maxDate.setDate(maxDate.getDate() + 1);
+            const { data, error } = await supabase
+              .from('expenses')
+              .select('name, amount, created_at')
+              .eq('user_id', user.id)
+              .gte('created_at', minDate.toISOString())
+              .lte('created_at', maxDate.toISOString());
+            if (error) throw error;
+            const existentes = (data || []).map(e => ({
+              concepto: e.name as string,
+              importe: Number(e.amount),
+              fecha: e.created_at as string,
+            }));
+            for (const m of movs) {
+              if (m.duplicado) continue;
+              if (existentes.some(e => esMismoMovimiento(m, e))) {
+                m.duplicado = true;
+                m.incluir = false;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error comprobando duplicados', err);
+        }
+      }
+
+      setMovimientos(movs);
+      toast.success(`${movs.length} movimientos detectados`);
+    }
     catch (err: any) { toast.error(err.message || 'Error al procesar el archivo'); }
     finally { setProcessing(false); }
   };
 
   const updateCategoria = (id: string, categoria: CategoryName) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, categoria } : m));
+  const toggleIncluir = (id: string) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, incluir: !m.incluir } : m));
   const removeRow = (id: string) => setMovimientos(prev => prev.filter(m => m.id !== id));
 
   const handleConfirmar = async () => {
     if (!user || !movimientos.length) return;
+    const seleccionados = movimientos.filter(m => m.incluir);
+    if (!seleccionados.length) {
+      toast.warning('No hay movimientos seleccionados para importar');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
         fileName: file?.name || 'Archivo bancario',
         createdAt: new Date().toISOString(),
-        movimientos: movimientos.map(m => ({
+        movimientos: seleccionados.map(m => ({
           concepto: m.concepto,
           importe: m.importe,
           fecha: m.fecha,
@@ -181,15 +245,17 @@ export const BankExcelImporter = ({ onImported }: Props) => {
       };
       localStorage.setItem(`pending_import_${user.id}`, JSON.stringify(payload));
       window.dispatchEvent(new Event('pending-import-updated'));
-      toast.success(`${movimientos.length} movimientos listos — confírmalos en el Dashboard`);
+      toast.success(`${seleccionados.length} movimientos listos — confírmalos en el Dashboard`);
       onImported?.();
       handleClose(false);
     } catch (err: any) { toast.error('Error al preparar la importación'); }
     finally { setSaving(false); }
   };
 
-  const total = movimientos.reduce((s, m) => s + m.importe, 0);
-  const sinFecha = movimientos.filter(m => !m.fecha).length;
+  const incluidos = movimientos.filter(m => m.incluir);
+  const total = incluidos.reduce((s, m) => s + m.importe, 0);
+  const sinFecha = incluidos.filter(m => !m.fecha).length;
+  const duplicadosCount = movimientos.filter(m => m.duplicado).length;
 
   const formatFechaES = (iso: string | null): string => {
     if (!iso) return '';
@@ -272,12 +338,17 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                   style={{ background: 'hsl(200 35% 15%)', border: '1px solid hsl(200 30% 20%)' }}>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
-                      <span className="font-semibold text-foreground">{movimientos.length}</span> movimientos detectados
+                      <span className="font-semibold text-foreground">{incluidos.length}</span> de {movimientos.length} movimientos seleccionados
                     </span>
                     <span className="text-sm text-muted-foreground">
                       Total: <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
                     </span>
                   </div>
+                  {duplicadosCount > 0 && (
+                    <div className="text-xs text-amber-400">
+                      ⚠ {duplicadosCount} {duplicadosCount === 1 ? 'movimiento ya existe' : 'movimientos ya existen'} — desmarcados, revísalos antes de confirmar.
+                    </div>
+                  )}
                   {sinFecha > 0 && (
                     <div className="text-xs text-amber-400">
                       ⚠ {sinFecha} {sinFecha === 1 ? 'movimiento sin fecha' : 'movimientos sin fecha'} — se registrarán con la fecha de hoy.
@@ -291,9 +362,9 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                     <table className="w-full text-sm">
                       <thead className="sticky top-0 z-10" style={{ background: 'hsl(200 40% 13%)' }}>
                         <tr className="text-left text-muted-foreground">
+                          <th className="px-3 py-3 font-medium w-10"></th>
                           <th className="px-4 py-3 font-medium">Concepto</th>
                           <th className="px-4 py-3 font-medium whitespace-nowrap">Fecha</th>
-
                           <th className="px-4 py-3 font-medium text-right">Importe</th>
                           <th className="px-4 py-3 font-medium">Categoría</th>
                           <th className="px-4 py-3 w-10"></th>
@@ -302,11 +373,32 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                       <tbody>
                         {movimientos.map((m, i) => {
                           const meta = getCategoryMeta(m.categoria);
+                          const baseBg = i % 2 === 0 ? 'hsl(200 40% 11%)' : 'hsl(200 35% 13%)';
                           return (
                             <tr key={m.id}
-                              className="border-t transition-colors hover:bg-white/3"
-                              style={{ borderColor: 'hsl(200 30% 17%)', background: i % 2 === 0 ? 'hsl(200 40% 11%)' : 'hsl(200 35% 13%)' }}>
-                              <td className="px-4 py-3 text-foreground max-w-xs truncate" title={m.concepto}>{m.concepto}</td>
+                              className={cn(
+                                'border-t transition-colors hover:bg-white/3',
+                                m.duplicado && 'bg-amber-500/10',
+                                !m.incluir && 'opacity-60'
+                              )}
+                              style={{ borderColor: 'hsl(200 30% 17%)', background: m.duplicado ? undefined : baseBg }}>
+                              <td className="px-3 py-3">
+                                <Checkbox
+                                  checked={m.incluir}
+                                  onCheckedChange={() => toggleIncluir(m.id)}
+                                  aria-label="Incluir movimiento"
+                                />
+                              </td>
+                              <td className="px-4 py-3 text-foreground max-w-xs" title={m.concepto}>
+                                <div className="flex items-center gap-2">
+                                  <span className="truncate">{m.concepto}</span>
+                                  {m.duplicado && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 text-amber-400 bg-amber-500/10 shrink-0">
+                                      Ya existe
+                                    </Badge>
+                                  )}
+                                </div>
+                              </td>
                               <td className={cn('px-4 py-3 font-mono whitespace-nowrap', m.fecha ? 'text-muted-foreground' : 'text-amber-400')}>
                                 {m.fecha ? formatFechaES(m.fecha) : 'Sin fecha'}
                               </td>
@@ -346,10 +438,10 @@ export const BankExcelImporter = ({ onImported }: Props) => {
 
                 <Button size="lg" className="w-full h-12 rounded-xl text-base font-semibold shadow-xl shadow-income/20"
                   style={{ background: 'linear-gradient(135deg, hsl(158 64% 42%), hsl(158 64% 32%))', color: 'white' }}
-                  onClick={handleConfirmar} disabled={saving || !movimientos.length}>
+                  onClick={handleConfirmar} disabled={saving || !incluidos.length}>
                   {saving
                     ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Guardando...</>
-                    : <><Check className="w-5 h-5 mr-2" />Confirmar y Guardar {movimientos.length} Movimientos</>}
+                    : <><Check className="w-5 h-5 mr-2" />Confirmar y Guardar {incluidos.length} Movimientos</>}
                 </Button>
               </div>
             )}
