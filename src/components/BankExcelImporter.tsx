@@ -307,6 +307,10 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                               className="border-t transition-colors hover:bg-white/3"
                               style={{ borderColor: 'hsl(200 30% 17%)', background: i % 2 === 0 ? 'hsl(200 40% 11%)' : 'hsl(200 35% 13%)' }}>
                               <td className="px-4 py-3 text-foreground max-w-xs truncate" title={m.concepto}>{m.concepto}</td>
+                              <td className={cn('px-4 py-3 font-mono whitespace-nowrap', m.fecha ? 'text-muted-foreground' : 'text-amber-400')}>
+                                {m.fecha ? formatFechaES(m.fecha) : 'Sin fecha'}
+                              </td>
+
                               <td className="px-4 py-3 text-right font-mono text-foreground">{formatCurrency(m.importe)}</td>
                               <td className="px-4 py-3">
                                 <Select value={m.categoria} onValueChange={v => updateCategoria(m.id, v as CategoryName)}>
