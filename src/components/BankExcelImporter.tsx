@@ -13,6 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 
 import {
   CATEGORIES,
@@ -23,6 +25,7 @@ import {
   parseFechaCelda,
   esGasto,
 } from '@/lib/bankParsing';
+import { esMismoMovimiento } from '@/lib/duplicateDetection';
 
 
 const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'en', 'a', 'y', 'es']);
