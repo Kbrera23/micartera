@@ -438,10 +438,10 @@ export const BankExcelImporter = ({ onImported }: Props) => {
 
                 <Button size="lg" className="w-full h-12 rounded-xl text-base font-semibold shadow-xl shadow-income/20"
                   style={{ background: 'linear-gradient(135deg, hsl(158 64% 42%), hsl(158 64% 32%))', color: 'white' }}
-                  onClick={handleConfirmar} disabled={saving || !movimientos.length}>
+                  onClick={handleConfirmar} disabled={saving || !incluidos.length}>
                   {saving
                     ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Guardando...</>
-                    : <><Check className="w-5 h-5 mr-2" />Confirmar y Guardar {movimientos.length} Movimientos</>}
+                    : <><Check className="w-5 h-5 mr-2" />Confirmar y Guardar {incluidos.length} Movimientos</>}
                 </Button>
               </div>
             )}
