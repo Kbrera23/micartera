@@ -14,49 +14,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 
-const CATEGORIES = [
-  { name: 'Alimentación',   icon: '🛒', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-  { name: 'Suplementación', icon: '💪', color: 'bg-lime-500/20 text-lime-300 border-lime-500/30' },
-  { name: 'Transporte',     icon: '🚌', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-  { name: 'Suscripción',    icon: '📺', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-  { name: 'Viajes',         icon: '✈️', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
-  { name: 'Salud',          icon: '💊', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
-  { name: 'Ocio',           icon: '🎮', color: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
-  { name: 'Vivienda',       icon: '🏠', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-  { name: 'Servicios',      icon: '💡', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
-  { name: 'Compras',        icon: '🛍️', color: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30' },
-  { name: 'Ropa',           icon: '👕', color: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
-  { name: 'Otros',          icon: '📁', color: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
-] as const;
+import {
+  CATEGORIES,
+  CategoryName,
+  getCategoryMeta,
+  categorizarGasto,
+  parseImporte,
+  parseFechaCelda,
+  esGasto,
+} from '@/lib/bankParsing';
 
-type CategoryName = typeof CATEGORIES[number]['name'];
-const getCategoryMeta = (name: string) => CATEGORIES.find(c => c.name === name) ?? CATEGORIES[CATEGORIES.length - 1];
-
-const CATEGORY_KEYWORDS: Record<Exclude<CategoryName, 'Otros'>, string[]> = {
-  'Alimentación':   ['mercadona', 'alimentacion', 'alimentación', 'dia, s.a', 'dia,s.a', 'uber eats', 'ubereats', 'glovo', 'just eat', 'carrefour', 'lidl', 'aldi', 'supermercado', 'panaderia', 'panadería', 'fruteria', 'frutería'],
-  'Suplementación': ['m i nutrition', 'mi nutrition', 'myprotein', 'prozis', 'suplementos', 'suplementacion', 'suplementación', 'nutricion', 'nutrición'],
-  'Transporte':     ['gasolina', 'moeve', 'repsol', 'cepsa', 'shell', 'galp', 'gasolinera', 'combustible', 'repostaje', 'taxi', 'metro', 'renfe', 'cabify', 'villargordo cab', 'bolt'],
-  'Suscripción':    ['netflix', 'crunchyroll', 'disney', 'spotify', 'hbo', 'prime video', 'apple tv', 'youtube premium', 'streaming'],
-  'Viajes':         ['nuitee', 'booking', 'airbnb', 'hotel', 'trivago', 'expedia', 'iberia', 'ryanair', 'vueling'],
-  'Salud':          ['farmacia', 'clinica', 'clínica', 'medico', 'médico', 'hospital', 'dentista', 'salud'],
-  'Ocio':           ['acorde cafe', 'acorde café', 'cafe', 'café', 'duo barbers', 'barbers', 'barberia', 'barbería', 'peluqueria', 'peluquería', 'cine', 'teatro', 'concierto', 'gym', 'gimnasio', 'decathlon'],
-  'Vivienda':       ['alquiler', 'hipoteca', 'arrendamientos', 'arrendamiento', 'recibo ay', 'comunidad propietarios'],
-  'Servicios':      ['internet', 'movistar', 'vodafone', 'orange ', 'telefonica', 'telefónica', 'endesa', 'iberdrola', 'naturgy', 'aguas', 'canal isabel', 'cetelem', 'recibo ', ' luz ', ' gas ', ' agua '],
-  'Compras':        ['amazon', 'ebay', 'aliexpress', 'fnac', 'mediamarkt'],
-  'Ropa':           ['zara', 'zalando', 'shein', 'mango', 'primark', 'h&m', 'pull&bear', 'bershka'],
-};
-
-const categorizarGasto = (concepto: string): { categoria: CategoryName; auto: boolean } => {
-  const raw = ` ${(concepto || '').toLowerCase()} `;
-  // Guardas específicas: "Uber Eats" gana a "Uber"
-  if (/uber\s*eats|uber-eats|ubereats/.test(raw)) return { categoria: 'Alimentación', auto: true };
-  // "Uber" solo (sin eats) → Transporte
-  if (/\buber\b/.test(raw) && !/eats/.test(raw)) return { categoria: 'Transporte', auto: true };
-  for (const [cat, kws] of Object.entries(CATEGORY_KEYWORDS) as [CategoryName, string[]][]) {
-    if (kws.some(k => raw.includes(k))) return { categoria: cat, auto: true };
-  }
-  return { categoria: 'Otros', auto: false };
-};
 
 const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'en', 'a', 'y', 'es']);
 const capitalizeWords = (s: string) =>
@@ -101,22 +68,6 @@ const limpiarConcepto = (concepto: string): string => {
   return t;
 };
 
-
-const parseImporte = (raw: string): number => {
-  if (!raw) return 0;
-  let str = String(raw).trim();
-  str = str.replace(/[€\s]/g, '');
-  if (str.includes(',')) {
-    str = str.replace(/\./g, '').replace(',', '.');
-  } else {
-    const parts = str.split('.');
-    if (parts.length === 2 && parts[1].length === 3) {
-      str = str.replace('.', '');
-    }
-  }
-  return parseFloat(str) || 0;
-};
-
 interface Movimiento {
   id: string;
   concepto: string;
@@ -126,13 +77,6 @@ interface Movimiento {
   categoria: CategoryName;
   autoCategorized: boolean;
 }
-
-const toSafeISODate = (d: Date): string => {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}T12:00:00.000Z`;
-};
 
 const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
   const data = await file.arrayBuffer();
@@ -161,25 +105,26 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
     const concepto = String(row[conceptoIdx] || '').trim();
     const importeRaw = String(row[importeIdx] || '').trim();
     if (!concepto || !importeRaw) continue;
-    const cleaned = parseImporte(importeRaw);
-    const importe = cleaned;
-    if (isNaN(importe) || importe >= 0) continue;
+    const importe = parseImporte(importeRaw);
+    if (!esGasto(importe)) continue;
 
-    let fecha: string | null = null;
-    if (fechaIdx !== -1) {
-      const f = row[fechaIdx];
-      if (f instanceof Date && !isNaN(f.getTime())) { fecha = toSafeISODate(f); }
-      else if (typeof f === 'string' && f) {
-        const m = f.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-        if (m) { const yr = m[3].length === 2 ? `20${m[3]}` : m[3]; const dia = m[1]; const mes = m[2]; const d = new Date(Number(yr), Number(mes) - 1, Number(dia)); if (!isNaN(d.getTime())) fecha = toSafeISODate(d); }
-      }
-    }
+    const fecha = fechaIdx !== -1 ? parseFechaCelda(row[fechaIdx]) : null;
+
     const cat = categorizarGasto(concepto);
-    movimientos.push({ id: `${i}-${Math.random().toString(36).slice(2,8)}`, concepto: limpiarConcepto(concepto), conceptoOriginal: concepto, importe: Math.abs(importe), fecha, categoria: cat.categoria, autoCategorized: cat.auto });
+    movimientos.push({
+      id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
+      concepto: limpiarConcepto(concepto),
+      conceptoOriginal: concepto,
+      importe: Math.abs(importe),
+      fecha,
+      categoria: cat.categoria,
+      autoCategorized: cat.auto,
+    });
   }
   if (!movimientos.length) throw new Error('El archivo no contiene movimientos');
   return movimientos;
 };
+
 
 interface Props { onImported?: () => void; }
 
@@ -244,6 +189,14 @@ export const BankExcelImporter = ({ onImported }: Props) => {
   };
 
   const total = movimientos.reduce((s, m) => s + m.importe, 0);
+  const sinFecha = movimientos.filter(m => !m.fecha).length;
+
+  const formatFechaES = (iso: string | null): string => {
+    if (!iso) return '';
+    const [y, mo, d] = iso.slice(0, 10).split('-');
+    return `${d}/${mo}/${y}`;
+  };
+
 
   return (
     <>
@@ -315,15 +268,23 @@ export const BankExcelImporter = ({ onImported }: Props) => {
             {/* Tabla preview */}
             {movimientos.length > 0 && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between px-4 py-3 rounded-xl"
+                <div className="flex flex-col gap-2 px-4 py-3 rounded-xl"
                   style={{ background: 'hsl(200 35% 15%)', border: '1px solid hsl(200 30% 20%)' }}>
-                  <span className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">{movimientos.length}</span> movimientos detectados
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    Total: <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      <span className="font-semibold text-foreground">{movimientos.length}</span> movimientos detectados
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      Total: <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
+                    </span>
+                  </div>
+                  {sinFecha > 0 && (
+                    <div className="text-xs text-amber-400">
+                      ⚠ {sinFecha} {sinFecha === 1 ? 'movimiento sin fecha' : 'movimientos sin fecha'} — se registrarán con la fecha de hoy.
+                    </div>
+                  )}
                 </div>
+
 
                 <div className="rounded-xl overflow-hidden" style={{ border: '1px solid hsl(200 30% 18%)' }}>
                   <div className="max-h-[45vh] overflow-y-auto">
@@ -331,6 +292,8 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                       <thead className="sticky top-0 z-10" style={{ background: 'hsl(200 40% 13%)' }}>
                         <tr className="text-left text-muted-foreground">
                           <th className="px-4 py-3 font-medium">Concepto</th>
+                          <th className="px-4 py-3 font-medium whitespace-nowrap">Fecha</th>
+
                           <th className="px-4 py-3 font-medium text-right">Importe</th>
                           <th className="px-4 py-3 font-medium">Categoría</th>
                           <th className="px-4 py-3 w-10"></th>
@@ -344,6 +307,10 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                               className="border-t transition-colors hover:bg-white/3"
                               style={{ borderColor: 'hsl(200 30% 17%)', background: i % 2 === 0 ? 'hsl(200 40% 11%)' : 'hsl(200 35% 13%)' }}>
                               <td className="px-4 py-3 text-foreground max-w-xs truncate" title={m.concepto}>{m.concepto}</td>
+                              <td className={cn('px-4 py-3 font-mono whitespace-nowrap', m.fecha ? 'text-muted-foreground' : 'text-amber-400')}>
+                                {m.fecha ? formatFechaES(m.fecha) : 'Sin fecha'}
+                              </td>
+
                               <td className="px-4 py-3 text-right font-mono text-foreground">{formatCurrency(m.importe)}</td>
                               <td className="px-4 py-3">
                                 <Select value={m.categoria} onValueChange={v => updateCategoria(m.id, v as CategoryName)}>
