@@ -338,12 +338,17 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                   style={{ background: 'hsl(200 35% 15%)', border: '1px solid hsl(200 30% 20%)' }}>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
-                      <span className="font-semibold text-foreground">{movimientos.length}</span> movimientos detectados
+                      <span className="font-semibold text-foreground">{incluidos.length}</span> de {movimientos.length} movimientos seleccionados
                     </span>
                     <span className="text-sm text-muted-foreground">
                       Total: <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
                     </span>
                   </div>
+                  {duplicadosCount > 0 && (
+                    <div className="text-xs text-amber-400">
+                      ⚠ {duplicadosCount} {duplicadosCount === 1 ? 'movimiento ya existe' : 'movimientos ya existen'} — desmarcados, revísalos antes de confirmar.
+                    </div>
+                  )}
                   {sinFecha > 0 && (
                     <div className="text-xs text-amber-400">
                       ⚠ {sinFecha} {sinFecha === 1 ? 'movimiento sin fecha' : 'movimientos sin fecha'} — se registrarán con la fecha de hoy.
