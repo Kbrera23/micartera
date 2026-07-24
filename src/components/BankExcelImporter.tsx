@@ -70,22 +70,7 @@ const limpiarConcepto = (concepto: string): string => {
 
 
 
-interface Movimiento {
-  id: string;
-  concepto: string;
-  conceptoOriginal: string;
-  importe: number;
-  fecha: string | null;
-  categoria: CategoryName;
-  autoCategorized: boolean;
-}
-
-const toSafeISODate = (d: Date): string => {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}T12:00:00.000Z`;
-};
+const toSafeISODate = null as never;
 
 const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
   const data = await file.arrayBuffer();
@@ -114,22 +99,11 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
     const concepto = String(row[conceptoIdx] || '').trim();
     const importeRaw = String(row[importeIdx] || '').trim();
     if (!concepto || !importeRaw) continue;
-    const cleaned = parseImporte(importeRaw);
-    const importe = cleaned;
-    if (isNaN(importe) || importe >= 0) continue;
+    const importe = parseImporte(importeRaw);
+    if (!esGasto(importe)) continue;
 
-    let fecha: string | null = null;
-    if (fechaIdx !== -1) {
-      const f = row[fechaIdx];
-      if (f instanceof Date && !isNaN(f.getTime())) { fecha = toSafeISODate(f); }
-      else if (typeof f === 'string' && f) {
-        const m = f.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-        if (m) { const yr = m[3].length === 2 ? `20${m[3]}` : m[3]; const dia = m[1]; const mes = m[2]; const d = new Date(Number(yr), Number(mes) - 1, Number(dia)); if (!isNaN(d.getTime())) fecha = toSafeISODate(d); }
-      }
-    }
-    const cat = categorizarGasto(concepto);
-    movimientos.push({ id: `${i}-${Math.random().toString(36).slice(2,8)}`, concepto: limpiarConcepto(concepto), conceptoOriginal: concepto, importe: Math.abs(importe), fecha, categoria: cat.categoria, autoCategorized: cat.auto });
-  }
+    const fecha = fechaIdx !== -1 ? parseFechaCelda(row[fechaIdx]) : null;
+
   if (!movimientos.length) throw new Error('El archivo no contiene movimientos');
   return movimientos;
 };
