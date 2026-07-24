@@ -268,15 +268,23 @@ export const BankExcelImporter = ({ onImported }: Props) => {
             {/* Tabla preview */}
             {movimientos.length > 0 && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between px-4 py-3 rounded-xl"
+                <div className="flex flex-col gap-2 px-4 py-3 rounded-xl"
                   style={{ background: 'hsl(200 35% 15%)', border: '1px solid hsl(200 30% 20%)' }}>
-                  <span className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">{movimientos.length}</span> movimientos detectados
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    Total: <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      <span className="font-semibold text-foreground">{movimientos.length}</span> movimientos detectados
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      Total: <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
+                    </span>
+                  </div>
+                  {sinFecha > 0 && (
+                    <div className="text-xs text-amber-400">
+                      ⚠ {sinFecha} {sinFecha === 1 ? 'movimiento sin fecha' : 'movimientos sin fecha'} — se registrarán con la fecha de hoy.
+                    </div>
+                  )}
                 </div>
+
 
                 <div className="rounded-xl overflow-hidden" style={{ border: '1px solid hsl(200 30% 18%)' }}>
                   <div className="max-h-[45vh] overflow-y-auto">
