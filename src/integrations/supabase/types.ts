@@ -262,6 +262,30 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_imports: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          id: string
+          movimientos: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          id?: string
+          movimientos: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          id?: string
+          movimientos?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
