@@ -1,0 +1,38 @@
+# Ejecuta los tests automáticamente en cada cambio del repo.
+# No hay que instalar ni lanzar nada a mano: GitHub lo hace solo y
+# marca el commit con un check verde (pasa) o una cruz roja (algo se rompió).
+#
+# Este archivo va en:  .github/workflows/tests.yml
+
+name: Tests
+
+# Cuándo se ejecuta: en cada push a main y en cada pull request hacia main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Ejecutar tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Descarga el código del repo
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      # 2) Prepara Bun (el gestor de paquetes que usa el proyecto)
+      - name: Preparar Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # 3) Instala las dependencias a partir del bun.lock
+      - name: Instalar dependencias
+        run: bun install --frozen-lockfile
+
+      # 4) Ejecuta la batería de tests (script "test" del package.json)
+      - name: Ejecutar tests
+        run: bun run test
