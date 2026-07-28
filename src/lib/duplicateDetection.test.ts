@@ -21,8 +21,7 @@ describe('normalizarConcepto', () => {
 
   it('no revienta con vacío o null', () => {
     expect(normalizarConcepto('')).toBe('');
-    // @ts-expect-error probamos entrada inválida a propósito
-    expect(normalizarConcepto(null)).toBe('');
+    expect(normalizarConcepto(null as unknown as string)).toBe('');
   });
 });
 
