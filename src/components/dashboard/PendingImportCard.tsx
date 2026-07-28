@@ -16,8 +16,9 @@ interface PendingMovimiento {
 }
 
 interface PendingImport {
-  fileName: string;
-  createdAt: string;
+  id: string;
+  file_name: string | null;
+  created_at: string;
   movimientos: PendingMovimiento[];
 }
 
@@ -49,14 +50,23 @@ export const PendingImportCard = ({ refetch }: Props) => {
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const storageKey = user ? `pending_import_${user.id}` : null;
-
-  const load = useCallback(() => {
-    if (!storageKey) return;
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) { setPending(null); return; }
-    try { setPending(JSON.parse(raw)); } catch { setPending(null); }
-  }, [storageKey]);
+  const load = useCallback(async () => {
+    if (!user) { setPending(null); return; }
+    const { data, error } = await supabase
+      .from('pending_imports')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) { setPending(null); return; }
+    setPending({
+      id: data.id,
+      file_name: data.file_name,
+      created_at: data.created_at,
+      movimientos: (data.movimientos as unknown as PendingMovimiento[]) || [],
+    });
+  }, [user]);
 
   useEffect(() => {
     load();
@@ -69,24 +79,16 @@ export const PendingImportCard = ({ refetch }: Props) => {
     };
   }, [load]);
 
-  const clearPending = useCallback(() => {
-    if (storageKey) localStorage.removeItem(storageKey);
-    setPending(null);
-    window.dispatchEvent(new Event('pending-import-updated'));
-  }, [storageKey]);
-
-  if (!pending || !user || !storageKey) return null;
+  if (!pending || !user) return null;
 
   const total = pending.movimientos.reduce((s, m) => s + m.importe, 0);
   const sinCategoria = pending.movimientos.filter(m => !m.autoCategorized).length;
-  const mesNombre = MESES[new Date(pending.createdAt).getMonth()];
-
+  const mesNombre = MESES[new Date(pending.created_at).getMonth()];
 
   const handleAccept = async () => {
     setSaving(true);
     let expensesInserted = false;
     try {
-      // 1) Get existing categories for user
       const { data: existingCats } = await supabase
         .from('categories')
         .select('id, name')
@@ -95,7 +97,6 @@ export const PendingImportCard = ({ refetch }: Props) => {
       const catMap = new Map<string, string>();
       (existingCats || []).forEach((c: any) => catMap.set(norm(c.name), c.id));
 
-      // 2) Create missing categories (best-effort, ignore errors)
       const neededNames = Array.from(new Set(pending.movimientos.map(m => m.categoria).filter(Boolean)));
       const toCreate = neededNames.filter(n => !catMap.has(norm(n)));
       if (toCreate.length) {
@@ -107,7 +108,6 @@ export const PendingImportCard = ({ refetch }: Props) => {
         (created || []).forEach((c: any) => catMap.set(norm(c.name), c.id));
       }
 
-      // 3) Insert expenses with category_id
       const expenseRows = pending.movimientos.map(m => ({
         user_id: user.id,
         name: m.concepto,
@@ -122,13 +122,17 @@ export const PendingImportCard = ({ refetch }: Props) => {
       const { error } = await supabase.from('expenses').insert(expenseRows);
       if (error) throw error;
       expensesInserted = true;
-      clearPending();
+      await supabase.from('pending_imports').delete().eq('id', pending.id);
+      setPending(null);
+      window.dispatchEvent(new Event('pending-import-updated'));
       toast.success(`✓ ${expenseRows.length} gastos importados y categorizados`);
       try { refetch(); } catch (e) { console.error(e); }
     } catch (err) {
       console.error(err);
       if (expensesInserted) {
-        clearPending();
+        await supabase.from('pending_imports').delete().eq('id', pending.id);
+        setPending(null);
+        window.dispatchEvent(new Event('pending-import-updated'));
       } else {
         toast.error('Error al guardar los movimientos');
       }
@@ -137,9 +141,10 @@ export const PendingImportCard = ({ refetch }: Props) => {
     }
   };
 
-  const handleDiscard = () => {
-    localStorage.removeItem(storageKey);
+  const handleDiscard = async () => {
+    await supabase.from('pending_imports').delete().eq('id', pending.id);
     setPending(null);
+    window.dispatchEvent(new Event('pending-import-updated'));
     toast.info('Importación descartada');
   };
 
@@ -161,7 +166,7 @@ export const PendingImportCard = ({ refetch }: Props) => {
               Importación de Banco — {mesNombre}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              {pending.movimientos.length} movimientos · {pending.fileName}
+              {pending.movimientos.length} movimientos · {pending.file_name}
               {sinCategoria > 0 && (
                 <span className="ml-1 text-amber-400">· ⚠ {sinCategoria} sin categoría</span>
               )}

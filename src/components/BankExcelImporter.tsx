@@ -232,9 +232,9 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     }
     setSaving(true);
     try {
-      const payload = {
-        fileName: file?.name || 'Archivo bancario',
-        createdAt: new Date().toISOString(),
+      const { error } = await supabase.from('pending_imports').insert({
+        user_id: user.id,
+        file_name: file?.name || 'Archivo bancario',
         movimientos: seleccionados.map(m => ({
           concepto: m.concepto,
           importe: m.importe,
@@ -242,8 +242,8 @@ export const BankExcelImporter = ({ onImported }: Props) => {
           categoria: m.categoria,
           autoCategorized: m.autoCategorized,
         })),
-      };
-      localStorage.setItem(`pending_import_${user.id}`, JSON.stringify(payload));
+      });
+      if (error) throw error;
       window.dispatchEvent(new Event('pending-import-updated'));
       toast.success(`${seleccionados.length} movimientos listos — confírmalos en el Dashboard`);
       onImported?.();
@@ -251,6 +251,7 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     } catch (err: any) { toast.error('Error al preparar la importación'); }
     finally { setSaving(false); }
   };
+
 
   const incluidos = movimientos.filter(m => m.incluir);
   const total = incluidos.reduce((s, m) => s + m.importe, 0);
