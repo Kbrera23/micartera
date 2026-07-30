@@ -178,3 +178,26 @@ describe('esGasto — solo importamos gastos, no ingresos', () => {
     expect(esGasto(Infinity)).toBe(false);
   });
 });
+
+describe('categorizarGasto — prioridad y comercios nuevos', () => {
+  it('categoría específica gana a genérica (café en hospital → Salud)', () => {
+    expect(categorizarGasto('CAFETERÍA DEL HOSPITAL CENTRAL').categoria).toBe('Salud');
+  });
+  it('gasolinera con cafetería → Transporte, no Ocio', () => {
+    expect(categorizarGasto('GASOLINERA CAFETERIA').categoria).toBe('Transporte');
+  });
+  it('reconoce comercios españoles nuevos', () => {
+    expect(categorizarGasto('LEROY MERLIN SEVILLA').categoria).toBe('Compras');
+    expect(categorizarGasto('FARMACIA LOPEZ').categoria).toBe('Salud');
+    expect(categorizarGasto('PEAJE AUTOPISTA AP-4').categoria).toBe('Transporte');
+    expect(categorizarGasto('MCDONALDS NERVION').categoria).toBe('Ocio');
+    expect(categorizarGasto('APPLE MUSIC').categoria).toBe('Suscripción');
+  });
+  it('Decathlon ahora es Ropa (no Ocio)', () => {
+    expect(categorizarGasto('DECATHLON SEVILLA ESTE').categoria).toBe('Ropa');
+  });
+  it('mantiene la guarda Uber Eats vs Uber', () => {
+    expect(categorizarGasto('UBER EATS MADRID').categoria).toBe('Alimentación');
+    expect(categorizarGasto('UBER TRIP').categoria).toBe('Transporte');
+  });
+});
