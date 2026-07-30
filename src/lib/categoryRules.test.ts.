@@ -1,0 +1,55 @@
+/**
+ * Tests de la extracción de comercio y las reglas aprendidas.
+ * Ejecutar con: bun run test
+ */
+import { describe, it, expect } from 'vitest';
+import { extraerComercio, categoriaPorReglas } from './categoryRules';
+
+describe('extraerComercio — saca el comercio del concepto sucio', () => {
+  it('quita "PAGO TARJETA", números y lugar', () => {
+    expect(extraerComercio('PAGO TARJETA 4587 SUPERCOR SEVILLA ESTE 12/03')).toBe('SUPERCOR');
+  });
+  it('quita "COMPRA EN" y la fecha', () => {
+    expect(extraerComercio('COMPRA EN MERCADONA NERVION 15/04/2026')).toBe('MERCADONA');
+  });
+  it('quita el sufijo societario (SA, clientes)', () => {
+    expect(extraerComercio('RECIBO DOMICILIACION IBERDROLA CLIENTES SA')).toBe('IBERDROLA');
+  });
+  it('conserva comercios de dos palabras', () => {
+    expect(extraerComercio('PAGO CON TARJETA LEROY MERLIN 4021 SEVILLA')).toBe('LEROY MERLIN');
+  });
+  it('quita el dominio .com pero conserva la marca', () => {
+    expect(extraerComercio('NETFLIX.COM 03/2026')).toBe('NETFLIX');
+  });
+  it('maneja abreviaturas con punto', () => {
+    expect(extraerComercio('PAGO TARJ. FARMACIA LOPEZ 12.50')).toBe('FARMACIA LOPEZ');
+  });
+  it('concepto vacío devuelve cadena vacía', () => {
+    expect(extraerComercio('')).toBe('');
+    expect(extraerComercio('   ')).toBe('');
+  });
+  it('un concepto todo números/ruido no revienta', () => {
+    expect(extraerComercio('PAGO TARJETA 4587 12/03')).toBe('');
+  });
+});
+
+describe('categoriaPorReglas — las reglas del usuario mandan', () => {
+  const reglas = [
+    { comercio: 'SUPERCOR', categoria: 'Alimentación' },
+    { comercio: 'LEROY MERLIN', categoria: 'Compras' },
+  ];
+
+  it('aplica la regla cuando el concepto contiene el comercio', () => {
+    expect(categoriaPorReglas('PAGO SUPERCOR SEVILLA 12/03', reglas)).toBe('Alimentación');
+    expect(categoriaPorReglas('COMPRA LEROY MERLIN NERVION', reglas)).toBe('Compras');
+  });
+  it('es indiferente a mayúsculas/minúsculas', () => {
+    expect(categoriaPorReglas('compra en supercor', reglas)).toBe('Alimentación');
+  });
+  it('devuelve null si ninguna regla coincide', () => {
+    expect(categoriaPorReglas('PAGO EN ZARA', reglas)).toBeNull();
+  });
+  it('sin reglas devuelve null', () => {
+    expect(categoriaPorReglas('SUPERCOR', [])).toBeNull();
+  });
+});
