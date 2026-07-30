@@ -11,6 +11,7 @@ import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import ResetPassword from "./pages/ResetPassword";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 document.documentElement.classList.remove("dark");
 
@@ -55,7 +56,8 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
         {/* ✅ Solo Sonner — eliminado <Toaster /> de shadcn/ui */}
@@ -65,7 +67,8 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
-  </QueryClientProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
