@@ -30,7 +30,7 @@ export const CATEGORY_KEYWORDS: Record<Exclude<CategoryName, 'Otros'>, string[]>
   'Alimentación':   ['mercadona', 'alimentacion', 'alimentación', 'dia, s.a', 'dia,s.a', 'uber eats', 'ubereats', 'glovo', 'just eat', 'carrefour', 'lidl', 'aldi', 'supermercado', 'panaderia', 'panadería', 'fruteria', 'frutería'],
   'Suplementación': ['m i nutrition', 'mi nutrition', 'myprotein', 'prozis', 'suplementos', 'suplementacion', 'suplementación', 'nutricion', 'nutrición'],
   'Transporte':     ['gasolina', 'moeve', 'repsol', 'cepsa', 'shell', 'galp', 'gasolinera', 'combustible', 'repostaje', 'taxi', 'metro', 'renfe', 'cabify', 'villargordo cab', 'bolt', 'peaje', 'autopista', 'parking', 'aparcamiento', 'itv'],
-  'Suscripción':    ['netflix', 'crunchyroll', 'disney', 'spotify', 'hbo', 'prime video', 'apple tv', 'youtube premium', 'streaming'],
+  'Suscripción':    ['netflix', 'crunchyroll', 'disney', 'spotify', 'hbo', 'prime video', 'apple tv', 'apple music', 'apple.com/bill', 'youtube premium', 'streaming'],
   'Viajes':         ['nuitee', 'booking', 'airbnb', 'hotel', 'trivago', 'expedia', 'iberia', 'ryanair', 'vueling'],
   'Salud':          ['farmacia', 'clinica', 'clínica', 'medico', 'médico', 'hospital', 'dentista', 'salud'],
   'Ocio':           ['acorde cafe', 'acorde café', 'cafe', 'café', 'duo barbers', 'barbers', 'barberia', 'barbería', 'peluqueria', 'peluquería', 'mcdonald', 'burger king', 'kfc', 'restaurante', 'bar ', 'cine', 'teatro', 'concierto', 'gym', 'gimnasio'],
