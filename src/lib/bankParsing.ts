@@ -1,203 +1,140 @@
 /**
- * Tests del parseo de extractos bancarios.
+ * Funciones puras de parseo de extractos bancarios.
  *
- * Ejecutar con:  npm test
- *
- * Estos tests existen porque los errores de parseo NO dan pantalla de error:
- * simplemente hacen que los números salgan mal sin que nadie se entere.
+ * Están aquí (y no dentro del componente) para poder testearlas.
+ * Si tocas algo de este archivo, ejecuta `npm test` antes de dar nada por bueno.
  */
-import { describe, it, expect } from 'vitest';
-import {
-  parseImporte,
-  toSafeISODate,
-  parseFechaCelda,
-  categorizarGasto,
-  esGasto,
-} from './bankParsing';
 
-describe('parseImporte — importes del banco', () => {
-  it('formato español con miles y decimales', () => {
-    expect(parseImporte('1.234,56')).toBe(1234.56);
-    expect(parseImporte('2.500,00')).toBe(2500);
-    expect(parseImporte('-1.234,56')).toBe(-1234.56);
-  });
+/** Categorías que maneja el importador. */
+export const CATEGORIES = [
+  { name: 'Alimentación',   icon: '🛒', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+  { name: 'Suplementación', icon: '💪', color: 'bg-lime-500/20 text-lime-300 border-lime-500/30' },
+  { name: 'Transporte',     icon: '🚌', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
+  { name: 'Suscripción',    icon: '📺', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+  { name: 'Viajes',         icon: '✈️', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
+  { name: 'Salud',          icon: '💊', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
+  { name: 'Ocio',           icon: '🎮', color: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
+  { name: 'Vivienda',       icon: '🏠', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
+  { name: 'Servicios',      icon: '💡', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
+  { name: 'Compras',        icon: '🛍️', color: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30' },
+  { name: 'Ropa',           icon: '👕', color: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
+  { name: 'Otros',          icon: '📁', color: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
+] as const;
 
-  it('formato español solo con decimales', () => {
-    expect(parseImporte('45,90')).toBe(45.9);
-    expect(parseImporte('-45,90')).toBe(-45.9);
-    expect(parseImporte('0,99')).toBe(0.99);
-    expect(parseImporte('950,00')).toBe(950);
-  });
+export type CategoryName = typeof CATEGORIES[number]['name'];
 
-  it('miles sin decimales: 1.234 son mil doscientos treinta y cuatro', () => {
-    expect(parseImporte('1.234')).toBe(1234);
-    expect(parseImporte('-2.500')).toBe(-2500);
-  });
+export const getCategoryMeta = (name: string) =>
+  CATEGORIES.find(c => c.name === name) ?? CATEGORIES[CATEGORIES.length - 1];
 
-  it('formato anglosajón (Revolut, N26)', () => {
-    expect(parseImporte('1234.56')).toBe(1234.56);
-    expect(parseImporte('12.50')).toBe(12.5);
-    expect(parseImporte('-45.90')).toBe(-45.9);
-  });
+export const CATEGORY_KEYWORDS: Record<Exclude<CategoryName, 'Otros'>, string[]> = {
+  'Alimentación':   ['mercadona', 'alimentacion', 'alimentación', 'dia, s.a', 'dia,s.a', 'uber eats', 'ubereats', 'glovo', 'just eat', 'carrefour', 'lidl', 'aldi', 'supermercado', 'panaderia', 'panadería', 'fruteria', 'frutería'],
+  'Suplementación': ['m i nutrition', 'mi nutrition', 'myprotein', 'prozis', 'suplementos', 'suplementacion', 'suplementación', 'nutricion', 'nutrición'],
+  'Transporte':     ['gasolina', 'moeve', 'repsol', 'cepsa', 'shell', 'galp', 'gasolinera', 'combustible', 'repostaje', 'taxi', 'metro', 'renfe', 'cabify', 'villargordo cab', 'bolt', 'peaje', 'autopista', 'parking', 'aparcamiento', 'itv'],
+  'Suscripción':    ['netflix', 'crunchyroll', 'disney', 'spotify', 'hbo', 'prime video', 'apple tv', 'apple music', 'apple.com/bill', 'youtube premium', 'streaming'],
+  'Viajes':         ['nuitee', 'booking', 'airbnb', 'hotel', 'trivago', 'expedia', 'iberia', 'ryanair', 'vueling'],
+  'Salud':          ['farmacia', 'clinica', 'clínica', 'medico', 'médico', 'hospital', 'dentista', 'salud'],
+  'Ocio':           ['acorde cafe', 'acorde café', 'cafe', 'café', 'duo barbers', 'barbers', 'barberia', 'barbería', 'peluqueria', 'peluquería', 'mcdonald', 'burger king', 'kfc', 'restaurante', 'bar ', 'cine', 'teatro', 'concierto', 'gym', 'gimnasio'],
+  'Vivienda':       ['alquiler', 'hipoteca', 'arrendamientos', 'arrendamiento', 'recibo ay', 'comunidad propietarios'],
+  'Servicios':      ['internet', 'movistar', 'vodafone', 'orange ', 'telefonica', 'telefónica', 'endesa', 'iberdrola', 'naturgy', 'aguas', 'canal isabel', 'cetelem', 'recibo ', ' luz ', ' gas ', ' agua '],
+  'Compras':        ['amazon', 'ebay', 'aliexpress', 'fnac', 'mediamarkt', 'leroy merlin', 'ikea', 'bricomart'],
+  'Ropa':           ['zara', 'zalando', 'shein', 'mango', 'primark', 'h&m', 'pull&bear', 'bershka', 'decathlon'],
+};
 
-  it('limpia el símbolo de euro y los espacios', () => {
-    expect(parseImporte('1.234,56 €')).toBe(1234.56);
-    expect(parseImporte(' -45,90€ ')).toBe(-45.9);
-  });
+/**
+ * Convierte el importe de texto del banco a número.
+ *
+ * Maneja formato español (1.234,56) y anglosajón (1234.56), y el caso
+ * ambiguo de los miles sin decimales (1.234 -> 1234).
+ */
+export const parseImporte = (raw: string): number => {
+  if (!raw) return 0;
+  let str = String(raw).trim();
+  str = str.replace(/[€\s]/g, '');
+  if (str.includes(',')) {
+    // Formato español: los puntos son miles, la coma es decimal
+    str = str.replace(/\./g, '').replace(',', '.');
+  } else {
+    // Sin coma: un punto seguido de 3 dígitos es separador de miles (1.234)
+    const parts = str.split('.');
+    if (parts.length === 2 && parts[1].length === 3) {
+      str = str.replace('.', '');
+    }
+  }
+  return parseFloat(str) || 0;
+};
 
-  it('valores vacíos o basura devuelven 0, nunca NaN', () => {
-    expect(parseImporte('')).toBe(0);
-    expect(parseImporte('   ')).toBe(0);
-    expect(parseImporte('sin importe')).toBe(0);
-  });
+/**
+ * Convierte una fecha a texto ISO SIN que se desplace de día.
+ *
+ * Ojo: usar d.toISOString() directamente es un bug. En España (UTC+1/+2)
+ * una fecha creada a medianoche local se convierte al día ANTERIOR a las
+ * 22:00/23:00 UTC, y el gasto acaba contando en el mes equivocado.
+ * Por eso construimos el texto con los componentes locales y fijamos
+ * la hora a mediodía UTC, que es inmune a cualquier zona horaria.
+ */
+export const toSafeISODate = (d: Date): string => {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T12:00:00.000Z`;
+};
 
-  // Este es el bug que tenía el importador antiguo: 12.50 se convertía en 1250
-  it('NO multiplica por cien los decimales anglosajones', () => {
-    expect(parseImporte('12.50')).not.toBe(1250);
-    expect(parseImporte('0.99')).not.toBe(99);
-  });
-});
+/**
+ * Interpreta la celda de fecha de un Excel bancario.
+ *
+ * Acepta: objeto Date (cellDates), texto DD/MM/AAAA o DD-MM-AA,
+ * y número de serie de Excel. Devuelve null si no es una fecha válida
+ * (importante: null significa "no se sabe", NO "hoy").
+ */
+export const parseFechaCelda = (valor: unknown): string | null => {
+  if (valor === null || valor === undefined || valor === '') return null;
 
-describe('toSafeISODate — el bug del cambio de mes', () => {
-  it('el día 1 de marzo se guarda como marzo, no como febrero', () => {
-    // Fecha creada en hora local (como la devuelve Excel con cellDates)
-    const uno_de_marzo = new Date(2026, 2, 1);
-    expect(toSafeISODate(uno_de_marzo)).toBe('2026-03-01T12:00:00.000Z');
-    // Lo que hacía el código antiguo: .toISOString() -> 2026-02-28T23:00Z
-    expect(toSafeISODate(uno_de_marzo).slice(0, 7)).toBe('2026-03');
-  });
+  // 1) Objeto Date (xlsx con cellDates: true)
+  if (valor instanceof Date) {
+    return isNaN(valor.getTime()) ? null : toSafeISODate(valor);
+  }
 
-  it('el día 1 de enero se guarda en el año correcto', () => {
-    const anio_nuevo = new Date(2026, 0, 1);
-    expect(toSafeISODate(anio_nuevo)).toBe('2026-01-01T12:00:00.000Z');
-    expect(toSafeISODate(anio_nuevo).slice(0, 4)).toBe('2026');
-  });
+  // 2) Número de serie de Excel (días desde 30/12/1899)
+  if (typeof valor === 'number' && isFinite(valor) && valor > 0) {
+    const d = new Date(Date.UTC(1899, 11, 30));
+    d.setUTCDate(d.getUTCDate() + Math.floor(valor));
+    return isNaN(d.getTime())
+      ? null
+      : `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}T12:00:00.000Z`;
+  }
 
-  it('rellena con ceros los días y meses de una cifra', () => {
-    expect(toSafeISODate(new Date(2026, 4, 7))).toBe('2026-05-07T12:00:00.000Z');
-  });
+  // 3) Texto: DD/MM/AAAA, DD-MM-AA, DD.MM.AAAA
+  const str = String(valor).trim();
+  const m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if (!m) return null;
 
-  it('la hora es mediodía UTC, inmune a la zona horaria', () => {
-    const d = new Date(2026, 6, 15);
-    expect(toSafeISODate(d)).toContain('T12:00:00.000Z');
-    // Mediodía UTC sigue siendo el mismo día en cualquier zona horaria
-    expect(new Date(toSafeISODate(d)).getUTCDate()).toBe(15);
-  });
-});
+  const dia = Number(m[1]);
+  const mes = Number(m[2]);
+  const anio = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
 
-describe('parseFechaCelda — fechas tal y como vienen del Excel', () => {
-  it('acepta un objeto Date sin desplazar el día', () => {
-    expect(parseFechaCelda(new Date(2026, 2, 1))).toBe('2026-03-01T12:00:00.000Z');
-  });
+  if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return null;
 
-  it('acepta texto DD/MM/AAAA', () => {
-    expect(parseFechaCelda('01/03/2026')).toBe('2026-03-01T12:00:00.000Z');
-    expect(parseFechaCelda('19/03/2026')).toBe('2026-03-19T12:00:00.000Z');
-    expect(parseFechaCelda('20/03/2026')).toBe('2026-03-20T12:00:00.000Z');
-  });
+  // Construimos con componentes numéricos (nunca desde cadena) y
+  // comprobamos que la fecha existe de verdad (31 de febrero, etc.)
+  const d = new Date(anio, mes - 1, dia);
+  if (d.getFullYear() !== anio || d.getMonth() !== mes - 1 || d.getDate() !== dia) {
+    return null;
+  }
+  return toSafeISODate(d);
+};
 
-  it('acepta guiones y puntos como separador', () => {
-    expect(parseFechaCelda('01-03-2026')).toBe('2026-03-01T12:00:00.000Z');
-    expect(parseFechaCelda('01.03.2026')).toBe('2026-03-01T12:00:00.000Z');
-  });
+/** Asigna categoría automáticamente según el concepto del movimiento. */
+export const categorizarGasto = (concepto: string): { categoria: CategoryName; auto: boolean } => {
+  const raw = ` ${(concepto || '').toLowerCase()} `;
+  // Guardas específicas: "Uber Eats" gana a "Uber"
+  if (/uber\s*eats|uber-eats|ubereats/.test(raw)) return { categoria: 'Alimentación', auto: true };
+  if (/\buber\b/.test(raw) && !/eats/.test(raw)) return { categoria: 'Transporte', auto: true };
+  for (const [cat, kws] of Object.entries(CATEGORY_KEYWORDS) as [CategoryName, string[]][]) {
+    if (kws.some(k => raw.includes(k))) return { categoria: cat, auto: true };
+  }
+  return { categoria: 'Otros', auto: false };
+};
 
-  it('acepta año de dos cifras', () => {
-    expect(parseFechaCelda('01/03/26')).toBe('2026-03-01T12:00:00.000Z');
-  });
-
-  it('acepta el número de serie de Excel', () => {
-    // 45717 = 1 de marzo de 2025 en el calendario de Excel
-    const r = parseFechaCelda(45717);
-    expect(r).not.toBeNull();
-    expect(r!.slice(0, 10)).toBe('2025-03-01');
-  });
-
-  it('devuelve null (no la fecha de hoy) si no hay fecha válida', () => {
-    expect(parseFechaCelda('')).toBeNull();
-    expect(parseFechaCelda(null)).toBeNull();
-    expect(parseFechaCelda(undefined)).toBeNull();
-    expect(parseFechaCelda('sin fecha')).toBeNull();
-    expect(parseFechaCelda('N/A')).toBeNull();
-  });
-
-  it('rechaza fechas imposibles en vez de inventárselas', () => {
-    expect(parseFechaCelda('32/03/2026')).toBeNull();
-    expect(parseFechaCelda('01/13/2026')).toBeNull();
-    expect(parseFechaCelda('31/02/2026')).toBeNull(); // febrero no tiene 31
-  });
-
-  // Los días 19 y 20 fallaban en el importador antiguo
-  it('los días 19 y 20 no se pierden', () => {
-    expect(parseFechaCelda('19/03/2026')).not.toBeNull();
-    expect(parseFechaCelda('20/03/2026')).not.toBeNull();
-  });
-});
-
-describe('categorizarGasto — categorías automáticas', () => {
-  it('reconoce comercios habituales', () => {
-    expect(categorizarGasto('COMPRA EN MERCADONA').categoria).toBe('Alimentación');
-    expect(categorizarGasto('NETFLIX.COM').categoria).toBe('Suscripción');
-    expect(categorizarGasto('GASOLINERA REPSOL').categoria).toBe('Transporte');
-    expect(categorizarGasto('FARMACIA CENTRAL').categoria).toBe('Salud');
-    expect(categorizarGasto('ZARA ESPAÑA').categoria).toBe('Ropa');
-  });
-
-  it('Uber Eats es comida, Uber a secas es transporte', () => {
-    expect(categorizarGasto('UBER EATS MADRID').categoria).toBe('Alimentación');
-    expect(categorizarGasto('UBER TRIP').categoria).toBe('Transporte');
-  });
-
-  it('lo desconocido va a Otros y se marca como no automático', () => {
-    const r = categorizarGasto('PAGO XYZ 4839');
-    expect(r.categoria).toBe('Otros');
-    expect(r.auto).toBe(false);
-  });
-
-  it('lo reconocido se marca como automático', () => {
-    expect(categorizarGasto('MERCADONA').auto).toBe(true);
-  });
-
-  it('no revienta con concepto vacío', () => {
-    expect(categorizarGasto('').categoria).toBe('Otros');
-  });
-});
-
-describe('esGasto — solo importamos gastos, no ingresos', () => {
-  it('los importes negativos son gastos', () => {
-    expect(esGasto(-45.9)).toBe(true);
-    expect(esGasto(-0.01)).toBe(true);
-  });
-
-  it('la nómina y las devoluciones NO son gastos', () => {
-    expect(esGasto(1800)).toBe(false);
-    expect(esGasto(0)).toBe(false);
-  });
-
-  it('los valores inválidos no son gastos', () => {
-    expect(esGasto(NaN)).toBe(false);
-    expect(esGasto(Infinity)).toBe(false);
-  });
-});
-
-describe('categorizarGasto — prioridad y comercios nuevos', () => {
-  it('categoría específica gana a genérica (café en hospital → Salud)', () => {
-    expect(categorizarGasto('CAFETERÍA DEL HOSPITAL CENTRAL').categoria).toBe('Salud');
-  });
-  it('gasolinera con cafetería → Transporte, no Ocio', () => {
-    expect(categorizarGasto('GASOLINERA CAFETERIA').categoria).toBe('Transporte');
-  });
-  it('reconoce comercios españoles nuevos', () => {
-    expect(categorizarGasto('LEROY MERLIN SEVILLA').categoria).toBe('Compras');
-    expect(categorizarGasto('FARMACIA LOPEZ').categoria).toBe('Salud');
-    expect(categorizarGasto('PEAJE AUTOPISTA AP-4').categoria).toBe('Transporte');
-    expect(categorizarGasto('MCDONALDS NERVION').categoria).toBe('Ocio');
-    expect(categorizarGasto('APPLE MUSIC').categoria).toBe('Suscripción');
-  });
-  it('Decathlon ahora es Ropa (no Ocio)', () => {
-    expect(categorizarGasto('DECATHLON SEVILLA ESTE').categoria).toBe('Ropa');
-  });
-  it('mantiene la guarda Uber Eats vs Uber', () => {
-    expect(categorizarGasto('UBER EATS MADRID').categoria).toBe('Alimentación');
-    expect(categorizarGasto('UBER TRIP').categoria).toBe('Transporte');
-  });
-});
+/** ¿Es un gasto? En los extractos los gastos son importes negativos. */
+export const esGasto = (importe: number): boolean =>
+  !isNaN(importe) && isFinite(importe) && importe < 0;

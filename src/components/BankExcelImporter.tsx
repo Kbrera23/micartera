@@ -26,6 +26,12 @@ import {
   esGasto,
 } from '@/lib/bankParsing';
 import { esMismoMovimiento } from '@/lib/duplicateDetection';
+import { categoriaPorReglas, extraerComercio } from '@/lib/categoryRules';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'en', 'a', 'y', 'es']);
@@ -83,7 +89,9 @@ interface Movimiento {
   incluir: boolean;
 }
 
-const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
+type Regla = { comercio: string; categoria: string };
+
+const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimiento[]> => {
   const data = await file.arrayBuffer();
   const wb = XLSX.read(data, { type: 'array', cellDates: true });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -115,7 +123,10 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
 
     const fecha = fechaIdx !== -1 ? parseFechaCelda(row[fechaIdx]) : null;
 
-    const cat = categorizarGasto(concepto);
+    const porRegla = categoriaPorReglas(concepto, reglas);
+    const cat = porRegla
+      ? { categoria: porRegla as CategoryName, auto: true }
+      : categorizarGasto(concepto);
     movimientos.push({
       id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
       concepto: limpiarConcepto(concepto),
@@ -143,6 +154,9 @@ export const BankExcelImporter = ({ onImported }: Props) => {
   const [processing, setProcessing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
+  const [reglas, setReglas] = useState<Regla[]>([]);
+  const [reglaPropuesta, setReglaPropuesta] = useState<{ comercio: string; categoria: string } | null>(null);
+  const [guardandoRegla, setGuardandoRegla] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => { setFile(null); setMovimientos([]); setProcessing(false); setSaving(false); };
@@ -164,7 +178,24 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     if (!file) return;
     setProcessing(true);
     try {
-      const movs = await parseExcelFile(file);
+      // Cargar las reglas aprendidas del usuario (sin bloquear si falla)
+      let reglasActuales: Regla[] = reglas;
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('category_rules')
+            .select('comercio, categoria')
+            .eq('user_id', user.id);
+          if (error) throw error;
+          reglasActuales = (data || []) as Regla[];
+          setReglas(reglasActuales);
+        } catch (err) {
+          console.error('Error cargando reglas de categorización', err);
+        }
+      }
+
+      const movs = await parseExcelFile(file, reglasActuales);
+
 
       // Marcar duplicados dentro del propio archivo
       for (let i = 0; i < movs.length; i++) {
@@ -219,7 +250,38 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     finally { setProcessing(false); }
   };
 
-  const updateCategoria = (id: string, categoria: CategoryName) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, categoria } : m));
+  const updateCategoria = (id: string, categoria: CategoryName) => {
+    const mov = movimientos.find(m => m.id === id);
+    setMovimientos(prev => prev.map(m => m.id === id ? { ...m, categoria } : m));
+    if (mov) {
+      setReglaPropuesta({ comercio: extraerComercio(mov.conceptoOriginal), categoria });
+    }
+  };
+
+  const guardarRegla = async () => {
+    if (!user || !reglaPropuesta) return;
+    const comercio = reglaPropuesta.comercio.trim().toUpperCase();
+    if (!comercio) { setReglaPropuesta(null); return; }
+    setGuardandoRegla(true);
+    try {
+      const { error } = await supabase
+        .from('category_rules')
+        .upsert(
+          { user_id: user.id, comercio, categoria: reglaPropuesta.categoria },
+          { onConflict: 'user_id,comercio' }
+        );
+      if (error) throw error;
+      setReglas(prev => [...prev.filter(r => r.comercio.toUpperCase() !== comercio), { comercio, categoria: reglaPropuesta.categoria }]);
+      toast.success(`Recordado: ${comercio} → ${reglaPropuesta.categoria}`);
+      setReglaPropuesta(null);
+    } catch (err) {
+      console.error('Error guardando la regla', err);
+      toast.error('No se pudo guardar la regla');
+    } finally {
+      setGuardandoRegla(false);
+    }
+  };
+
   const toggleIncluir = (id: string) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, incluir: !m.incluir } : m));
   const removeRow = (id: string) => setMovimientos(prev => prev.filter(m => m.id !== id));
 
@@ -449,6 +511,35 @@ export const BankExcelImporter = ({ onImported }: Props) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!reglaPropuesta} onOpenChange={o => { if (!o) setReglaPropuesta(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Recordar que {reglaPropuesta?.comercio || 'este comercio'} es {reglaPropuesta?.categoria}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              La próxima vez lo clasificaré así. Puedes ajustar el nombre del comercio.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={reglaPropuesta?.comercio ?? ''}
+            onChange={e => setReglaPropuesta(prev => prev ? { ...prev, comercio: e.target.value } : prev)}
+            placeholder="Nombre del comercio"
+            aria-label="Nombre del comercio"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={guardandoRegla}>No, gracias</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => { e.preventDefault(); guardarRegla(); }}
+              disabled={guardandoRegla || !reglaPropuesta?.comercio.trim()}
+            >
+              {guardandoRegla ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</> : 'Recordar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </>
   );
 };
