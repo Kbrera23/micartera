@@ -26,6 +26,12 @@ import {
   esGasto,
 } from '@/lib/bankParsing';
 import { esMismoMovimiento } from '@/lib/duplicateDetection';
+import { categoriaPorReglas, extraerComercio } from '@/lib/categoryRules';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'en', 'a', 'y', 'es']);
