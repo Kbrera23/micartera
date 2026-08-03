@@ -1,9 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Trash2, Calendar, TrendingUp } from 'lucide-react';
+import { Trash2, Calendar, TrendingUp, AlertTriangle, PiggyBank } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { estimarObjetivo } from '@/lib/goalEstimation';
 
 interface PurchaseGoalWithQuota {
   id: string;
