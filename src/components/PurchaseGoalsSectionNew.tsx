@@ -1,11 +1,12 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Trash2, Gift, AlertTriangle, Calendar, Coins } from 'lucide-react';
+import { Gift, AlertTriangle, Coins } from 'lucide-react';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { gastoMedioMensual, ahorroMensual as calcAhorroMensual } from '@/lib/goalEstimation';
+import { PurchaseGoalCard } from '@/components/PurchaseGoalCard';
 
 interface GoalWithQuota {
   id: string;
