@@ -511,6 +511,35 @@ export const BankExcelImporter = ({ onImported }: Props) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!reglaPropuesta} onOpenChange={o => { if (!o) setReglaPropuesta(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Recordar que {reglaPropuesta?.comercio || 'este comercio'} es {reglaPropuesta?.categoria}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              La próxima vez lo clasificaré así. Puedes ajustar el nombre del comercio.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={reglaPropuesta?.comercio ?? ''}
+            onChange={e => setReglaPropuesta(prev => prev ? { ...prev, comercio: e.target.value } : prev)}
+            placeholder="Nombre del comercio"
+            aria-label="Nombre del comercio"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={guardandoRegla}>No, gracias</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => { e.preventDefault(); guardarRegla(); }}
+              disabled={guardandoRegla || !reglaPropuesta?.comercio.trim()}
+            >
+              {guardandoRegla ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</> : 'Recordar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </>
   );
 };
