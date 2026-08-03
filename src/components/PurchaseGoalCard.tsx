@@ -20,9 +20,11 @@ interface PurchaseGoalWithQuota {
 interface PurchaseGoalCardProps {
   goal: PurchaseGoalWithQuota;
   onRemove: (id: string) => void;
+  ahorroMensual?: number;
+  mesesData?: number;
 }
 
-export const PurchaseGoalCard = ({ goal, onRemove }: PurchaseGoalCardProps) => {
+export const PurchaseGoalCard = ({ goal, onRemove, ahorroMensual = 0, mesesData = 0 }: PurchaseGoalCardProps) => {
   const formatDate = (date: Date) => {
     return format(new Date(date), 'MMM yyyy', { locale: es });
   };
