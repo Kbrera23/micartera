@@ -154,6 +154,9 @@ export const BankExcelImporter = ({ onImported }: Props) => {
   const [processing, setProcessing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
+  const [reglas, setReglas] = useState<Regla[]>([]);
+  const [reglaPropuesta, setReglaPropuesta] = useState<{ comercio: string; categoria: string } | null>(null);
+  const [guardandoRegla, setGuardandoRegla] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => { setFile(null); setMovimientos([]); setProcessing(false); setSaving(false); };
