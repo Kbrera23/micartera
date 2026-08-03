@@ -33,11 +33,11 @@ export const CATEGORY_KEYWORDS: Record<Exclude<CategoryName, 'Otros'>, string[]>
   'Suscripción':    ['netflix', 'crunchyroll', 'disney', 'spotify', 'hbo', 'prime video', 'apple tv', 'youtube premium', 'streaming'],
   'Viajes':         ['nuitee', 'booking', 'airbnb', 'hotel', 'trivago', 'expedia', 'iberia', 'ryanair', 'vueling'],
   'Salud':          ['farmacia', 'clinica', 'clínica', 'medico', 'médico', 'hospital', 'dentista', 'salud'],
-  'Ocio':           ['acorde cafe', 'acorde café', 'cafe', 'café', 'duo barbers', 'barbers', 'barberia', 'barbería', 'peluqueria', 'peluquería', 'cine', 'teatro', 'concierto', 'gym', 'gimnasio', 'decathlon'],
+  'Ocio':           ['acorde cafe', 'acorde café', 'cafe', 'café', 'duo barbers', 'barbers', 'barberia', 'barbería', 'peluqueria', 'peluquería', 'cine', 'teatro', 'concierto', 'gym', 'gimnasio'],
   'Vivienda':       ['alquiler', 'hipoteca', 'arrendamientos', 'arrendamiento', 'recibo ay', 'comunidad propietarios'],
   'Servicios':      ['internet', 'movistar', 'vodafone', 'orange ', 'telefonica', 'telefónica', 'endesa', 'iberdrola', 'naturgy', 'aguas', 'canal isabel', 'cetelem', 'recibo ', ' luz ', ' gas ', ' agua '],
-  'Compras':        ['amazon', 'ebay', 'aliexpress', 'fnac', 'mediamarkt'],
-  'Ropa':           ['zara', 'zalando', 'shein', 'mango', 'primark', 'h&m', 'pull&bear', 'bershka'],
+  'Compras':        ['amazon', 'ebay', 'aliexpress', 'fnac', 'mediamarkt', 'leroy merlin', 'ikea', 'bricomart'],
+  'Ropa':           ['zara', 'zalando', 'shein', 'mango', 'primark', 'h&m', 'pull&bear', 'bershka', 'decathlon'],
 };
 
 /**
