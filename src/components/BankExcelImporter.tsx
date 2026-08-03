@@ -250,7 +250,38 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     finally { setProcessing(false); }
   };
 
-  const updateCategoria = (id: string, categoria: CategoryName) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, categoria } : m));
+  const updateCategoria = (id: string, categoria: CategoryName) => {
+    const mov = movimientos.find(m => m.id === id);
+    setMovimientos(prev => prev.map(m => m.id === id ? { ...m, categoria } : m));
+    if (mov) {
+      setReglaPropuesta({ comercio: extraerComercio(mov.conceptoOriginal), categoria });
+    }
+  };
+
+  const guardarRegla = async () => {
+    if (!user || !reglaPropuesta) return;
+    const comercio = reglaPropuesta.comercio.trim().toUpperCase();
+    if (!comercio) { setReglaPropuesta(null); return; }
+    setGuardandoRegla(true);
+    try {
+      const { error } = await supabase
+        .from('category_rules')
+        .upsert(
+          { user_id: user.id, comercio, categoria: reglaPropuesta.categoria },
+          { onConflict: 'user_id,comercio' }
+        );
+      if (error) throw error;
+      setReglas(prev => [...prev.filter(r => r.comercio.toUpperCase() !== comercio), { comercio, categoria: reglaPropuesta.categoria }]);
+      toast.success(`Recordado: ${comercio} → ${reglaPropuesta.categoria}`);
+      setReglaPropuesta(null);
+    } catch (err) {
+      console.error('Error guardando la regla', err);
+      toast.error('No se pudo guardar la regla');
+    } finally {
+      setGuardandoRegla(false);
+    }
+  };
+
   const toggleIncluir = (id: string) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, incluir: !m.incluir } : m));
   const removeRow = (id: string) => setMovimientos(prev => prev.filter(m => m.id !== id));
 
