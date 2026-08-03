@@ -89,7 +89,9 @@ interface Movimiento {
   incluir: boolean;
 }
 
-const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
+type Regla = { comercio: string; categoria: string };
+
+const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimiento[]> => {
   const data = await file.arrayBuffer();
   const wb = XLSX.read(data, { type: 'array', cellDates: true });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -121,7 +123,10 @@ const parseExcelFile = async (file: File): Promise<Movimiento[]> => {
 
     const fecha = fechaIdx !== -1 ? parseFechaCelda(row[fechaIdx]) : null;
 
-    const cat = categorizarGasto(concepto);
+    const porRegla = categoriaPorReglas(concepto, reglas);
+    const cat = porRegla
+      ? { categoria: porRegla as CategoryName, auto: true }
+      : categorizarGasto(concepto);
     movimientos.push({
       id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
       concepto: limpiarConcepto(concepto),
