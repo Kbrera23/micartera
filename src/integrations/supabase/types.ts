@@ -47,6 +47,30 @@ export type Database = {
         }
         Relationships: []
       }
+      category_rules: {
+        Row: {
+          categoria: string
+          comercio: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          comercio: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          comercio?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
