@@ -33,6 +33,9 @@ export const PurchaseGoalCard = ({ goal, onRemove, ahorroMensual = 0, mesesData 
     return `€${amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
   };
 
+  const estimacion = estimarObjetivo(goal.targetPrice, goal.savedAmount, ahorroMensual, mesesData);
+
+
   return (
     <Card className="glass-card animate-fade-in overflow-hidden rounded-2xl">
       <div className="h-1.5 bg-gradient-to-r from-goal to-goal/70" />
