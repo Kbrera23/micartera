@@ -82,6 +82,36 @@ export const PurchaseGoalCard = ({ goal, onRemove, ahorroMensual = 0, mesesData 
             {formatCurrency(goal.monthlyQuota)}
           </span>
         </div>
+
+        {/* Estimación real */}
+        <div className="p-2.5 rounded-xl bg-muted border border-border/50 space-y-1">
+          <div className="flex items-center gap-2">
+            {estimacion.alcanzable ? (
+              <PiggyBank className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+            )}
+            <span className="text-sm font-medium text-foreground">Estimación real</span>
+          </div>
+          {estimacion.alcanzable ? (
+            <p className="text-xs text-muted-foreground">
+              A tu ritmo de ahorro ({formatCurrency(estimacion.ahorroMensual)}/mes), lo alcanzas en{' '}
+              <span className="font-semibold text-foreground">{estimacion.mesesNecesarios}</span>{' '}
+              {estimacion.mesesNecesarios === 1 ? 'mes' : 'meses'}.
+            </p>
+          ) : estimacion.faltante === 0 ? (
+            <p className="text-xs text-muted-foreground">Ya has alcanzado este objetivo.</p>
+          ) : (
+            <p className="text-xs text-amber-500">
+              Con tu ahorro actual no llegarías a este objetivo. Revisa gastos o ingresos.
+            </p>
+          )}
+          {estimacion.pocosData && (
+            <p className="text-[11px] text-muted-foreground">
+              Estimación provisional (pocos meses de datos)
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
