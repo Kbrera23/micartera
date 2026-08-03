@@ -178,7 +178,24 @@ export const BankExcelImporter = ({ onImported }: Props) => {
     if (!file) return;
     setProcessing(true);
     try {
-      const movs = await parseExcelFile(file);
+      // Cargar las reglas aprendidas del usuario (sin bloquear si falla)
+      let reglasActuales: Regla[] = reglas;
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('category_rules')
+            .select('comercio, categoria')
+            .eq('user_id', user.id);
+          if (error) throw error;
+          reglasActuales = (data || []) as Regla[];
+          setReglas(reglasActuales);
+        } catch (err) {
+          console.error('Error cargando reglas de categorización', err);
+        }
+      }
+
+      const movs = await parseExcelFile(file, reglasActuales);
+
 
       // Marcar duplicados dentro del propio archivo
       for (let i = 0; i < movs.length; i++) {
