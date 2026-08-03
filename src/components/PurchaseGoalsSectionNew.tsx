@@ -1,11 +1,12 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Trash2, Gift, AlertTriangle, Calendar, Coins } from 'lucide-react';
+import { Gift, AlertTriangle, Coins } from 'lucide-react';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { gastoMedioMensual, ahorroMensual as calcAhorroMensual } from '@/lib/goalEstimation';
+import { PurchaseGoalCard } from '@/components/PurchaseGoalCard';
 
 interface GoalWithQuota {
   id: string;
@@ -33,6 +34,32 @@ export const PurchaseGoalsSectionNew = ({
   hasInsufficientFunds,
   onRemove
 }: PurchaseGoalsSectionProps) => {
+  const [ahorro, setAhorro] = useState(0);
+  const [mesesData, setMesesData] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return;
+
+      const [{ data: gastos }, { data: profile }] = await Promise.all([
+        supabase.from('expenses').select('amount, created_at').eq('user_id', userId),
+        supabase.from('profiles').select('monthly_income').eq('user_id', userId).maybeSingle(),
+      ]);
+      if (cancelled) return;
+
+      const medio = gastoMedioMensual(
+        (gastos || []).map((g) => ({ amount: Number(g.amount), created_at: g.created_at }))
+      );
+      setMesesData(medio.meses);
+      setAhorro(calcAhorroMensual(Number(profile?.monthly_income || 0), medio.medio));
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* Summary Card */}
@@ -89,41 +116,22 @@ export const PurchaseGoalsSectionNew = ({
           ) : (
             <div className="space-y-3">
               {goals.map((goal) => (
-                <div
+                <PurchaseGoalCard
                   key={goal.id}
-                  className="p-4 bg-muted/50 rounded-xl group"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{goal.name}</h4>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                        <Calendar className="h-3.5 w-3.5" />
-                        <span>{format(new Date(goal.target_date), "d MMM yyyy", { locale: es })}</span>
-                        <span>•</span>
-                        <span>{goal.monthsRemaining} meses</span>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                      onClick={() => onRemove(goal.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">
-                      {formatCurrencyCompact(goal.current_amount)} / {formatCurrencyCompact(goal.target_amount)}
-                    </span>
-                    <span className="font-semibold text-goal">
-                      {formatCurrencyCompact(goal.monthlyQuota)}/mes
-                    </span>
-                  </div>
-
-                  {/* Progress bar removed as per requirements */}
-                </div>
+                  goal={{
+                    id: goal.id,
+                    name: goal.name,
+                    targetPrice: goal.target_amount,
+                    savedAmount: goal.current_amount,
+                    targetDate: new Date(goal.target_date),
+                    monthlyQuota: goal.monthlyQuota,
+                    monthsRemaining: goal.monthsRemaining,
+                    progressPercent: goal.progressPercent,
+                  }}
+                  onRemove={onRemove}
+                  ahorroMensual={ahorro}
+                  mesesData={mesesData}
+                />
               ))}
             </div>
           )}
