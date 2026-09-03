@@ -53,12 +53,12 @@ export const ExpensesSection = ({
   const filteredRecurring = useMemo(() => filteredExpenses.filter(e => e.is_recurring), [filteredExpenses]);
   const filteredOneTime = useMemo(() => filteredExpenses.filter(e => !e.is_recurring), [filteredExpenses]);
 
+  // Solo gastos mensuales: trimestrales/anuales se descuentan al pulsar "Hecho"
   const filteredRecurringTotal = useMemo(() =>
-    filteredRecurring.reduce((sum, e) => {
-      if (e.frequency === 'quarterly') return sum + e.amount / 3;
-      if (e.frequency === 'annual') return sum + e.amount / 12;
-      return sum + e.amount;
-    }, 0), [filteredRecurring]);
+    filteredRecurring
+      .filter(e => e.frequency === 'monthly')
+      .reduce((sum, e) => sum + e.amount, 0),
+    [filteredRecurring]);
 
   const filteredOneTimeTotal = useMemo(() =>
     filteredOneTime.reduce((sum, e) => sum + e.amount, 0),

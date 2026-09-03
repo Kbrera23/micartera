@@ -103,12 +103,11 @@ const Index = () => {
     [oneTimeExpenses]
   );
   
-  const totalRecurring = useMemo(() => 
-    recurringExpenses.reduce((sum, e) => {
-      if (e.frequency === 'quarterly') return sum + e.amount / 3;
-      if (e.frequency === 'annual') return sum + e.amount / 12;
-      return sum + e.amount;
-    }, 0), 
+  // Solo gastos mensuales: trimestrales/anuales se descuentan al pulsar "Hecho"
+  const totalRecurring = useMemo(() =>
+    recurringExpenses
+      .filter(e => e.frequency === 'monthly')
+      .reduce((sum, e) => sum + e.amount, 0),
     [recurringExpenses]
   );
 
