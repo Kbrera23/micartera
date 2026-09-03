@@ -1,11 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Target, Play, Pause, Trash2, Calendar, TrendingUp } from 'lucide-react';
+import { Plus, Target, Play, Pause, Trash2, Calendar, TrendingUp, PiggyBank, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { PurchaseGoal } from '@/hooks/useSupabaseFinances';
 import { GoalCreationModal } from '@/components/GoalCreationModal';
+import { supabase } from '@/integrations/supabase/client';
+import { gastoMedioMensual, ahorroMensual, estimarObjetivo } from '@/lib/goalEstimation';
 
 interface GoalsSectionProps {
   goals: PurchaseGoal[];
