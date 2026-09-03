@@ -243,6 +243,31 @@ export const GoalsSection = ({
   onToggleGoalStatus
 }: GoalsSectionProps) => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [ahorro, setAhorro] = useState(0);
+  const [mesesData, setMesesData] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return;
+
+      const [{ data: gastos }, { data: profile }] = await Promise.all([
+        supabase.from('expenses').select('amount, created_at').eq('user_id', userId),
+        supabase.from('profiles').select('monthly_income').eq('user_id', userId).maybeSingle(),
+      ]);
+      if (cancelled) return;
+
+      const medio = gastoMedioMensual(
+        (gastos || []).map((g) => ({ amount: Number(g.amount), created_at: g.created_at }))
+      );
+      setMesesData(medio.meses);
+      setAhorro(ahorroMensual(Number(profile?.monthly_income || 0), medio.medio));
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   const activeGoals = useMemo(() => goals.filter(g => g.status === 'active'), [goals]);
   const pendingGoals = useMemo(() => goals.filter(g => g.status === 'pending'), [goals]);
