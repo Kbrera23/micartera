@@ -539,15 +539,13 @@ export const useSupabaseFinances = () => {
 
     const monthlyRevolutProvision = quarterlyProvision;
 
-    // Gastos por categoría
+    // Gastos por categoría: solo mensuales y únicos (los trimestrales/anuales
+    // se contabilizan como pago al pulsar "Hecho", vía is_payment_record)
     const expensesByCategory = categories
       .map(cat => {
         const catExpenses = expenses.filter(e => e.category_id === cat.id);
         const total = catExpenses.reduce((sum, e) => {
-          if (e.is_recurring) {
-            if (e.frequency === 'quarterly') return sum + e.amount / 3;
-            if (e.frequency === 'annual')    return sum + e.amount / 12;
-          }
+          if (e.is_recurring && e.frequency !== 'monthly') return sum;
           return sum + e.amount;
         }, 0);
         return {
