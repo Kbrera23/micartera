@@ -152,6 +152,51 @@ const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal, ahorro, mesesData }:
         </div>
       )}
 
+      {/* Estimación real */}
+      {!isCompleted && (
+        <div className="mb-3 p-2.5 rounded-xl bg-muted border border-border/50 space-y-1">
+          <div className="flex items-center gap-2">
+            {(() => {
+              const est = estimarObjetivo(goal.target_amount, goal.current_amount, ahorro, mesesData);
+              return est.alcanzable ? (
+                <PiggyBank className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+              );
+            })()}
+            <span className="text-sm font-medium text-foreground">Estimación real</span>
+          </div>
+          {(() => {
+            const est = estimarObjetivo(goal.target_amount, goal.current_amount, ahorro, mesesData);
+            if (est.faltante === 0) {
+              return <p className="text-xs text-muted-foreground">Ya has alcanzado este objetivo.</p>;
+            }
+            if (est.alcanzable) {
+              return (
+                <p className="text-xs text-muted-foreground">
+                  A tu ritmo de ahorro ({formatCurrencyCompact(est.ahorroMensual)}/mes), lo alcanzas en{' '}
+                  <span className="font-semibold text-foreground">{est.mesesNecesarios}</span>{' '}
+                  {est.mesesNecesarios === 1 ? 'mes' : 'meses'}.
+                </p>
+              );
+            }
+            return (
+              <p className="text-xs text-amber-500">
+                Con tu ahorro actual no llegarías a este objetivo. Revisa gastos o ingresos.
+              </p>
+            );
+          })()}
+          {(() => {
+            const est = estimarObjetivo(goal.target_amount, goal.current_amount, ahorro, mesesData);
+            return est.pocosData ? (
+              <p className="text-[11px] text-muted-foreground">
+                Estimación provisional (pocos meses de datos)
+              </p>
+            ) : null;
+          })()}
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex items-center gap-2 pt-2 border-t border-border/30">
         {isActive ? (
