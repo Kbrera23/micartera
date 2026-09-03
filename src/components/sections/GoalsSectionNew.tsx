@@ -1,11 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Target, Play, Pause, Trash2, Calendar, TrendingUp } from 'lucide-react';
+import { Plus, Target, Play, Pause, Trash2, Calendar, TrendingUp, PiggyBank, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { PurchaseGoal } from '@/hooks/useSupabaseFinances';
 import { GoalCreationModal } from '@/components/GoalCreationModal';
+import { supabase } from '@/integrations/supabase/client';
+import { gastoMedioMensual, ahorroMensual, estimarObjetivo } from '@/lib/goalEstimation';
 
 interface GoalsSectionProps {
   goals: PurchaseGoal[];
@@ -28,9 +30,11 @@ interface GoalCardProps {
   goal: PurchaseGoal;
   onToggleGoalStatus: (goalId: string, newStatus: 'active' | 'pending') => void;
   onRemoveGoal: (id: string) => void;
+  ahorro: number;
+  mesesData: number;
 }
 
-const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal }: GoalCardProps) => {
+const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal, ahorro, mesesData }: GoalCardProps) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -148,6 +152,51 @@ const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal }: GoalCardProps) => 
         </div>
       )}
 
+      {/* Estimación real */}
+      {!isCompleted && (
+        <div className="mb-3 p-2.5 rounded-xl bg-muted border border-border/50 space-y-1">
+          <div className="flex items-center gap-2">
+            {(() => {
+              const est = estimarObjetivo(goal.target_amount, goal.current_amount, ahorro, mesesData);
+              return est.alcanzable ? (
+                <PiggyBank className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+              );
+            })()}
+            <span className="text-sm font-medium text-foreground">Estimación real</span>
+          </div>
+          {(() => {
+            const est = estimarObjetivo(goal.target_amount, goal.current_amount, ahorro, mesesData);
+            if (est.faltante === 0) {
+              return <p className="text-xs text-muted-foreground">Ya has alcanzado este objetivo.</p>;
+            }
+            if (est.alcanzable) {
+              return (
+                <p className="text-xs text-muted-foreground">
+                  A tu ritmo de ahorro ({formatCurrencyCompact(est.ahorroMensual)}/mes), lo alcanzas en{' '}
+                  <span className="font-semibold text-foreground">{est.mesesNecesarios}</span>{' '}
+                  {est.mesesNecesarios === 1 ? 'mes' : 'meses'}.
+                </p>
+              );
+            }
+            return (
+              <p className="text-xs text-amber-500">
+                Con tu ahorro actual no llegarías a este objetivo. Revisa gastos o ingresos.
+              </p>
+            );
+          })()}
+          {(() => {
+            const est = estimarObjetivo(goal.target_amount, goal.current_amount, ahorro, mesesData);
+            return est.pocosData ? (
+              <p className="text-[11px] text-muted-foreground">
+                Estimación provisional (pocos meses de datos)
+              </p>
+            ) : null;
+          })()}
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex items-center gap-2 pt-2 border-t border-border/30">
         {isActive ? (
@@ -194,6 +243,31 @@ export const GoalsSection = ({
   onToggleGoalStatus
 }: GoalsSectionProps) => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [ahorro, setAhorro] = useState(0);
+  const [mesesData, setMesesData] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return;
+
+      const [{ data: gastos }, { data: profile }] = await Promise.all([
+        supabase.from('expenses').select('amount, created_at').eq('user_id', userId),
+        supabase.from('profiles').select('monthly_income').eq('user_id', userId).maybeSingle(),
+      ]);
+      if (cancelled) return;
+
+      const medio = gastoMedioMensual(
+        (gastos || []).map((g) => ({ amount: Number(g.amount), created_at: g.created_at }))
+      );
+      setMesesData(medio.meses);
+      setAhorro(ahorroMensual(Number(profile?.monthly_income || 0), medio.medio));
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   const activeGoals = useMemo(() => goals.filter(g => g.status === 'active'), [goals]);
   const pendingGoals = useMemo(() => goals.filter(g => g.status === 'pending'), [goals]);
@@ -256,7 +330,7 @@ export const GoalsSection = ({
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {activeGoals.map(goal => (
-              <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} />
+              <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} ahorro={ahorro} mesesData={mesesData} />
             ))}
           </div>
         </div>
@@ -271,7 +345,7 @@ export const GoalsSection = ({
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {pendingGoals.map(goal => (
-              <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} />
+              <GoalCard key={goal.id} goal={goal} onToggleGoalStatus={onToggleGoalStatus} onRemoveGoal={onRemoveGoal} ahorro={ahorro} mesesData={mesesData} />
             ))}
           </div>
         </div>
