@@ -30,9 +30,11 @@ interface GoalCardProps {
   goal: PurchaseGoal;
   onToggleGoalStatus: (goalId: string, newStatus: 'active' | 'pending') => void;
   onRemoveGoal: (id: string) => void;
+  ahorro: number;
+  mesesData: number;
 }
 
-const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal }: GoalCardProps) => {
+const GoalCard = ({ goal, onToggleGoalStatus, onRemoveGoal, ahorro, mesesData }: GoalCardProps) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
