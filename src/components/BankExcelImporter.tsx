@@ -217,7 +217,30 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
         }
       }
 
-      const movs = await parseExcelFile(file, reglasActuales);
+      // Cargar los comercios marcados como gasto fijo (sin bloquear si falla)
+      let fijosActuales: string[] = reglasFijos;
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('fixed_expense_rules')
+            .select('comercio')
+            .eq('user_id', user.id);
+          if (error) throw error;
+          fijosActuales = (data || []).map(r => String(r.comercio || '').toUpperCase());
+          setReglasFijos(fijosActuales);
+        } catch (err) {
+          console.error('Error cargando reglas de gastos fijos', err);
+          fijosActuales = [];
+        }
+      }
+
+      const movs = await parseExcelFile(
+        file,
+        reglasActuales,
+        fijosActuales,
+        gastosRecurrentes.map(g => g.name),
+      );
+
 
 
       // Marcar duplicados dentro del propio archivo
