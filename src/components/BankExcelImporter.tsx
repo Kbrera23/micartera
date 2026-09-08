@@ -87,11 +87,17 @@ interface Movimiento {
   autoCategorized: boolean;
   duplicado: boolean;
   incluir: boolean;
+  esFijo: boolean;
 }
 
 type Regla = { comercio: string; categoria: string };
 
-const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimiento[]> => {
+const parseExcelFile = async (
+  file: File,
+  reglas: Regla[] = [],
+  reglasFijos: string[] = [],
+  nombresRecurrentes: string[] = [],
+): Promise<Movimiento[]> => {
   const data = await file.arrayBuffer();
   const wb = XLSX.read(data, { type: 'array', cellDates: true });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -111,6 +117,11 @@ const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimie
   }
   if (headerRowIdx === -1) throw new Error('Formato de Excel no reconocido');
 
+  const fijosSet = new Set(reglasFijos.map(c => c.toUpperCase().trim()).filter(Boolean));
+  const recurrentes = nombresRecurrentes
+    .map(n => (n || '').toUpperCase().trim())
+    .filter(n => n.length > 2);
+
   const movimientos: Movimiento[] = [];
   for (let i = headerRowIdx + 1; i < rows.length; i++) {
     const row = rows[i];
@@ -127,6 +138,14 @@ const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimie
     const cat = porRegla
       ? { categoria: porRegla as CategoryName, auto: true }
       : categorizarGasto(concepto);
+
+    // ¿Es un gasto fijo? Por regla aprendida o por coincidir con un recurrente ya registrado.
+    const comercio = extraerComercio(concepto);
+    const conceptoUpper = concepto.toUpperCase();
+    const esFijo =
+      (!!comercio && fijosSet.has(comercio.toUpperCase())) ||
+      recurrentes.some(n => conceptoUpper.includes(n));
+
     movimientos.push({
       id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
       concepto: limpiarConcepto(concepto),
@@ -136,7 +155,8 @@ const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimie
       categoria: cat.categoria,
       autoCategorized: cat.auto,
       duplicado: false,
-      incluir: true,
+      incluir: !esFijo,
+      esFijo,
     });
   }
   if (!movimientos.length) throw new Error('El archivo no contiene movimientos');
@@ -144,9 +164,10 @@ const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimie
 };
 
 
-interface Props { onImported?: () => void; }
+interface Props { onImported?: () => void; gastosRecurrentes?: { name: string }[]; }
 
-export const BankExcelImporter = ({ onImported }: Props) => {
+export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props) => {
+
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -155,6 +176,8 @@ export const BankExcelImporter = ({ onImported }: Props) => {
   const [saving, setSaving] = useState(false);
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
   const [reglas, setReglas] = useState<Regla[]>([]);
+  const [reglasFijos, setReglasFijos] = useState<string[]>([]);
+
   const [reglaPropuesta, setReglaPropuesta] = useState<{ comercio: string; categoria: string } | null>(null);
   const [guardandoRegla, setGuardandoRegla] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -194,7 +217,30 @@ export const BankExcelImporter = ({ onImported }: Props) => {
         }
       }
 
-      const movs = await parseExcelFile(file, reglasActuales);
+      // Cargar los comercios marcados como gasto fijo (sin bloquear si falla)
+      let fijosActuales: string[] = reglasFijos;
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('fixed_expense_rules')
+            .select('comercio')
+            .eq('user_id', user.id);
+          if (error) throw error;
+          fijosActuales = (data || []).map(r => String(r.comercio || '').toUpperCase());
+          setReglasFijos(fijosActuales);
+        } catch (err) {
+          console.error('Error cargando reglas de gastos fijos', err);
+          fijosActuales = [];
+        }
+      }
+
+      const movs = await parseExcelFile(
+        file,
+        reglasActuales,
+        fijosActuales,
+        gastosRecurrentes.map(g => g.name),
+      );
+
 
 
       // Marcar duplicados dentro del propio archivo
@@ -244,7 +290,13 @@ export const BankExcelImporter = ({ onImported }: Props) => {
       }
 
       setMovimientos(movs);
-      toast.success(`${movs.length} movimientos detectados`);
+      const fijosCount = movs.filter(m => m.esFijo).length;
+      toast.success(
+        fijosCount
+          ? `${movs.length} movimientos detectados (${fijosCount} fijos ya contados)`
+          : `${movs.length} movimientos detectados`
+      );
+
     }
     catch (err: any) { toast.error(err.message || 'Error al procesar el archivo'); }
     finally { setProcessing(false); }
@@ -285,6 +337,56 @@ export const BankExcelImporter = ({ onImported }: Props) => {
   const toggleIncluir = (id: string) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, incluir: !m.incluir } : m));
   const removeRow = (id: string) => setMovimientos(prev => prev.filter(m => m.id !== id));
 
+  // Marca/desmarca un movimiento como gasto fijo y aprende el comercio.
+  const toggleFijo = async (id: string) => {
+    const mov = movimientos.find(m => m.id === id);
+    if (!mov) return;
+    const comercio = extraerComercio(mov.conceptoOriginal).toUpperCase().trim();
+
+    if (mov.esFijo) {
+      // Desmarcar: vuelve al recuento y se olvida la regla
+      setMovimientos(prev => prev.map(m => m.id === id ? { ...m, esFijo: false, incluir: true } : m));
+      if (user && comercio) {
+        try {
+          await supabase
+            .from('fixed_expense_rules')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('comercio', comercio);
+        } catch (err) {
+          console.error('Error eliminando la regla de gasto fijo', err);
+        }
+        setReglasFijos(prev => prev.filter(c => c !== comercio));
+      }
+      toast.success('Ya no se considera gasto fijo');
+      return;
+    }
+
+    setMovimientos(prev => prev.map(m => m.id === id ? { ...m, esFijo: true, incluir: false } : m));
+    if (user && comercio) {
+      try {
+        const { error } = await supabase
+          .from('fixed_expense_rules')
+          .upsert({ user_id: user.id, comercio }, { onConflict: 'user_id,comercio' });
+        if (error) throw error;
+        setReglasFijos(prev => prev.includes(comercio) ? prev : [...prev, comercio]);
+        // Aplicar al resto de la importación
+        setMovimientos(prev => prev.map(m =>
+          m.id !== id && !m.esFijo && extraerComercio(m.conceptoOriginal).toUpperCase() === comercio
+            ? { ...m, esFijo: true, incluir: false }
+            : m
+        ));
+        toast.success(`Recordado: ${comercio} es un gasto fijo`);
+      } catch (err) {
+        console.error('Error guardando la regla de gasto fijo', err);
+        toast.error('No se pudo recordar el gasto fijo');
+      }
+    } else {
+      toast.success('Marcado como gasto fijo');
+    }
+  };
+
+
   const handleConfirmar = async () => {
     if (!user || !movimientos.length) return;
     const seleccionados = movimientos.filter(m => m.incluir);
@@ -319,6 +421,8 @@ export const BankExcelImporter = ({ onImported }: Props) => {
   const total = incluidos.reduce((s, m) => s + m.importe, 0);
   const sinFecha = incluidos.filter(m => !m.fecha).length;
   const duplicadosCount = movimientos.filter(m => m.duplicado).length;
+  const fijosCount = movimientos.filter(m => m.esFijo).length;
+
 
   const formatFechaES = (iso: string | null): string => {
     if (!iso) return '';
@@ -412,11 +516,17 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                       ⚠ {duplicadosCount} {duplicadosCount === 1 ? 'movimiento ya existe' : 'movimientos ya existen'} — desmarcados, revísalos antes de confirmar.
                     </div>
                   )}
+                  {fijosCount > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      🔁 {fijosCount} {fijosCount === 1 ? 'gasto fijo detectado' : 'gastos fijos detectados'} — fuera del recuento porque ya están contados.
+                    </div>
+                  )}
                   {sinFecha > 0 && (
                     <div className="text-xs text-amber-400">
                       ⚠ {sinFecha} {sinFecha === 1 ? 'movimiento sin fecha' : 'movimientos sin fecha'} — se registrarán con la fecha de hoy.
                     </div>
                   )}
+
                 </div>
 
 
@@ -442,7 +552,8 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                               className={cn(
                                 'border-t transition-colors hover:bg-white/3',
                                 m.duplicado && 'bg-amber-500/10',
-                                !m.incluir && 'opacity-60'
+                                m.esFijo && 'opacity-50',
+                                !m.incluir && !m.esFijo && 'opacity-60'
                               )}
                               style={{ borderColor: 'hsl(200 30% 17%)', background: m.duplicado ? undefined : baseBg }}>
                               <td className="px-3 py-3">
@@ -460,8 +571,20 @@ export const BankExcelImporter = ({ onImported }: Props) => {
                                       Ya existe
                                     </Badge>
                                   )}
+                                  {m.esFijo && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary bg-primary/10 shrink-0">
+                                      Fijo — ya contado
+                                    </Badge>
+                                  )}
                                 </div>
+                                <button
+                                  onClick={() => toggleFijo(m.id)}
+                                  className="mt-1 text-[10px] text-muted-foreground hover:text-primary underline underline-offset-2"
+                                >
+                                  {m.esFijo ? 'No es un gasto fijo' : 'Marcar como gasto fijo'}
+                                </button>
                               </td>
+
                               <td className={cn('px-4 py-3 font-mono whitespace-nowrap', m.fecha ? 'text-muted-foreground' : 'text-amber-400')}>
                                 {m.fecha ? formatFechaES(m.fecha) : 'Sin fecha'}
                               </td>
