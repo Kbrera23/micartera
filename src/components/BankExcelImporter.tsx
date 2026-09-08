@@ -516,11 +516,17 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
                       ⚠ {duplicadosCount} {duplicadosCount === 1 ? 'movimiento ya existe' : 'movimientos ya existen'} — desmarcados, revísalos antes de confirmar.
                     </div>
                   )}
+                  {fijosCount > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      🔁 {fijosCount} {fijosCount === 1 ? 'gasto fijo detectado' : 'gastos fijos detectados'} — fuera del recuento porque ya están contados.
+                    </div>
+                  )}
                   {sinFecha > 0 && (
                     <div className="text-xs text-amber-400">
                       ⚠ {sinFecha} {sinFecha === 1 ? 'movimiento sin fecha' : 'movimientos sin fecha'} — se registrarán con la fecha de hoy.
                     </div>
                   )}
+
                 </div>
 
 
