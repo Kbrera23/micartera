@@ -87,11 +87,17 @@ interface Movimiento {
   autoCategorized: boolean;
   duplicado: boolean;
   incluir: boolean;
+  esFijo: boolean;
 }
 
 type Regla = { comercio: string; categoria: string };
 
-const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimiento[]> => {
+const parseExcelFile = async (
+  file: File,
+  reglas: Regla[] = [],
+  reglasFijos: string[] = [],
+  nombresRecurrentes: string[] = [],
+): Promise<Movimiento[]> => {
   const data = await file.arrayBuffer();
   const wb = XLSX.read(data, { type: 'array', cellDates: true });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -111,6 +117,11 @@ const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimie
   }
   if (headerRowIdx === -1) throw new Error('Formato de Excel no reconocido');
 
+  const fijosSet = new Set(reglasFijos.map(c => c.toUpperCase().trim()).filter(Boolean));
+  const recurrentes = nombresRecurrentes
+    .map(n => (n || '').toUpperCase().trim())
+    .filter(n => n.length > 2);
+
   const movimientos: Movimiento[] = [];
   for (let i = headerRowIdx + 1; i < rows.length; i++) {
     const row = rows[i];
@@ -127,6 +138,14 @@ const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimie
     const cat = porRegla
       ? { categoria: porRegla as CategoryName, auto: true }
       : categorizarGasto(concepto);
+
+    // ¿Es un gasto fijo? Por regla aprendida o por coincidir con un recurrente ya registrado.
+    const comercio = extraerComercio(concepto);
+    const conceptoUpper = concepto.toUpperCase();
+    const esFijo =
+      (!!comercio && fijosSet.has(comercio.toUpperCase())) ||
+      recurrentes.some(n => conceptoUpper.includes(n));
+
     movimientos.push({
       id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
       concepto: limpiarConcepto(concepto),
@@ -136,7 +155,8 @@ const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimie
       categoria: cat.categoria,
       autoCategorized: cat.auto,
       duplicado: false,
-      incluir: true,
+      incluir: !esFijo,
+      esFijo,
     });
   }
   if (!movimientos.length) throw new Error('El archivo no contiene movimientos');
@@ -144,9 +164,10 @@ const parseExcelFile = async (file: File, reglas: Regla[] = []): Promise<Movimie
 };
 
 
-interface Props { onImported?: () => void; }
+interface Props { onImported?: () => void; gastosRecurrentes?: { name: string }[]; }
 
-export const BankExcelImporter = ({ onImported }: Props) => {
+export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props) => {
+
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
