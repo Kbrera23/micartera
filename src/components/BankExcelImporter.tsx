@@ -337,6 +337,56 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
   const toggleIncluir = (id: string) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, incluir: !m.incluir } : m));
   const removeRow = (id: string) => setMovimientos(prev => prev.filter(m => m.id !== id));
 
+  // Marca/desmarca un movimiento como gasto fijo y aprende el comercio.
+  const toggleFijo = async (id: string) => {
+    const mov = movimientos.find(m => m.id === id);
+    if (!mov) return;
+    const comercio = extraerComercio(mov.conceptoOriginal).toUpperCase().trim();
+
+    if (mov.esFijo) {
+      // Desmarcar: vuelve al recuento y se olvida la regla
+      setMovimientos(prev => prev.map(m => m.id === id ? { ...m, esFijo: false, incluir: true } : m));
+      if (user && comercio) {
+        try {
+          await supabase
+            .from('fixed_expense_rules')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('comercio', comercio);
+        } catch (err) {
+          console.error('Error eliminando la regla de gasto fijo', err);
+        }
+        setReglasFijos(prev => prev.filter(c => c !== comercio));
+      }
+      toast.success('Ya no se considera gasto fijo');
+      return;
+    }
+
+    setMovimientos(prev => prev.map(m => m.id === id ? { ...m, esFijo: true, incluir: false } : m));
+    if (user && comercio) {
+      try {
+        const { error } = await supabase
+          .from('fixed_expense_rules')
+          .upsert({ user_id: user.id, comercio }, { onConflict: 'user_id,comercio' });
+        if (error) throw error;
+        setReglasFijos(prev => prev.includes(comercio) ? prev : [...prev, comercio]);
+        // Aplicar al resto de la importación
+        setMovimientos(prev => prev.map(m =>
+          m.id !== id && !m.esFijo && extraerComercio(m.conceptoOriginal).toUpperCase() === comercio
+            ? { ...m, esFijo: true, incluir: false }
+            : m
+        ));
+        toast.success(`Recordado: ${comercio} es un gasto fijo`);
+      } catch (err) {
+        console.error('Error guardando la regla de gasto fijo', err);
+        toast.error('No se pudo recordar el gasto fijo');
+      }
+    } else {
+      toast.success('Marcado como gasto fijo');
+    }
+  };
+
+
   const handleConfirmar = async () => {
     if (!user || !movimientos.length) return;
     const seleccionados = movimientos.filter(m => m.incluir);
