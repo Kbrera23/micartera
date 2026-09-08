@@ -290,7 +290,13 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
       }
 
       setMovimientos(movs);
-      toast.success(`${movs.length} movimientos detectados`);
+      const fijosCount = movs.filter(m => m.esFijo).length;
+      toast.success(
+        fijosCount
+          ? `${movs.length} movimientos detectados (${fijosCount} fijos ya contados)`
+          : `${movs.length} movimientos detectados`
+      );
+
     }
     catch (err: any) { toast.error(err.message || 'Error al procesar el archivo'); }
     finally { setProcessing(false); }
