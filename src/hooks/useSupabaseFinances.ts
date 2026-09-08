@@ -589,6 +589,7 @@ export const useSupabaseFinances = () => {
     purchaseGoals,
     userBanks,
     monthlySavings,
+    paidProvision,
     loading,
     error,
     hasProfile,
