@@ -17,13 +17,16 @@ const RUIDO = new Set([
   'la', 'el', 'los', 'las', 'op', 'ref', 'movimiento', 'cargo', 'adeudo',
   'liquidacion', 'liquidación', 'comision', 'comisión', 'sa', 'sl', 'sau',
   'slu', 'www', 'http', 'https', 'com', 'es', 'cliente', 'clientes', 'online',
-  'contactless',
+  'contactless', 'inmediata',
+  'septiembre', 'octubre', 'noviembre', 'diciembre', 'enero', 'febrero',
+  'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
 ]);
 
 /** Lugares frecuentes que ensucian el concepto (muestra ampliable). */
 const LUGARES = new Set([
   'sevilla', 'madrid', 'barcelona', 'valencia', 'malaga', 'málaga', 'nervion',
   'nervión', 'este', 'oeste', 'centro', 'sur', 'norte', 'espana', 'españa',
+  'hermanas', 'dos', 'mairena', 'corchuela', 'pozuelo', 'coppell', 'aes', 'laes',
 ]);
 
 /**
@@ -32,11 +35,17 @@ const LUGARES = new Set([
  */
 export const extraerComercio = (concepto: string): string => {
   let s = (concepto || '').toLowerCase();
+  // Bancos como Santander ponen "Pago Movil En X" — quitamos esa muletilla entera.
+  s = s.replace(/pago movil en /g, ' ').replace(/pago movil/g, ' ');
+  // En Bizum y transferencias, lo relevante va tras la palabra "Concepto".
+  if (/\b(bizum|transferencia)\b/.test(s) && /concepto/.test(s)) {
+    s = s.split(/concepto:?\s*/)[1] || s;
+  }
   s = s.replace(/https?:\/\/\S+/g, ' ');           // urls
-  s = s.replace(/\.(com|es|net|org)\b/g, ' ');      // dominios (deja la palabra de delante)
+  s = s.replace(/\.(com|es|net|org)\b/g, ' ');      // dominios
   s = s.replace(/\d{1,2}[/\-.]\d{1,2}([/\-.]\d{2,4})?/g, ' '); // fechas
   s = s.replace(/\d{1,2}:\d{2}/g, ' ');             // horas
-  s = s.replace(/\d{2,}/g, ' ');                     // números largos (refs, tarjetas)
+  s = s.replace(/\d{2,}/g, ' ');                     // numeros largos
   s = s.replace(/[^a-záéíóúñ ]/gi, ' ');            // signos
   const tokens = s.split(/\s+/).filter(Boolean)
     .filter(t => !RUIDO.has(t) && !LUGARES.has(t) && t.length > 2);
