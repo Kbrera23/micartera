@@ -28,6 +28,7 @@ interface MinimalDashboardProps {
   categories: Category[];
   savingsByBank: Record<string, number>;
   monthlySavings: MonthlySaving[];
+  paidProvision: number;
   onAddExpense: (name: string, amount: number, isRecurring: boolean, frequency: ExpenseFrequency, bank: BankType | null) => Promise<void>;
   onAddMonthlySaving: (year: number, month: number, bank: BankType, amount: number, note?: string | null) => Promise<void> | void;
   onRemoveMonthlySaving: (id: string) => Promise<void> | void;
@@ -55,6 +56,7 @@ export const MinimalDashboard = ({
   categories,
   savingsByBank,
   monthlySavings,
+  paidProvision,
   onAddExpense,
   onAddMonthlySaving,
   onRemoveMonthlySaving,
@@ -83,7 +85,7 @@ export const MinimalDashboard = ({
           monthlyIncome={monthlyIncome}
           savingsGoal={savingsGoal}
           totalSubscriptions={totalSubscriptions}
-          reserveFund={reserveFund}
+          reserveFund={paidProvision}
           rent={rent}
           savingsByBank={savingsByBank}
         />
