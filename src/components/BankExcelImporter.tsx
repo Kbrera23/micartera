@@ -421,6 +421,8 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
   const total = incluidos.reduce((s, m) => s + m.importe, 0);
   const sinFecha = incluidos.filter(m => !m.fecha).length;
   const duplicadosCount = movimientos.filter(m => m.duplicado).length;
+  const fijosCount = movimientos.filter(m => m.esFijo).length;
+
 
   const formatFechaES = (iso: string | null): string => {
     if (!iso) return '';
