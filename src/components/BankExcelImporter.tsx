@@ -552,7 +552,8 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
                               className={cn(
                                 'border-t transition-colors hover:bg-white/3',
                                 m.duplicado && 'bg-amber-500/10',
-                                !m.incluir && 'opacity-60'
+                                m.esFijo && 'opacity-50',
+                                !m.incluir && !m.esFijo && 'opacity-60'
                               )}
                               style={{ borderColor: 'hsl(200 30% 17%)', background: m.duplicado ? undefined : baseBg }}>
                               <td className="px-3 py-3">
@@ -570,8 +571,20 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
                                       Ya existe
                                     </Badge>
                                   )}
+                                  {m.esFijo && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary bg-primary/10 shrink-0">
+                                      Fijo — ya contado
+                                    </Badge>
+                                  )}
                                 </div>
+                                <button
+                                  onClick={() => toggleFijo(m.id)}
+                                  className="mt-1 text-[10px] text-muted-foreground hover:text-primary underline underline-offset-2"
+                                >
+                                  {m.esFijo ? 'No es un gasto fijo' : 'Marcar como gasto fijo'}
+                                </button>
                               </td>
+
                               <td className={cn('px-4 py-3 font-mono whitespace-nowrap', m.fecha ? 'text-muted-foreground' : 'text-amber-400')}>
                                 {m.fecha ? formatFechaES(m.fecha) : 'Sin fecha'}
                               </td>
