@@ -121,6 +121,27 @@ export type Database = {
           },
         ]
       }
+      fixed_expense_rules: {
+        Row: {
+          comercio: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comercio: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comercio?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       monthly_payments_tracking: {
         Row: {
           amount: number
