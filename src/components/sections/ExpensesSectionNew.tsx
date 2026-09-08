@@ -101,7 +101,7 @@ export const ExpensesSection = ({
 
       {/* Importador bancario */}
       <div className="glass-card rounded-2xl p-4">
-        <BankExcelImporter onImported={refetch ?? (() => {})} />
+        <BankExcelImporter onImported={refetch ?? (() => {})} gastosRecurrentes={visibleRecurring} />
       </div>
 
       {/* Filtros */}
