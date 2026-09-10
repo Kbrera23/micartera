@@ -607,8 +607,9 @@ export const useSupabaseFinances = () => {
       monthlyRecurring, quarterlyRecurring, annualRecurring,
       hasInsufficientFunds, subscriptions, lacaixaBalance, revolutBalance,
       monthlyRevolutProvision, expensesByCategory, savingsByBank,
+      variableSpentThisMonth, provisionEntrenadorAceptada, ahorroPersonalAceptado,
     };
-  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings]);
+  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings, provisionEntrenadorAceptada, ahorroPersonalAceptado]);
 
   return {
     profile,
