@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { PiggyBank, Check, Undo2, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatCurrencyCompact, parseCurrencyInput } from '@/lib/currency';
+import { formatCurrencyCompact, parseInputCurrency } from '@/lib/currency';
 import { toast } from 'sonner';
 
 interface PersonalSavingsCardProps {
@@ -45,7 +45,7 @@ export const PersonalSavingsCard = ({ refetch }: PersonalSavingsCardProps) => {
 
   const handleConfirm = async () => {
     if (!user) return;
-    const cantidad = parseCurrencyInput(value);
+    const cantidad = parseInputCurrency(value);
     if (!cantidad || cantidad <= 0) {
       toast.error('Introduce una cantidad válida');
       return;
