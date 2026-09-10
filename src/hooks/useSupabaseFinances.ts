@@ -540,7 +540,24 @@ export const useSupabaseFinances = () => {
     );
     const totalSubscriptions = subscriptions.reduce((sum, e) => sum + e.amount, 0);
 
-    const dineroLibre        = monthlyIncome - rent - totalFixedExpenses - savingsGoal - totalPurchaseGoalQuotas - paidThisMonth;
+    // Gastos variables (no recurrentes) del mes actual
+    const nowCalc = new Date();
+    const curMonth = nowCalc.getMonth();
+    const curYear  = nowCalc.getFullYear();
+    const variableSpentThisMonth = expenses
+      .filter(e => !e.is_recurring)
+      .filter(e => {
+        const d = new Date(e.created_at);
+        return d.getMonth() === curMonth && d.getFullYear() === curYear;
+      })
+      .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+    const dineroLibre = monthlyIncome
+      - totalFixedExpenses
+      - variableSpentThisMonth
+      - provisionEntrenadorAceptada
+      - ahorroPersonalAceptado
+      - totalPurchaseGoalQuotas;
     const hasInsufficientFunds = dineroLibre < 0;
     const dineroLibrePercent   = monthlyIncome > 0 ? (dineroLibre / monthlyIncome) * 100 : 0;
 
