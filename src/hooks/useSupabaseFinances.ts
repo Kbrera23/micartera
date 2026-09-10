@@ -139,7 +139,7 @@ export const useSupabaseFinances = () => {
 
       // ✅ CORREGIDO: eliminados @ts-ignore y "as any" — categories ya está en los tipos
       //    de Supabase (Database). monthly_payments_tracking también.
-      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes, savingsRes] =
+      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes, savingsRes, savingsLogRes] =
         await Promise.all([
           supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('expenses').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
