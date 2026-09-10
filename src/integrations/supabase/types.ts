@@ -400,6 +400,39 @@ export type Database = {
         }
         Relationships: []
       }
+      savings_log: {
+        Row: {
+          anio: number
+          cantidad: number
+          created_at: string
+          destino: string
+          id: string
+          mes: number
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          anio: number
+          cantidad: number
+          created_at?: string
+          destino: string
+          id?: string
+          mes: number
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          anio?: number
+          cantidad?: number
+          created_at?: string
+          destino?: string
+          id?: string
+          mes?: number
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_banks: {
         Row: {
           bank: Database["public"]["Enums"]["bank_type"]

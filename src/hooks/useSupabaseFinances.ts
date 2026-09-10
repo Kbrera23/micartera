@@ -122,6 +122,8 @@ export const useSupabaseFinances = () => {
   const [error, setError]                 = useState<Error | null>(null);
   const [paidThisMonth, setPaidThisMonth] = useState(0);
   const [paidProvision, setPaidProvision] = useState(0);
+  const [provisionEntrenadorAceptada, setProvisionEntrenadorAceptada] = useState(0);
+  const [ahorroPersonalAceptado, setAhorroPersonalAceptado] = useState(0);
   const [monthlySavings, setMonthlySavings] = useState<MonthlySaving[]>([]);
 
   const fetchData = useCallback(async () => {
@@ -137,7 +139,7 @@ export const useSupabaseFinances = () => {
 
       // ✅ CORREGIDO: eliminados @ts-ignore y "as any" — categories ya está en los tipos
       //    de Supabase (Database). monthly_payments_tracking también.
-      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes, savingsRes] =
+      const [profileRes, expensesRes, goalsRes, banksRes, categoriesRes, trackingRes, savingsRes, savingsLogRes] =
         await Promise.all([
           supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('expenses').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -146,7 +148,16 @@ export const useSupabaseFinances = () => {
           supabase.from('categories').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
           supabase.from('monthly_payments_tracking').select('amount, payment_type').eq('user_id', user.id).eq('month', currentMonth).eq('year', currentYear),
           supabase.from('monthly_savings').select('*').eq('user_id', user.id).order('year', { ascending: false }).order('month', { ascending: false }).order('created_at', { ascending: false }),
+          supabase.from('savings_log').select('tipo, cantidad').eq('user_id', user.id).eq('mes', currentMonth).eq('anio', currentYear),
         ]);
+
+      const logRows = savingsLogRes.data || [];
+      setProvisionEntrenadorAceptada(
+        logRows.filter(r => r.tipo === 'entrenador').reduce((s, r) => s + Number(r.cantidad || 0), 0)
+      );
+      setAhorroPersonalAceptado(
+        logRows.filter(r => r.tipo === 'ahorro_personal').reduce((s, r) => s + Number(r.cantidad || 0), 0)
+      );
 
 
       if (profileRes.data) {
@@ -529,7 +540,24 @@ export const useSupabaseFinances = () => {
     );
     const totalSubscriptions = subscriptions.reduce((sum, e) => sum + e.amount, 0);
 
-    const dineroLibre        = monthlyIncome - rent - totalFixedExpenses - savingsGoal - totalPurchaseGoalQuotas - paidThisMonth;
+    // Gastos variables (no recurrentes) del mes actual
+    const nowCalc = new Date();
+    const curMonth = nowCalc.getMonth();
+    const curYear  = nowCalc.getFullYear();
+    const variableSpentThisMonth = expenses
+      .filter(e => !e.is_recurring)
+      .filter(e => {
+        const d = new Date(e.created_at);
+        return d.getMonth() === curMonth && d.getFullYear() === curYear;
+      })
+      .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+    const dineroLibre = monthlyIncome
+      - totalFixedExpenses
+      - variableSpentThisMonth
+      - provisionEntrenadorAceptada
+      - ahorroPersonalAceptado
+      - totalPurchaseGoalQuotas;
     const hasInsufficientFunds = dineroLibre < 0;
     const dineroLibrePercent   = monthlyIncome > 0 ? (dineroLibre / monthlyIncome) * 100 : 0;
 
@@ -579,8 +607,9 @@ export const useSupabaseFinances = () => {
       monthlyRecurring, quarterlyRecurring, annualRecurring,
       hasInsufficientFunds, subscriptions, lacaixaBalance, revolutBalance,
       monthlyRevolutProvision, expensesByCategory, savingsByBank,
+      variableSpentThisMonth, provisionEntrenadorAceptada, ahorroPersonalAceptado,
     };
-  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings]);
+  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings, provisionEntrenadorAceptada, ahorroPersonalAceptado]);
 
   return {
     profile,
