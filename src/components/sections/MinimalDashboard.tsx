@@ -116,6 +116,11 @@ export const MinimalDashboard = ({
         </div>
       )}
 
+      {/* Ahorro personal */}
+      <div style={{ animationDelay: '210ms' }} className="animate-fade-in">
+        <PersonalSavingsCard refetch={refetch} />
+      </div>
+
       {/* Upcoming large payments */}
       <div style={{ animationDelay: '240ms' }} className="animate-fade-in">
         <UpcomingLargePayments recurringExpenses={recurringExpenses} onAddExpense={onAddExpense} refetch={refetch} />
