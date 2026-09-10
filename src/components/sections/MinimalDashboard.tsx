@@ -3,6 +3,7 @@ import { KPICards } from '@/components/dashboard/KPICards';
 import { UpcomingLargePayments } from '@/components/dashboard/UpcomingLargePayments';
 import { RecentExpenses } from '@/components/dashboard/RecentExpenses';
 import { MonthlyReminder } from '@/components/dashboard/MonthlyReminder';
+import { PersonalSavingsCard } from '@/components/dashboard/PersonalSavingsCard';
 import { PendingImportCard } from '@/components/dashboard/PendingImportCard';
 import { MonthlySummaryCard } from '@/components/dashboard/MonthlySummaryCard';
 import { EditMonthlyFinances } from '@/components/dashboard/EditMonthlyFinances';
