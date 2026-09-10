@@ -122,6 +122,8 @@ export const useSupabaseFinances = () => {
   const [error, setError]                 = useState<Error | null>(null);
   const [paidThisMonth, setPaidThisMonth] = useState(0);
   const [paidProvision, setPaidProvision] = useState(0);
+  const [provisionEntrenadorAceptada, setProvisionEntrenadorAceptada] = useState(0);
+  const [ahorroPersonalAceptado, setAhorroPersonalAceptado] = useState(0);
   const [monthlySavings, setMonthlySavings] = useState<MonthlySaving[]>([]);
 
   const fetchData = useCallback(async () => {
