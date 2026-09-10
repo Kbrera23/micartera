@@ -148,7 +148,16 @@ export const useSupabaseFinances = () => {
           supabase.from('categories').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
           supabase.from('monthly_payments_tracking').select('amount, payment_type').eq('user_id', user.id).eq('month', currentMonth).eq('year', currentYear),
           supabase.from('monthly_savings').select('*').eq('user_id', user.id).order('year', { ascending: false }).order('month', { ascending: false }).order('created_at', { ascending: false }),
+          supabase.from('savings_log').select('tipo, cantidad').eq('user_id', user.id).eq('mes', currentMonth).eq('anio', currentYear),
         ]);
+
+      const logRows = savingsLogRes.data || [];
+      setProvisionEntrenadorAceptada(
+        logRows.filter(r => r.tipo === 'entrenador').reduce((s, r) => s + Number(r.cantidad || 0), 0)
+      );
+      setAhorroPersonalAceptado(
+        logRows.filter(r => r.tipo === 'ahorro_personal').reduce((s, r) => s + Number(r.cantidad || 0), 0)
+      );
 
 
       if (profileRes.data) {
