@@ -199,7 +199,7 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
   const [guardandoRegla, setGuardandoRegla] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const reset = () => { setFile(null); setMovimientos([]); setProcessing(false); setSaving(false); };
+  const reset = () => { setFile(null); setMovimientos([]); setSaldoSantander(null); setProcessing(false); setSaving(false); };
   const handleClose = (o: boolean) => { setOpen(o); if (!o) reset(); };
 
   const validateAndSetFile = (f: File) => {
