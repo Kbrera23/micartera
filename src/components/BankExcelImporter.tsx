@@ -97,7 +97,7 @@ const parseExcelFile = async (
   reglas: Regla[] = [],
   reglasFijos: string[] = [],
   nombresRecurrentes: string[] = [],
-): Promise<Movimiento[]> => {
+): Promise<{ movimientos: Movimiento[]; saldoSantander: number | null }> => {
   const data = await file.arrayBuffer();
   const wb = XLSX.read(data, { type: 'array', cellDates: true });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -116,6 +116,22 @@ const parseExcelFile = async (
     }
   }
   if (headerRowIdx === -1) throw new Error('Formato de Excel no reconocido');
+
+  // Saldo real de la cuenta en la cabecera (fila con "Saldo" y "Titular")
+  let saldoSantander: number | null = null;
+  for (let i = 0; i < headerRowIdx; i++) {
+    const row = (rows[i] || []).map(c => String(c ?? '').toUpperCase().replace(/\s/g, ''));
+    const sIdx = row.findIndex(c => c === 'SALDO');
+    if (sIdx !== -1 && row.some(c => c.includes('TITULAR'))) {
+      const raw = String(rows[i + 1]?.[sIdx] ?? '').replace(/[^\d.,]/g, '');
+      if (raw) {
+        const negativo = String(rows[i + 1]?.[sIdx] ?? '').trim().startsWith('-');
+        const val = parseImporte(raw);
+        if (Number.isFinite(val)) saldoSantander = negativo ? -val : val;
+      }
+      break;
+    }
+  }
 
   const fijosSet = new Set(reglasFijos.map(c => c.toUpperCase().trim()).filter(Boolean));
   const recurrentes = nombresRecurrentes
@@ -160,7 +176,7 @@ const parseExcelFile = async (
     });
   }
   if (!movimientos.length) throw new Error('El archivo no contiene movimientos');
-  return movimientos;
+  return { movimientos, saldoSantander };
 };
 
 
@@ -177,6 +193,7 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
   const [reglas, setReglas] = useState<Regla[]>([]);
   const [reglasFijos, setReglasFijos] = useState<string[]>([]);
+  const [saldoSantander, setSaldoSantander] = useState<number | null>(null);
 
   const [reglaPropuesta, setReglaPropuesta] = useState<{ comercio: string; categoria: string } | null>(null);
   const [guardandoRegla, setGuardandoRegla] = useState(false);
@@ -234,12 +251,13 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
         }
       }
 
-      const movs = await parseExcelFile(
+      const { movimientos: movs, saldoSantander: saldo } = await parseExcelFile(
         file,
         reglasActuales,
         fijosActuales,
         gastosRecurrentes.map(g => g.name),
       );
+      setSaldoSantander(saldo);
 
 
 
@@ -408,6 +426,14 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
         })),
       });
       if (error) throw error;
+      if (saldoSantander !== null) {
+        const { error: bankErr } = await supabase
+          .from('user_banks')
+          .update({ initial_balance: saldoSantander })
+          .eq('user_id', user.id)
+          .eq('bank', 'santander');
+        if (bankErr) console.error('Error actualizando saldo Santander', bankErr);
+      }
       window.dispatchEvent(new Event('pending-import-updated'));
       toast.success(`${seleccionados.length} movimientos listos — confírmalos en el Dashboard`);
       onImported?.();
