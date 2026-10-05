@@ -142,6 +142,36 @@ export type Database = {
         }
         Relationships: []
       }
+      incomes: {
+        Row: {
+          amount: number
+          concepto: string
+          created_at: string
+          fecha: string | null
+          id: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          concepto: string
+          created_at?: string
+          fecha?: string | null
+          id?: string
+          tipo?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          concepto?: string
+          created_at?: string
+          fecha?: string | null
+          id?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       monthly_payments_tracking: {
         Row: {
           amount: number
