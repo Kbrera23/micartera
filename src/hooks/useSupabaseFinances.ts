@@ -124,6 +124,7 @@ export const useSupabaseFinances = () => {
   const [paidProvision, setPaidProvision] = useState(0);
   const [provisionEntrenadorAceptada, setProvisionEntrenadorAceptada] = useState(0);
   const [ahorroPersonalAceptado, setAhorroPersonalAceptado] = useState(0);
+  const [ingresosNetosDelMes, setIngresosNetosDelMes] = useState(0);
   const [monthlySavings, setMonthlySavings] = useState<MonthlySaving[]>([]);
 
   const fetchData = useCallback(async () => {
@@ -150,6 +151,24 @@ export const useSupabaseFinances = () => {
           supabase.from('monthly_savings').select('*').eq('user_id', user.id).order('year', { ascending: false }).order('month', { ascending: false }).order('created_at', { ascending: false }),
           supabase.from('savings_log').select('tipo, cantidad').eq('user_id', user.id).eq('mes', currentMonth).eq('anio', currentYear),
         ]);
+
+      // Ingresos (Bizums recibidos, etc.) del mes en curso — sin contar la nómina
+      try {
+        const { data: incRows } = await supabase
+          .from('incomes').select('amount, tipo, fecha').eq('user_id', user.id);
+        setIngresosNetosDelMes(
+          (incRows || [])
+            .filter(r => {
+              if (r.tipo !== 'ingreso' || !r.fecha) return false;
+              const d = new Date(r.fecha as string);
+              return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear;
+            })
+            .reduce((s, r) => s + Number(r.amount || 0), 0)
+        );
+      } catch (e) {
+        console.error('Error cargando ingresos', e);
+        setIngresosNetosDelMes(0);
+      }
 
       const logRows = savingsLogRes.data || [];
       setProvisionEntrenadorAceptada(
@@ -554,7 +573,7 @@ export const useSupabaseFinances = () => {
 
     const dineroLibre = monthlyIncome
       - totalFixedExpenses
-      - variableSpentThisMonth
+      - Math.max(0, variableSpentThisMonth - ingresosNetosDelMes)
       - provisionEntrenadorAceptada
       - ahorroPersonalAceptado
       - totalPurchaseGoalQuotas;
@@ -608,8 +627,9 @@ export const useSupabaseFinances = () => {
       hasInsufficientFunds, subscriptions, lacaixaBalance, revolutBalance,
       monthlyRevolutProvision, expensesByCategory, savingsByBank,
       variableSpentThisMonth, provisionEntrenadorAceptada, ahorroPersonalAceptado,
+      ingresosNetosDelMes,
     };
-  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings, provisionEntrenadorAceptada, ahorroPersonalAceptado]);
+  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings, provisionEntrenadorAceptada, ahorroPersonalAceptado, ingresosNetosDelMes]);
 
   return {
     profile,
