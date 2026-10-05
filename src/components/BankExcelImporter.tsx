@@ -88,6 +88,8 @@ interface Movimiento {
   duplicado: boolean;
   incluir: boolean;
   esFijo: boolean;
+  esIngreso: boolean;
+  tipo?: 'ingreso' | 'nomina';
 }
 
 type Regla = { comercio: string; categoria: string };
@@ -146,9 +148,28 @@ const parseExcelFile = async (
     const importeRaw = String(row[importeIdx] || '').trim();
     if (!concepto || !importeRaw) continue;
     const importe = parseImporte(importeRaw);
-    if (!esGasto(importe)) continue;
-
     const fecha = fechaIdx !== -1 ? parseFechaCelda(row[fechaIdx]) : null;
+
+    if (!esGasto(importe)) {
+      // Positivo: ingreso (Bizum recibido, nómina...). Sin fijos ni categorización.
+      if (!isFinite(importe) || importe <= 0) continue;
+      const low = concepto.toLowerCase();
+      movimientos.push({
+        id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
+        concepto: limpiarConcepto(concepto),
+        conceptoOriginal: concepto,
+        importe: Math.abs(importe),
+        fecha,
+        categoria: 'Otros',
+        autoCategorized: true,
+        duplicado: false,
+        incluir: true,
+        esFijo: false,
+        esIngreso: true,
+        tipo: low.includes('nomina') || low.includes('nómina') ? 'nomina' : 'ingreso',
+      });
+      continue;
+    }
 
     const porRegla = categoriaPorReglas(concepto, reglas);
     const cat = porRegla
@@ -261,11 +282,11 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
 
 
 
-      // Marcar duplicados dentro del propio archivo
+      // Marcar duplicados dentro del propio archivo (solo entre movimientos del mismo tipo)
       for (let i = 0; i < movs.length; i++) {
         if (movs[i].duplicado) continue;
         for (let j = i + 1; j < movs.length; j++) {
-          if (movs[j].duplicado) continue;
+          if (movs[j].duplicado || movs[j].esIngreso !== movs[i].esIngreso) continue;
           if (esMismoMovimiento(movs[i], movs[j])) {
             movs[j].duplicado = true;
             movs[j].incluir = false;
@@ -275,8 +296,9 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
 
       // Comprobar duplicados contra la BD
       if (user) {
+        const gastosMovs = movs.filter(m => !m.esIngreso);
         try {
-          const fechas = movs.map(m => m.fecha).filter((f): f is string => !!f).sort();
+          const fechas = gastosMovs.map(m => m.fecha).filter((f): f is string => !!f).sort();
           if (fechas.length) {
             const minDate = new Date(fechas[0]);
             const maxDate = new Date(fechas[fechas.length - 1]);
@@ -294,7 +316,7 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
               importe: Number(e.amount),
               fecha: e.created_at as string,
             }));
-            for (const m of movs) {
+            for (const m of gastosMovs) {
               if (m.duplicado) continue;
               if (existentes.some(e => esMismoMovimiento(m, e))) {
                 m.duplicado = true;
@@ -304,6 +326,32 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
           }
         } catch (err) {
           console.error('Error comprobando duplicados', err);
+        }
+
+        // Duplicados de ingresos contra los ya guardados
+        const ingresosMovs = movs.filter(m => m.esIngreso);
+        if (ingresosMovs.length) {
+          try {
+            const { data, error } = await supabase
+              .from('incomes')
+              .select('concepto, amount, fecha')
+              .eq('user_id', user.id);
+            if (error) throw error;
+            const existentes = (data || []).map(r => ({
+              concepto: String(r.concepto || ''),
+              importe: Number(r.amount),
+              fecha: (r.fecha as string) || null,
+            }));
+            for (const m of ingresosMovs) {
+              if (m.duplicado) continue;
+              if (existentes.some(e => esMismoMovimiento(m, e))) {
+                m.duplicado = true;
+                m.incluir = false;
+              }
+            }
+          } catch (err) {
+            console.error('Error comprobando ingresos duplicados', err);
+          }
         }
       }
 
@@ -407,25 +455,45 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
 
   const handleConfirmar = async () => {
     if (!user || !movimientos.length) return;
-    const seleccionados = movimientos.filter(m => m.incluir);
-    if (!seleccionados.length) {
+    const seleccionados = movimientos.filter(m => m.incluir && !m.esIngreso);
+    const ingresosSel = movimientos.filter(m => m.incluir && m.esIngreso);
+    if (!seleccionados.length && !ingresosSel.length) {
       toast.warning('No hay movimientos seleccionados para importar');
       return;
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from('pending_imports').insert({
-        user_id: user.id,
-        file_name: file?.name || 'Archivo bancario',
-        movimientos: seleccionados.map(m => ({
-          concepto: m.concepto,
-          importe: m.importe,
-          fecha: m.fecha,
-          categoria: m.categoria,
-          autoCategorized: m.autoCategorized,
-        })),
-      });
-      if (error) throw error;
+      if (seleccionados.length) {
+        const { error } = await supabase.from('pending_imports').insert({
+          user_id: user.id,
+          file_name: file?.name || 'Archivo bancario',
+          movimientos: seleccionados.map(m => ({
+            concepto: m.concepto,
+            importe: m.importe,
+            fecha: m.fecha,
+            categoria: m.categoria,
+            autoCategorized: m.autoCategorized,
+          })),
+        });
+        if (error) throw error;
+      }
+      if (ingresosSel.length) {
+        const { error: incErr } = await supabase.from('incomes').insert(
+          ingresosSel.map(m => ({
+            user_id: user.id,
+            concepto: m.concepto,
+            amount: m.importe,
+            fecha: m.fecha || new Date().toISOString(),
+            tipo: m.tipo || 'ingreso',
+          })) as any
+        );
+        if (incErr) {
+          console.error('Error guardando ingresos', incErr);
+          toast.error('No se pudieron guardar los ingresos');
+        } else {
+          toast.success(`${ingresosSel.length} ingresos guardados`);
+        }
+      }
       if (saldoSantander !== null) {
         const { error: bankErr } = await supabase
           .from('user_banks')
@@ -435,7 +503,7 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
         if (bankErr) console.error('Error actualizando saldo Santander', bankErr);
       }
       window.dispatchEvent(new Event('pending-import-updated'));
-      toast.success(`${seleccionados.length} movimientos listos — confírmalos en el Dashboard`);
+      if (seleccionados.length) toast.success(`${seleccionados.length} movimientos listos — confírmalos en el Dashboard`);
       onImported?.();
       handleClose(false);
     } catch (err: any) { toast.error('Error al preparar la importación'); }
@@ -443,7 +511,9 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
   };
 
 
-  const incluidos = movimientos.filter(m => m.incluir);
+  const incluidos = movimientos.filter(m => m.incluir && !m.esIngreso);
+  const ingresosDetectados = movimientos.filter(m => m.esIngreso).length;
+  const ingresosIncluidos = movimientos.filter(m => m.incluir && m.esIngreso);
   const total = incluidos.reduce((s, m) => s + m.importe, 0);
   const sinFecha = incluidos.filter(m => !m.fecha).length;
   const duplicadosCount = movimientos.filter(m => m.duplicado).length;
@@ -531,7 +601,7 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
                   style={{ background: 'hsl(200 35% 15%)', border: '1px solid hsl(200 30% 20%)' }}>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
-                      <span className="font-semibold text-foreground">{incluidos.length}</span> de {movimientos.length} movimientos seleccionados
+                      <span className="font-semibold text-foreground">{incluidos.length}</span> de {movimientos.length - ingresosDetectados} gastos seleccionados
                     </span>
                     <span className="text-sm text-muted-foreground">
                       Total: <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
@@ -550,6 +620,11 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
                   {sinFecha > 0 && (
                     <div className="text-xs text-amber-400">
                       ⚠ {sinFecha} {sinFecha === 1 ? 'movimiento sin fecha' : 'movimientos sin fecha'} — se registrarán con la fecha de hoy.
+                    </div>
+                  )}
+                  {ingresosDetectados > 0 && (
+                    <div className="text-xs text-emerald-400">
+                      + {ingresosDetectados} {ingresosDetectados === 1 ? 'ingreso detectado' : 'ingresos detectados'} ({ingresosIncluidos.length} seleccionados, +{formatCurrency(ingresosIncluidos.reduce((s, m) => s + m.importe, 0))})
                     </div>
                   )}
 
@@ -603,20 +678,29 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
                                     </Badge>
                                   )}
                                 </div>
+                                {!m.esIngreso && (
                                 <button
                                   onClick={() => toggleFijo(m.id)}
                                   className="mt-1 text-[10px] text-muted-foreground hover:text-primary underline underline-offset-2"
                                 >
                                   {m.esFijo ? 'No es un gasto fijo' : 'Marcar como gasto fijo'}
                                 </button>
+                                )}
                               </td>
 
                               <td className={cn('px-4 py-3 font-mono whitespace-nowrap', m.fecha ? 'text-muted-foreground' : 'text-amber-400')}>
                                 {m.fecha ? formatFechaES(m.fecha) : 'Sin fecha'}
                               </td>
 
-                              <td className="px-4 py-3 text-right font-mono text-foreground">{formatCurrency(m.importe)}</td>
+                              <td className={cn('px-4 py-3 text-right font-mono', m.esIngreso ? 'text-emerald-400' : 'text-foreground')}>
+                                {m.esIngreso ? '+' : ''}{formatCurrency(m.importe)}
+                              </td>
                               <td className="px-4 py-3">
+                                {m.esIngreso ? (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 border-emerald-500/40 text-emerald-400 bg-emerald-500/10">
+                                    {m.tipo === 'nomina' ? 'Nómina' : 'Ingreso'}
+                                  </Badge>
+                                ) : (
                                 <Select value={m.categoria} onValueChange={v => updateCategoria(m.id, v as CategoryName)}>
                                   <SelectTrigger className={cn('w-[170px] h-8 border text-xs', meta.color)}>
                                     <SelectValue>
@@ -633,6 +717,7 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
                                     ))}
                                   </SelectContent>
                                 </Select>
+                                )}
                               </td>
                               <td className="px-2 py-3">
                                 <button onClick={() => removeRow(m.id)}
