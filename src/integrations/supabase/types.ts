@@ -463,6 +463,36 @@ export type Database = {
         }
         Relationships: []
       }
+      transfer_rules: {
+        Row: {
+          activa: boolean
+          banco_destino: string
+          created_at: string
+          etiqueta: string | null
+          id: string
+          patron_concepto: string
+          user_id: string
+        }
+        Insert: {
+          activa?: boolean
+          banco_destino: string
+          created_at?: string
+          etiqueta?: string | null
+          id?: string
+          patron_concepto: string
+          user_id: string
+        }
+        Update: {
+          activa?: boolean
+          banco_destino?: string
+          created_at?: string
+          etiqueta?: string | null
+          id?: string
+          patron_concepto?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_banks: {
         Row: {
           bank: Database["public"]["Enums"]["bank_type"]
