@@ -572,6 +572,7 @@ export const useSupabaseFinances = () => {
       .reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
     const dineroLibre = monthlyIncome
+      - rent
       - totalFixedExpenses
       - Math.max(0, variableSpentThisMonth - ingresosNetosDelMes)
       - provisionEntrenadorAceptada
