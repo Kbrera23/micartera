@@ -145,7 +145,7 @@ export const GoalCreationModal = ({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 p-4 py-8 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-auto flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-3 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -163,7 +163,7 @@ export const GoalCreationModal = ({
         </div>
 
         {/* Body - Con scroll */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,0.86fr)] gap-3 p-3 flex-1">
           {/* Columna izquierda */}
           <div className="space-y-3">
           {/* Nombre del objetivo */}
@@ -201,7 +201,7 @@ export const GoalCreationModal = ({
 
           {/* Estimación según el ritmo real de ahorro */}
           {showRitmoReal && estRitmo && (
-            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-3">
               <h4 className="font-semibold text-green-800 text-sm mb-1">
                 Según tu ritmo real
               </h4>
@@ -303,8 +303,8 @@ export const GoalCreationModal = ({
 
           {/* Preview de cálculos */}
           {targetAmount && ((calculationMode === 'date' && targetDate) || (calculationMode === 'quota' && monthlyQuota)) && (
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4 border-2 border-blue-100">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-3 border-2 border-blue-100">
+              <div className="flex items-center gap-2 mb-1">
                 <DollarSign className="w-4 h-4 text-blue-600" />
                 <h4 className="font-semibold text-gray-900 text-sm">Resumen</h4>
               </div>
@@ -330,7 +330,7 @@ export const GoalCreationModal = ({
               </div>
 
               {calculatedDate && (
-                <div className="mt-3 pt-3 border-t border-blue-200">
+                <div className="mt-2 pt-2 border-t border-blue-200">
                   <div className="text-xs text-gray-600 mb-1">Fecha estimada</div>
                   <div className="text-sm font-semibold text-gray-900">
                     📅 {formatDate(calculatedDate)}
@@ -340,7 +340,7 @@ export const GoalCreationModal = ({
 
               {/* Advertencia si excede dinero libre */}
               {calculatedQuota > dineroLibre && (
-                <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="text-xs text-yellow-800">
                     ⚠️ La cuota excede tu dinero libre
                   </p>
@@ -352,16 +352,16 @@ export const GoalCreationModal = ({
         </div>
 
         {/* Footer - Fijo abajo */}
-        <div className="flex gap-3 p-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
+        <div className="flex gap-3 p-3 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-semibold transition-colors"
+            className="flex-1 px-4 py-2.5 bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-semibold transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/30"
+            className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/30"
           >
             Crear Objetivo
           </button>
