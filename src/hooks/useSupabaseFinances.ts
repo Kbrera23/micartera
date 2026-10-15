@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { normalizarBanco } from '@/lib/transferRules';
 
 export type BankType = 'santander' | 'lacaixa' | 'ing' | 'revolut' | 'bbva';
 export type ExpenseFrequency = 'monthly' | 'quarterly' | 'annual';
@@ -127,6 +128,8 @@ export const useSupabaseFinances = () => {
   // Suma de TODOS los cubos de savings_log del mes (ahorro, entrenador, domiciliaciones…).
   // Es lo que de verdad ha salido del Dinero Libre hacia otras cuentas este mes.
   const [savingsDelMes, setSavingsDelMes] = useState(0);
+  // Entradas acumuladas a cada banco vía savings_log (todas las transferencias registradas).
+  const [savingsLogByBank, setSavingsLogByBank] = useState<Record<string, number>>({});
   const [ingresosNetosDelMes, setIngresosNetosDelMes] = useState(0);
   const [monthlySavings, setMonthlySavings] = useState<MonthlySaving[]>([]);
 
@@ -183,6 +186,24 @@ export const useSupabaseFinances = () => {
       setSavingsDelMes(
         logRows.reduce((s, r) => s + Number(r.cantidad || 0), 0)
       );
+
+      // Entradas acumuladas por banco (todas las transferencias registradas, todos los meses).
+      try {
+        const { data: allLog } = await supabase
+          .from('savings_log')
+          .select('cantidad, destino')
+          .eq('user_id', user.id);
+        const byBank = (allLog || []).reduce<Record<string, number>>((acc, r) => {
+          const banco = normalizarBanco(r.destino as string);
+          if (!banco) return acc;
+          acc[banco] = (acc[banco] || 0) + Number(r.cantidad || 0);
+          return acc;
+        }, {});
+        setSavingsLogByBank(byBank);
+      } catch (e) {
+        console.error('Error cargando entradas por banco', e);
+        setSavingsLogByBank({});
+      }
 
 
       if (profileRes.data) {
@@ -619,10 +640,15 @@ export const useSupabaseFinances = () => {
       .filter(item => item.total > 0 || item.category.budget_limit > 0);
 
     // Ahorros mensuales acumulados por banco (todos los registros, todos los meses)
+    // + entradas detectadas en el extracto (savings_log) a cada banco.
     const savingsByBank = monthlySavings.reduce<Record<string, number>>((acc, s) => {
-      acc[s.bank] = (acc[s.bank] || 0) + Number(s.amount || 0);
+      const banco = normalizarBanco(s.bank);
+      acc[banco] = (acc[banco] || 0) + Number(s.amount || 0);
       return acc;
     }, {});
+    for (const [banco, cantidad] of Object.entries(savingsLogByBank)) {
+      savingsByBank[banco] = (savingsByBank[banco] || 0) + cantidad;
+    }
 
     return {
       monthlyIncome, savingsGoal, rent, totalFixedExpenses, reserveFund,
@@ -635,7 +661,7 @@ export const useSupabaseFinances = () => {
       variableSpentThisMonth, provisionEntrenadorAceptada, ahorroPersonalAceptado,
       savingsDelMes, ingresosNetosDelMes,
     };
-  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings, provisionEntrenadorAceptada, ahorroPersonalAceptado, savingsDelMes, ingresosNetosDelMes]);
+  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings, provisionEntrenadorAceptada, ahorroPersonalAceptado, savingsDelMes, savingsLogByBank, ingresosNetosDelMes]);
 
   return {
     profile,
