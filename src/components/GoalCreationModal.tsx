@@ -2,6 +2,7 @@
 // Modal mejorado para crear objetivos con opción fecha/cuota y calendario moderno
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Calendar, Euro, TrendingUp, DollarSign } from 'lucide-react';
 import { ModernCalendar } from './ModernCalendar';
 import { estimarObjetivo } from '@/lib/goalEstimation';
@@ -141,7 +142,7 @@ export const GoalCreationModal = ({
     return tomorrow.toISOString().split('T')[0];
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 p-4 py-8 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-auto flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
@@ -368,5 +369,6 @@ export const GoalCreationModal = ({
         </div>
       </div>
     </div>
+    document.body
   );
 };
