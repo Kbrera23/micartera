@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -67,6 +67,39 @@ export type Database = {
           comercio?: string
           created_at?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      charges_log: {
+        Row: {
+          anio: number
+          banco: string
+          cantidad: number
+          created_at: string
+          id: string
+          mes: number
+          nombre: string
+          user_id: string
+        }
+        Insert: {
+          anio: number
+          banco: string
+          cantidad: number
+          created_at?: string
+          id?: string
+          mes: number
+          nombre: string
+          user_id: string
+        }
+        Update: {
+          anio?: number
+          banco?: string
+          cantidad?: number
+          created_at?: string
+          id?: string
+          mes?: number
+          nombre?: string
           user_id?: string
         }
         Relationships: []
@@ -168,6 +201,42 @@ export type Database = {
           fecha?: string | null
           id?: string
           tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      internal_charges: {
+        Row: {
+          activa: boolean
+          banco: string
+          cantidad: number
+          created_at: string
+          dia_mes: number | null
+          frecuencia: string
+          id: string
+          nombre: string
+          user_id: string
+        }
+        Insert: {
+          activa?: boolean
+          banco: string
+          cantidad: number
+          created_at?: string
+          dia_mes?: number | null
+          frecuencia?: string
+          id?: string
+          nombre: string
+          user_id: string
+        }
+        Update: {
+          activa?: boolean
+          banco?: string
+          cantidad?: number
+          created_at?: string
+          dia_mes?: number | null
+          frecuencia?: string
+          id?: string
+          nombre?: string
           user_id?: string
         }
         Relationships: []
