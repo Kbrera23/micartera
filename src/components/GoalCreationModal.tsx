@@ -143,9 +143,9 @@ export const GoalCreationModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 p-4 py-8 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full my-auto flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-auto flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -163,7 +163,9 @@ export const GoalCreationModal = ({
         </div>
 
         {/* Body - Con scroll */}
-        <div className="p-6 space-y-4 overflow-y-auto flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 flex-1">
+          {/* Columna izquierda */}
+          <div className="space-y-3">
           {/* Nombre del objetivo */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -256,7 +258,10 @@ export const GoalCreationModal = ({
               </button>
             </div>
           </div>
+          </div>
 
+          {/* Columna derecha */}
+          <div className="space-y-3">
           {/* Modo FECHA */}
           {calculationMode === 'date' && (
             <div>
@@ -343,10 +348,11 @@ export const GoalCreationModal = ({
               )}
             </div>
           )}
+          </div>
         </div>
 
         {/* Footer - Fijo abajo */}
-        <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
+        <div className="flex gap-3 p-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-3 bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-semibold transition-colors"
