@@ -1,0 +1,879 @@
+import { useState, useCallback, useRef } from 'react';
+import * as XLSX from 'xlsx';
+import { Upload, Check, X, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatCurrency } from '@/lib/currency';
+import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+
+import {
+  CATEGORIES,
+  CategoryName,
+  getCategoryMeta,
+  categorizarGasto,
+  parseImporte,
+  parseFechaCelda,
+  esGasto,
+} from '@/lib/bankParsing';
+import { esMismoMovimiento } from '@/lib/duplicateDetection';
+import { categoriaPorReglas, extraerComercio } from '@/lib/categoryRules';
+import { detectarTransferencia, TransferRule } from '@/lib/transferRules';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+
+const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'en', 'a', 'y', 'es']);
+const capitalizeWords = (s: string) =>
+  s.toLowerCase().split(/\s+/).map((w, i) => {
+    if (!w) return w;
+    if (i > 0 && STOPWORDS.has(w)) return w;
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }).join(' ');
+
+const limpiarConcepto = (concepto: string): string => {
+  let t = (concepto || '').trim();
+
+  // Bizum: extract person name
+  const bizumMatch = t.match(/bizum\s+(?:de|a|recibido de|enviado a)?\s*[:\-]?\s*([a-záéíóúñA-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{2,40})/i);
+  if (/bizum/i.test(t) && bizumMatch) {
+    const nombre = capitalizeWords(bizumMatch[1].trim().replace(/[,\.].*$/, '').trim());
+    return `Bizum ${nombre}`.slice(0, 35);
+  }
+
+  // Remove card refs
+  t = t.replace(/,?\s*tarj\.?:?\s*\*?\d+/gi, '');
+  t = t.replace(/\btarj\s*\*?\d+/gi, '');
+
+  // Remove common bank prefixes
+  t = t.replace(/\b(pago\s+movil\s+en|pago\s+móvil\s+en|compra\s+en|pago\s+en|bizum\s+de|bizum\s+a|recibo\s+de|recibo|transferencia\s+a|transferencia\s+de|transferencia)\b/gi, '');
+
+  // Remove the word "concepto" and stray "es," city codes
+  t = t.replace(/\bconcepto\b[:\s]*/gi, '');
+  t = t.replace(/\bes\s*,/gi, ',');
+  t = t.replace(/\b[a-záéíóúñ]+\s+es\b\s*,?/gi, m => /,/.test(m) ? ',' : ' ');
+
+  // Cleanup separators
+  t = t.replace(/[,;]+/g, ' ');
+  t = t.replace(/\s{2,}/g, ' ').trim();
+  t = t.replace(/^[,\s\-]+|[,\s\-]+$/g, '');
+
+  if (!t) return concepto.slice(0, 35);
+
+  t = capitalizeWords(t);
+
+  if (t.length > 35) t = t.slice(0, 34).trimEnd() + '…';
+  return t;
+};
+
+interface Movimiento {
+  id: string;
+  concepto: string;
+  conceptoOriginal: string;
+  importe: number;
+  fecha: string | null;
+  categoria: CategoryName;
+  autoCategorized: boolean;
+  duplicado: boolean;
+  incluir: boolean;
+  esFijo: boolean;
+  esIngreso: boolean;
+  tipo?: 'ingreso' | 'nomina';
+  // Transferencia interna detectada (Modelo A): no es gasto, es dinero movido a otra cuenta.
+  esTransferencia?: boolean;
+  transferBanco?: string;
+  transferTipo?: string;
+}
+
+type Regla = { comercio: string; categoria: string };
+
+const parseExcelFile = async (
+  file: File,
+  reglas: Regla[] = [],
+  reglasFijos: string[] = [],
+  nombresRecurrentes: string[] = [],
+  reglasTransfer: TransferRule[] = [],
+): Promise<{ movimientos: Movimiento[]; saldoSantander: number | null }> => {
+  const data = await file.arrayBuffer();
+  const wb = XLSX.read(data, { type: 'array', cellDates: true });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+  if (!rows.length) throw new Error('El archivo no contiene movimientos');
+
+  let headerRowIdx = -1, conceptoIdx = -1, importeIdx = -1, fechaIdx = -1;
+  for (let i = 0; i < Math.min(rows.length, 30); i++) {
+    const row = rows[i].map(c => String(c || '').toUpperCase().trim());
+    const cIdx = row.findIndex(c => c.includes('CONCEPTO') || c.includes('DESCRIPCI'));
+    const iIdx = row.findIndex(c => c.includes('IMPORTE'));
+    if (cIdx !== -1 && iIdx !== -1) {
+      headerRowIdx = i; conceptoIdx = cIdx; importeIdx = iIdx;
+      fechaIdx = row.findIndex(c => c.includes('FECHA'));
+      break;
+    }
+  }
+  if (headerRowIdx === -1) throw new Error('Formato de Excel no reconocido');
+
+  // Saldo real de la cuenta en la cabecera (fila con "Saldo" y "Titular")
+  let saldoSantander: number | null = null;
+  for (let i = 0; i < headerRowIdx; i++) {
+    const row = (rows[i] || []).map(c => String(c ?? '').toUpperCase().replace(/\s/g, ''));
+    const sIdx = row.findIndex(c => c === 'SALDO');
+    if (sIdx !== -1 && row.some(c => c.includes('TITULAR'))) {
+      const raw = String(rows[i + 1]?.[sIdx] ?? '').replace(/[^\d.,]/g, '');
+      if (raw) {
+        const negativo = String(rows[i + 1]?.[sIdx] ?? '').trim().startsWith('-');
+        const val = parseImporte(raw);
+        if (Number.isFinite(val)) saldoSantander = negativo ? -val : val;
+      }
+      break;
+    }
+  }
+
+  const fijosSet = new Set(reglasFijos.map(c => c.toUpperCase().trim()).filter(Boolean));
+  const recurrentes = nombresRecurrentes
+    .map(n => (n || '').toUpperCase().trim())
+    .filter(n => n.length > 2);
+
+  const movimientos: Movimiento[] = [];
+  for (let i = headerRowIdx + 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row?.length) continue;
+    const concepto = String(row[conceptoIdx] || '').trim();
+    const importeRaw = String(row[importeIdx] || '').trim();
+    if (!concepto || !importeRaw) continue;
+    const importe = parseImporte(importeRaw);
+    const fecha = fechaIdx !== -1 ? parseFechaCelda(row[fechaIdx]) : null;
+
+    if (!esGasto(importe)) {
+      // Positivo: ingreso (Bizum recibido, nómina...). Sin fijos ni categorización.
+      if (!isFinite(importe) || importe <= 0) continue;
+      const low = concepto.toLowerCase();
+      movimientos.push({
+        id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
+        concepto: limpiarConcepto(concepto),
+        conceptoOriginal: concepto,
+        importe: Math.abs(importe),
+        fecha,
+        categoria: 'Otros',
+        autoCategorized: true,
+        duplicado: false,
+        incluir: true,
+        esFijo: false,
+        esIngreso: true,
+        tipo: low.includes('nomina') || low.includes('nómina') ? 'nomina' : 'ingreso',
+      });
+      continue;
+    }
+
+    // ¿Es una transferencia interna a otra de mis cuentas? (Modelo A)
+    const transfer = detectarTransferencia(concepto, reglasTransfer);
+    if (transfer) {
+      movimientos.push({
+        id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
+        concepto: limpiarConcepto(concepto),
+        conceptoOriginal: concepto,
+        importe: Math.abs(importe),
+        fecha,
+        categoria: 'Otros',
+        autoCategorized: true,
+        duplicado: false,
+        incluir: true,
+        esFijo: false,
+        esIngreso: false,
+        esTransferencia: true,
+        transferBanco: transfer.banco,
+        transferTipo: transfer.tipo,
+      });
+      continue;
+    }
+
+    const porRegla = categoriaPorReglas(concepto, reglas);
+    const cat = porRegla
+      ? { categoria: porRegla as CategoryName, auto: true }
+      : categorizarGasto(concepto);
+
+    // ¿Es un gasto fijo? Por regla aprendida o por coincidir con un recurrente ya registrado.
+    const comercio = extraerComercio(concepto);
+    const conceptoUpper = concepto.toUpperCase();
+    const esFijo =
+      (!!comercio && fijosSet.has(comercio.toUpperCase())) ||
+      recurrentes.some(n => conceptoUpper.includes(n));
+
+    movimientos.push({
+      id: `${i}-${Math.random().toString(36).slice(2, 8)}`,
+      concepto: limpiarConcepto(concepto),
+      conceptoOriginal: concepto,
+      importe: Math.abs(importe),
+      fecha,
+      categoria: cat.categoria,
+      autoCategorized: cat.auto,
+      duplicado: false,
+      incluir: !esFijo,
+      esFijo,
+      esIngreso: false,
+    });
+  }
+  if (!movimientos.length) throw new Error('El archivo no contiene movimientos');
+  return { movimientos, saldoSantander };
+};
+
+
+interface Props { onImported?: () => void; gastosRecurrentes?: { name: string }[]; }
+
+export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props) => {
+
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
+  const [reglas, setReglas] = useState<Regla[]>([]);
+  const [reglasFijos, setReglasFijos] = useState<string[]>([]);
+  const [reglasTransfer, setReglasTransfer] = useState<TransferRule[]>([]);
+  const [saldoSantander, setSaldoSantander] = useState<number | null>(null);
+
+  const [reglaPropuesta, setReglaPropuesta] = useState<{ comercio: string; categoria: string } | null>(null);
+  const [guardandoRegla, setGuardandoRegla] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const reset = () => { setFile(null); setMovimientos([]); setSaldoSantander(null); setProcessing(false); setSaving(false); };
+  const handleClose = (o: boolean) => { setOpen(o); if (!o) reset(); };
+
+  const validateAndSetFile = (f: File) => {
+    const name = f.name.toLowerCase();
+    if (!name.endsWith('.xls') && !name.endsWith('.xlsx')) { toast.error('Solo se permiten archivos .xls o .xlsx'); return; }
+    setFile(f); setMovimientos([]);
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); setDragActive(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) validateAndSetFile(f);
+  }, []);
+
+  const handleProcess = async () => {
+    if (!file) return;
+    setProcessing(true);
+    try {
+      // Cargar las reglas aprendidas del usuario (sin bloquear si falla)
+      let reglasActuales: Regla[] = reglas;
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('category_rules')
+            .select('comercio, categoria')
+            .eq('user_id', user.id);
+          if (error) throw error;
+          reglasActuales = (data || []) as Regla[];
+          setReglas(reglasActuales);
+        } catch (err) {
+          console.error('Error cargando reglas de categorización', err);
+        }
+      }
+
+      // Cargar los comercios marcados como gasto fijo (sin bloquear si falla)
+      let fijosActuales: string[] = reglasFijos;
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('fixed_expense_rules')
+            .select('comercio')
+            .eq('user_id', user.id);
+          if (error) throw error;
+          fijosActuales = (data || []).map(r => String(r.comercio || '').toUpperCase());
+          setReglasFijos(fijosActuales);
+        } catch (err) {
+          console.error('Error cargando reglas de gastos fijos', err);
+          fijosActuales = [];
+        }
+      }
+
+      // Cargar las reglas de transferencias internas (sin bloquear si falla)
+      let transferActuales: TransferRule[] = reglasTransfer;
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('transfer_rules')
+            .select('patron_concepto, banco_destino, etiqueta, activa')
+            .eq('user_id', user.id);
+          if (error) throw error;
+          transferActuales = (data || []) as TransferRule[];
+          setReglasTransfer(transferActuales);
+        } catch (err) {
+          console.error('Error cargando reglas de transferencias', err);
+          transferActuales = [];
+        }
+      }
+
+      const { movimientos: movs, saldoSantander: saldo } = await parseExcelFile(
+        file,
+        reglasActuales,
+        fijosActuales,
+        gastosRecurrentes.map(g => g.name),
+        transferActuales,
+      );
+      setSaldoSantander(saldo);
+
+
+
+      // Marcar duplicados dentro del propio archivo (solo entre movimientos del mismo tipo).
+      // Las transferencias internas no se deduplican: dos traspasos iguales son ambos reales.
+      for (let i = 0; i < movs.length; i++) {
+        if (movs[i].duplicado || movs[i].esTransferencia) continue;
+        for (let j = i + 1; j < movs.length; j++) {
+          if (movs[j].duplicado || movs[j].esTransferencia || movs[j].esIngreso !== movs[i].esIngreso) continue;
+          if (esMismoMovimiento(movs[i], movs[j])) {
+            movs[j].duplicado = true;
+            movs[j].incluir = false;
+          }
+        }
+      }
+
+      // Comprobar duplicados contra la BD
+      if (user) {
+        const gastosMovs = movs.filter(m => !m.esIngreso && !m.esTransferencia);
+        try {
+          const fechas = gastosMovs.map(m => m.fecha).filter((f): f is string => !!f).sort();
+          if (fechas.length) {
+            const minDate = new Date(fechas[0]);
+            const maxDate = new Date(fechas[fechas.length - 1]);
+            minDate.setDate(minDate.getDate() - 1);
+            maxDate.setDate(maxDate.getDate() + 1);
+            const { data, error } = await supabase
+              .from('expenses')
+              .select('name, amount, created_at')
+              .eq('user_id', user.id)
+              .gte('created_at', minDate.toISOString())
+              .lte('created_at', maxDate.toISOString());
+            if (error) throw error;
+            const existentes = (data || []).map(e => ({
+              concepto: e.name as string,
+              importe: Number(e.amount),
+              fecha: e.created_at as string,
+            }));
+            for (const m of gastosMovs) {
+              if (m.duplicado) continue;
+              if (existentes.some(e => esMismoMovimiento(m, e))) {
+                m.duplicado = true;
+                m.incluir = false;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error comprobando duplicados', err);
+        }
+
+        // Duplicados de ingresos contra los ya guardados
+        const ingresosMovs = movs.filter(m => m.esIngreso);
+        if (ingresosMovs.length) {
+          try {
+            const { data, error } = await supabase
+              .from('incomes')
+              .select('concepto, amount, fecha')
+              .eq('user_id', user.id);
+            if (error) throw error;
+            const existentes = (data || []).map(r => ({
+              concepto: String(r.concepto || ''),
+              importe: Number(r.amount),
+              fecha: (r.fecha as string) || null,
+            }));
+            for (const m of ingresosMovs) {
+              if (m.duplicado) continue;
+              if (existentes.some(e => esMismoMovimiento(m, e))) {
+                m.duplicado = true;
+                m.incluir = false;
+              }
+            }
+          } catch (err) {
+            console.error('Error comprobando ingresos duplicados', err);
+          }
+        }
+      }
+
+      setMovimientos(movs);
+      const fijosCount = movs.filter(m => m.esFijo).length;
+      toast.success(
+        fijosCount
+          ? `${movs.length} movimientos detectados (${fijosCount} fijos ya contados)`
+          : `${movs.length} movimientos detectados`
+      );
+
+    }
+    catch (err: any) { toast.error(err.message || 'Error al procesar el archivo'); }
+    finally { setProcessing(false); }
+  };
+
+  const updateCategoria = (id: string, categoria: CategoryName) => {
+    const mov = movimientos.find(m => m.id === id);
+    setMovimientos(prev => prev.map(m => m.id === id ? { ...m, categoria } : m));
+    if (mov) {
+      setReglaPropuesta({ comercio: extraerComercio(mov.conceptoOriginal), categoria });
+    }
+  };
+
+  const guardarRegla = async () => {
+    if (!user || !reglaPropuesta) return;
+    const comercio = reglaPropuesta.comercio.trim().toUpperCase();
+    if (!comercio) { setReglaPropuesta(null); return; }
+    setGuardandoRegla(true);
+    try {
+      const { error } = await supabase
+        .from('category_rules')
+        .upsert(
+          { user_id: user.id, comercio, categoria: reglaPropuesta.categoria },
+          { onConflict: 'user_id,comercio' }
+        );
+      if (error) throw error;
+      setReglas(prev => [...prev.filter(r => r.comercio.toUpperCase() !== comercio), { comercio, categoria: reglaPropuesta.categoria }]);
+      toast.success(`Recordado: ${comercio} → ${reglaPropuesta.categoria}`);
+      setReglaPropuesta(null);
+    } catch (err) {
+      console.error('Error guardando la regla', err);
+      toast.error('No se pudo guardar la regla');
+    } finally {
+      setGuardandoRegla(false);
+    }
+  };
+
+  const toggleIncluir = (id: string) => setMovimientos(prev => prev.map(m => m.id === id ? { ...m, incluir: !m.incluir } : m));
+  const removeRow = (id: string) => setMovimientos(prev => prev.filter(m => m.id !== id));
+
+  // Marca/desmarca un movimiento como gasto fijo y aprende el comercio.
+  const toggleFijo = async (id: string) => {
+    const mov = movimientos.find(m => m.id === id);
+    if (!mov) return;
+    const comercio = extraerComercio(mov.conceptoOriginal).toUpperCase().trim();
+
+    if (mov.esFijo) {
+      // Desmarcar: vuelve al recuento y se olvida la regla
+      setMovimientos(prev => prev.map(m => m.id === id ? { ...m, esFijo: false, incluir: true } : m));
+      if (user && comercio) {
+        try {
+          await supabase
+            .from('fixed_expense_rules')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('comercio', comercio);
+        } catch (err) {
+          console.error('Error eliminando la regla de gasto fijo', err);
+        }
+        setReglasFijos(prev => prev.filter(c => c !== comercio));
+      }
+      toast.success('Ya no se considera gasto fijo');
+      return;
+    }
+
+    setMovimientos(prev => prev.map(m => m.id === id ? { ...m, esFijo: true, incluir: false } : m));
+    if (user && comercio) {
+      try {
+        const { error } = await supabase
+          .from('fixed_expense_rules')
+          .upsert({ user_id: user.id, comercio }, { onConflict: 'user_id,comercio' });
+        if (error) throw error;
+        setReglasFijos(prev => prev.includes(comercio) ? prev : [...prev, comercio]);
+        // Aplicar al resto de la importación
+        setMovimientos(prev => prev.map(m =>
+          m.id !== id && !m.esFijo && extraerComercio(m.conceptoOriginal).toUpperCase() === comercio
+            ? { ...m, esFijo: true, incluir: false }
+            : m
+        ));
+        toast.success(`Recordado: ${comercio} es un gasto fijo`);
+      } catch (err) {
+        console.error('Error guardando la regla de gasto fijo', err);
+        toast.error('No se pudo recordar el gasto fijo');
+      }
+    } else {
+      toast.success('Marcado como gasto fijo');
+    }
+  };
+
+
+  const handleConfirmar = async () => {
+    if (!user || !movimientos.length) return;
+    const seleccionados = movimientos.filter(m => m.incluir && !m.esIngreso && !m.esTransferencia);
+    const ingresosSel = movimientos.filter(m => m.incluir && m.esIngreso);
+    const transferenciasSel = movimientos.filter(m => m.incluir && m.esTransferencia);
+    if (!seleccionados.length && !ingresosSel.length && !transferenciasSel.length) {
+      toast.warning('No hay movimientos seleccionados para importar');
+      return;
+    }
+    setSaving(true);
+    try {
+      if (seleccionados.length) {
+        const { error } = await supabase.from('pending_imports').insert({
+          user_id: user.id,
+          file_name: file?.name || 'Archivo bancario',
+          movimientos: seleccionados.map(m => ({
+            concepto: m.concepto,
+            importe: m.importe,
+            fecha: m.fecha,
+            categoria: m.categoria,
+            autoCategorized: m.autoCategorized,
+          })),
+        });
+        if (error) throw error;
+      }
+      if (ingresosSel.length) {
+        const { error: incErr } = await supabase.from('incomes').insert(
+          ingresosSel.map(m => ({
+            user_id: user.id,
+            concepto: m.concepto,
+            amount: m.importe,
+            fecha: m.fecha || new Date().toISOString(),
+            tipo: m.tipo || 'ingreso',
+          })) as any
+        );
+        if (incErr) {
+          console.error('Error guardando ingresos', incErr);
+          toast.error('No se pudieron guardar los ingresos');
+        } else {
+          toast.success(`${ingresosSel.length} ingresos guardados`);
+        }
+      }
+      // Transferencias internas detectadas → savings_log (entradas a otras cuentas).
+      // Se agrupan por cubo (tipo) y mes, y se FIJA el total del mes = lo que muestra
+      // este extracto (idempotente: reimportar el mismo mes da el mismo número).
+      if (transferenciasSel.length) {
+        const grupos = new Map<string, { tipo: string; destino: string; mes: number; anio: number; cantidad: number }>();
+        for (const m of transferenciasSel) {
+          const d = m.fecha ? new Date(m.fecha) : new Date();
+          const mes = d.getMonth() + 1;
+          const anio = d.getFullYear();
+          const tipo = m.transferTipo || 'transferencia';
+          const key = `${tipo}|${anio}|${mes}`;
+          const g = grupos.get(key) || { tipo, destino: m.transferBanco || '', mes, anio, cantidad: 0 };
+          g.cantidad += m.importe;
+          grupos.set(key, g);
+        }
+        const filas = Array.from(grupos.values()).map(g => ({
+          user_id: user.id,
+          tipo: g.tipo,
+          destino: g.destino,
+          cantidad: g.cantidad,
+          mes: g.mes,
+          anio: g.anio,
+        }));
+        const { error: transErr } = await supabase
+          .from('savings_log')
+          .upsert(filas as any, { onConflict: 'user_id,tipo,mes,anio' });
+        if (transErr) {
+          console.error('Error guardando transferencias internas', transErr);
+          toast.error('No se pudieron guardar las transferencias');
+        } else {
+          toast.success(`${transferenciasSel.length} transferencias internas registradas`);
+        }
+      }
+
+      if (saldoSantander !== null) {
+        const { error: bankErr } = await supabase
+          .from('user_banks')
+          .update({ initial_balance: saldoSantander })
+          .eq('user_id', user.id)
+          .eq('bank', 'santander');
+        if (bankErr) console.error('Error actualizando saldo Santander', bankErr);
+      }
+      window.dispatchEvent(new Event('pending-import-updated'));
+      if (seleccionados.length) toast.success(`${seleccionados.length} movimientos listos — confírmalos en el Dashboard`);
+      onImported?.();
+      handleClose(false);
+    } catch (err: any) { toast.error('Error al preparar la importación'); }
+    finally { setSaving(false); }
+  };
+
+
+  const incluidos = movimientos.filter(m => m.incluir && !m.esIngreso && !m.esTransferencia);
+  const ingresosDetectados = movimientos.filter(m => m.esIngreso).length;
+  const ingresosIncluidos = movimientos.filter(m => m.incluir && m.esIngreso);
+  const transferenciasDetectadas = movimientos.filter(m => m.esTransferencia).length;
+  const transferenciasIncluidas = movimientos.filter(m => m.incluir && m.esTransferencia);
+  const total = incluidos.reduce((s, m) => s + m.importe, 0);
+  const sinFecha = incluidos.filter(m => !m.fecha).length;
+  const duplicadosCount = movimientos.filter(m => m.duplicado).length;
+  const fijosCount = movimientos.filter(m => m.esFijo).length;
+
+
+  const formatFechaES = (iso: string | null): string => {
+    if (!iso) return '';
+    const [y, mo, d] = iso.slice(0, 10).split('-');
+    return `${d}/${mo}/${y}`;
+  };
+
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        className="w-full h-11 rounded-xl font-medium gap-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
+        style={{ background: 'hsl(186 30% 14%)', color: 'hsl(186 100% 65%)' }}
+        onClick={() => setOpen(true)}
+      >
+        <Upload className="w-4 h-4" />
+        Importar Movimientos Bancarios
+      </Button>
+
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent
+          className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-0 rounded-2xl"
+          style={{ background: 'hsl(200 40% 11%)', border: '1px solid hsl(186 60% 50% / 0.12)' }}
+        >
+          <DialogHeader className="px-6 pt-6 pb-3 border-b" style={{ borderColor: 'hsl(200 30% 18%)' }}>
+            <DialogTitle className="text-xl text-foreground flex items-center gap-3">
+              <div className="p-2 rounded-xl" style={{ background: 'hsl(186 30% 16%)', border: '1px solid hsl(186 100% 50% / 0.20)' }}>
+                <FileSpreadsheet className="w-5 h-5 text-primary" />
+              </div>
+              Importar Movimientos Bancarios
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Sube un archivo Excel del banco y categoriza automáticamente tus gastos.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4 mt-4">
+            {/* Dropzone */}
+            {!movimientos.length && (
+              <div
+                onDragOver={e => { e.preventDefault(); setDragActive(true); }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={handleDrop}
+                onClick={() => inputRef.current?.click()}
+                className={cn(
+                  'border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all',
+                  dragActive
+                    ? 'border-primary bg-primary/5'
+                    : 'hover:border-primary/50 hover:bg-primary/3'
+                )}
+                style={{ borderColor: dragActive ? 'hsl(186 100% 50%)' : 'hsl(200 30% 22%)' }}
+              >
+                <div className="w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                  style={{ background: 'hsl(186 30% 16%)', border: '1px solid hsl(186 100% 50% / 0.15)' }}>
+                  <Upload className="w-7 h-7 text-primary" />
+                </div>
+                <p className="text-foreground font-medium">
+                  {file ? file.name : 'Arrastra tu archivo Excel aquí'}
+                </p>
+                <p className="text-muted-foreground text-sm mt-1">o haz click para seleccionar (.xls, .xlsx)</p>
+                <input ref={inputRef} type="file" accept=".xls,.xlsx" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) validateAndSetFile(f); }} />
+              </div>
+            )}
+
+            {file && !movimientos.length && (
+              <div className="flex gap-2">
+                <Button className="flex-1 h-11 rounded-xl shadow-lg shadow-primary/20" onClick={handleProcess} disabled={processing}>
+                  {processing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Procesando...</> : <><FileSpreadsheet className="w-4 h-4 mr-2" />Procesar archivo</>}
+                </Button>
+                <Button variant="outline" className="rounded-xl" onClick={reset}><X className="w-4 h-4" /></Button>
+              </div>
+            )}
+
+            {/* Tabla preview */}
+            {movimientos.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex flex-col gap-2 px-4 py-3 rounded-xl"
+                  style={{ background: 'hsl(200 35% 15%)', border: '1px solid hsl(200 30% 20%)' }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      <span className="font-semibold text-foreground">{incluidos.length}</span> de {movimientos.length - ingresosDetectados - transferenciasDetectadas} gastos seleccionados
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      Total: <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
+                    </span>
+                  </div>
+                  {duplicadosCount > 0 && (
+                    <div className="text-xs text-amber-400">
+                      ⚠ {duplicadosCount} {duplicadosCount === 1 ? 'movimiento ya existe' : 'movimientos ya existen'} — desmarcados, revísalos antes de confirmar.
+                    </div>
+                  )}
+                  {fijosCount > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      🔁 {fijosCount} {fijosCount === 1 ? 'gasto fijo detectado' : 'gastos fijos detectados'} — fuera del recuento porque ya están contados.
+                    </div>
+                  )}
+                  {sinFecha > 0 && (
+                    <div className="text-xs text-amber-400">
+                      ⚠ {sinFecha} {sinFecha === 1 ? 'movimiento sin fecha' : 'movimientos sin fecha'} — se registrarán con la fecha de hoy.
+                    </div>
+                  )}
+                  {ingresosDetectados > 0 && (
+                    <div className="text-xs text-emerald-400">
+                      + {ingresosDetectados} {ingresosDetectados === 1 ? 'ingreso detectado' : 'ingresos detectados'} ({ingresosIncluidos.length} seleccionados, +{formatCurrency(ingresosIncluidos.reduce((s, m) => s + m.importe, 0))})
+                    </div>
+                  )}
+                  {transferenciasDetectadas > 0 && (
+                    <div className="text-xs text-sky-400">
+                      ↔ {transferenciasDetectadas} {transferenciasDetectadas === 1 ? 'transferencia interna detectada' : 'transferencias internas detectadas'} ({transferenciasIncluidas.length} seleccionadas, {formatCurrency(transferenciasIncluidas.reduce((s, m) => s + m.importe, 0))}) — salen del Dinero Libre, no cuentan como gasto.
+                    </div>
+                  )}
+
+                </div>
+
+
+                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid hsl(200 30% 18%)' }}>
+                  <div className="max-h-[45vh] overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 z-10" style={{ background: 'hsl(200 40% 13%)' }}>
+                        <tr className="text-left text-muted-foreground">
+                          <th className="px-3 py-3 font-medium w-10"></th>
+                          <th className="px-4 py-3 font-medium">Concepto</th>
+                          <th className="px-4 py-3 font-medium whitespace-nowrap">Fecha</th>
+                          <th className="px-4 py-3 font-medium text-right">Importe</th>
+                          <th className="px-4 py-3 font-medium">Categoría</th>
+                          <th className="px-4 py-3 w-10"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {movimientos.map((m, i) => {
+                          const meta = getCategoryMeta(m.categoria);
+                          const baseBg = i % 2 === 0 ? 'hsl(200 40% 11%)' : 'hsl(200 35% 13%)';
+                          return (
+                            <tr key={m.id}
+                              className={cn(
+                                'border-t transition-colors hover:bg-white/3',
+                                m.duplicado && 'bg-amber-500/10',
+                                m.esFijo && 'opacity-50',
+                                !m.incluir && !m.esFijo && 'opacity-60'
+                              )}
+                              style={{ borderColor: 'hsl(200 30% 17%)', background: m.duplicado ? undefined : baseBg }}>
+                              <td className="px-3 py-3">
+                                <Checkbox
+                                  checked={m.incluir}
+                                  onCheckedChange={() => toggleIncluir(m.id)}
+                                  aria-label="Incluir movimiento"
+                                />
+                              </td>
+                              <td className="px-4 py-3 text-foreground max-w-xs" title={m.concepto}>
+                                <div className="flex items-center gap-2">
+                                  <span className="truncate">{m.concepto}</span>
+                                  {m.duplicado && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 text-amber-400 bg-amber-500/10 shrink-0">
+                                      Ya existe
+                                    </Badge>
+                                  )}
+                                  {m.esFijo && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary bg-primary/10 shrink-0">
+                                      Fijo — ya contado
+                                    </Badge>
+                                  )}
+                                  {m.esTransferencia && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-sky-500/40 text-sky-400 bg-sky-500/10 shrink-0">
+                                      ↔ Transferencia
+                                    </Badge>
+                                  )}
+                                </div>
+                                {!m.esIngreso && !m.esTransferencia && (
+                                <button
+                                  onClick={() => toggleFijo(m.id)}
+                                  className="mt-1 text-[10px] text-muted-foreground hover:text-primary underline underline-offset-2"
+                                >
+                                  {m.esFijo ? 'No es un gasto fijo' : 'Marcar como gasto fijo'}
+                                </button>
+                                )}
+                              </td>
+
+                              <td className={cn('px-4 py-3 font-mono whitespace-nowrap', m.fecha ? 'text-muted-foreground' : 'text-amber-400')}>
+                                {m.fecha ? formatFechaES(m.fecha) : 'Sin fecha'}
+                              </td>
+
+                              <td className={cn('px-4 py-3 text-right font-mono', m.esIngreso ? 'text-emerald-400' : 'text-foreground')}>
+                                {m.esIngreso ? '+' : ''}{formatCurrency(m.importe)}
+                              </td>
+                              <td className="px-4 py-3">
+                                {m.esTransferencia ? (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 border-sky-500/40 text-sky-400 bg-sky-500/10 capitalize">
+                                    → {m.transferBanco || 'otra cuenta'}
+                                  </Badge>
+                                ) : m.esIngreso ? (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 border-emerald-500/40 text-emerald-400 bg-emerald-500/10">
+                                    {m.tipo === 'nomina' ? 'Nómina' : 'Ingreso'}
+                                  </Badge>
+                                ) : (
+                                <Select value={m.categoria} onValueChange={v => updateCategoria(m.id, v as CategoryName)}>
+                                  <SelectTrigger className={cn('w-[170px] h-8 border text-xs', meta.color)}>
+                                    <SelectValue>
+                                      <span className="flex items-center gap-1.5">
+                                        <span>{meta.icon}</span><span>{m.categoria}</span>
+                                      </span>
+                                    </SelectValue>
+                                  </SelectTrigger>
+                                  <SelectContent style={{ background: 'hsl(200 40% 13%)', borderColor: 'hsl(200 30% 20%)' }}>
+                                    {CATEGORIES.map(c => (
+                                      <SelectItem key={c.name} value={c.name}>
+                                        <span className="flex items-center gap-2"><span>{c.icon}</span><span>{c.name}</span></span>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                )}
+                              </td>
+                              <td className="px-2 py-3">
+                                <button onClick={() => removeRow(m.id)}
+                                  className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-lg hover:bg-destructive/10">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <Button size="lg" className="w-full h-12 rounded-xl text-base font-semibold shadow-xl shadow-income/20"
+                  style={{ background: 'linear-gradient(135deg, hsl(158 64% 42%), hsl(158 64% 32%))', color: 'white' }}
+                  onClick={handleConfirmar} disabled={saving || (!incluidos.length && !ingresosIncluidos.length && !transferenciasIncluidas.length)}>
+                  {saving
+                    ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Guardando...</>
+                    : <><Check className="w-5 h-5 mr-2" />Confirmar y Guardar {incluidos.length + ingresosIncluidos.length + transferenciasIncluidas.length} Movimientos</>}
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!reglaPropuesta} onOpenChange={o => { if (!o) setReglaPropuesta(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Recordar que {reglaPropuesta?.comercio || 'este comercio'} es {reglaPropuesta?.categoria}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              La próxima vez lo clasificaré así. Puedes ajustar el nombre del comercio.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={reglaPropuesta?.comercio ?? ''}
+            onChange={e => setReglaPropuesta(prev => prev ? { ...prev, comercio: e.target.value } : prev)}
+            placeholder="Nombre del comercio"
+            aria-label="Nombre del comercio"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={guardandoRegla}>No, gracias</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => { e.preventDefault(); guardarRegla(); }}
+              disabled={guardandoRegla || !reglaPropuesta?.comercio.trim()}
+            >
+              {guardandoRegla ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</> : 'Recordar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+    </>
+  );
+};
