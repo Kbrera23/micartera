@@ -22,7 +22,7 @@ export const GoalCreationModal = ({
   show, 
   onClose, 
   onSubmit,
-  dineroLibre 
+  dineroLibre,
   ahorroMensual = 0,
   mesesData = 0
 }: GoalCreationModalProps) => {
