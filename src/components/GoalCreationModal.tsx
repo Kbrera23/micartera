@@ -4,12 +4,16 @@
 import { useState } from 'react';
 import { X, Calendar, Euro, TrendingUp, DollarSign } from 'lucide-react';
 import { ModernCalendar } from './ModernCalendar';
+import { estimarObjetivo } from '@/lib/goalEstimation';
+import { formatCurrencyCompact } from '@/lib/currency';
 
 interface GoalCreationModalProps {
   show: boolean;
   onClose: () => void;
   onSubmit: (name: string, targetAmount: number, targetDate: Date) => void;
   dineroLibre: number;
+  ahorroMensual?: number;
+  mesesData?: number;
 }
 
 type CalculationMode = 'date' | 'quota';
@@ -19,6 +23,8 @@ export const GoalCreationModal = ({
   onClose, 
   onSubmit,
   dineroLibre 
+  ahorroMensual = 0,
+  mesesData = 0
 }: GoalCreationModalProps) => {
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
@@ -65,6 +71,17 @@ export const GoalCreationModal = ({
     : targetAmount && monthlyQuota 
       ? Math.ceil(parseFloat(targetAmount) / parseFloat(monthlyQuota))
       : 0;
+
+  // Estimación según el ritmo de ahorro real del usuario
+  const amountNum = parseFloat(targetAmount);
+  const showRitmoReal = Number.isFinite(amountNum) && amountNum > 0;
+  const estRitmo = showRitmoReal
+    ? estimarObjetivo(amountNum, 0, ahorroMensual, mesesData)
+    : null;
+  const fechaEstimadaRitmo =
+    estRitmo && estRitmo.mesesNecesarios && estRitmo.mesesNecesarios > 0
+      ? new Date(new Date().setMonth(new Date().getMonth() + estRitmo.mesesNecesarios))
+      : null;
 
   const handleSubmit = () => {
     if (!name?.trim() || !targetAmount) {
@@ -179,6 +196,35 @@ export const GoalCreationModal = ({
               </span>
             </div>
           </div>
+
+          {/* Estimación según el ritmo real de ahorro */}
+          {showRitmoReal && estRitmo && (
+            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+              <h4 className="font-semibold text-green-800 text-sm mb-1">
+                Según tu ritmo real
+              </h4>
+              {ahorroMensual > 0 ? (
+                <p className="text-sm text-green-900">
+                  Por tus últimos {mesesData} meses, ahorras de media{' '}
+                  {formatCurrencyCompact(ahorroMensual)}/mes. A ese ritmo,{' '}
+                  {formatCurrencyCompact(amountNum)} te llevarían{' '}
+                  {estRitmo.mesesNecesarios}{' '}
+                  {estRitmo.mesesNecesarios === 1 ? 'mes' : 'meses'}
+                  {fechaEstimadaRitmo ? ` (sobre ${formatDate(fechaEstimadaRitmo)})` : ''}.
+                </p>
+              ) : (
+                <p className="text-sm text-green-900">
+                  Ahora mismo tu gasto medio iguala o supera tus ingresos, así que a este
+                  ritmo no estarías ahorrando para esto. Tendrías que recortar gasto.
+                </p>
+              )}
+              {estRitmo.pocosData && (
+                <p className="text-xs text-amber-700 mt-2">
+                  Estimación provisional: hay pocos meses de datos.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Toggle: Fecha vs Cuota */}
           <div>

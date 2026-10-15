@@ -371,6 +371,8 @@ export const GoalsSection = ({
         onClose={() => setShowAddModal(false)}
         onSubmit={onAddGoal}
         dineroLibre={dineroLibre}
+        ahorroMensual={ahorro}
+        mesesData={mesesData}
       />
     </div>
   );
