@@ -368,7 +368,7 @@ export const GoalCreationModal = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
     document.body
   );
 };

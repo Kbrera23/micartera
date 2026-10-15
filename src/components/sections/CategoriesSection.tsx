@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Trash2, Tag, TrendingUp, AlertTriangle, FolderOpen, Sparkles, Pencil, PiggyBank } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Category, MonthlySaving, BankType } from '@/hooks/useSupabaseFinances';
@@ -71,7 +72,7 @@ const CategoryModal = ({ initial, title, onClose, onSave }: CategoryModalProps) 
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-background/80 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="glass-card-elevated rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-border/50">
@@ -150,7 +151,8 @@ const CategoryModal = ({ initial, title, onClose, onSave }: CategoryModalProps) 
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
