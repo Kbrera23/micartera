@@ -124,6 +124,9 @@ export const useSupabaseFinances = () => {
   const [paidProvision, setPaidProvision] = useState(0);
   const [provisionEntrenadorAceptada, setProvisionEntrenadorAceptada] = useState(0);
   const [ahorroPersonalAceptado, setAhorroPersonalAceptado] = useState(0);
+  // Suma de TODOS los cubos de savings_log del mes (ahorro, entrenador, domiciliaciones…).
+  // Es lo que de verdad ha salido del Dinero Libre hacia otras cuentas este mes.
+  const [savingsDelMes, setSavingsDelMes] = useState(0);
   const [ingresosNetosDelMes, setIngresosNetosDelMes] = useState(0);
   const [monthlySavings, setMonthlySavings] = useState<MonthlySaving[]>([]);
 
@@ -176,6 +179,9 @@ export const useSupabaseFinances = () => {
       );
       setAhorroPersonalAceptado(
         logRows.filter(r => r.tipo === 'ahorro_personal').reduce((s, r) => s + Number(r.cantidad || 0), 0)
+      );
+      setSavingsDelMes(
+        logRows.reduce((s, r) => s + Number(r.cantidad || 0), 0)
       );
 
 
@@ -575,8 +581,7 @@ export const useSupabaseFinances = () => {
       - rent
       - totalFixedExpenses
       - Math.max(0, variableSpentThisMonth - ingresosNetosDelMes)
-      - provisionEntrenadorAceptada
-      - ahorroPersonalAceptado
+      - savingsDelMes
       - totalPurchaseGoalQuotas;
     const hasInsufficientFunds = dineroLibre < 0;
     const dineroLibrePercent   = monthlyIncome > 0 ? (dineroLibre / monthlyIncome) * 100 : 0;
@@ -628,9 +633,9 @@ export const useSupabaseFinances = () => {
       hasInsufficientFunds, subscriptions, lacaixaBalance, revolutBalance,
       monthlyRevolutProvision, expensesByCategory, savingsByBank,
       variableSpentThisMonth, provisionEntrenadorAceptada, ahorroPersonalAceptado,
-      ingresosNetosDelMes,
+      savingsDelMes, ingresosNetosDelMes,
     };
-  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings, provisionEntrenadorAceptada, ahorroPersonalAceptado, ingresosNetosDelMes]);
+  }, [profile, expenses, purchaseGoals, userBanks, categories, paidThisMonth, monthlySavings, provisionEntrenadorAceptada, ahorroPersonalAceptado, savingsDelMes, ingresosNetosDelMes]);
 
   return {
     profile,
