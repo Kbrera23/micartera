@@ -47,9 +47,21 @@ export const FixedExpensesOverview = ({ rent, recurringExpenses }: Props) => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from('internal_charges').select('*').eq('user_id', user.id).eq('activa', true)
-      .then(({ data }) => setCharges((data || []) as InternalCharge[]))
-      .catch(e => console.error('Error cargando gastos fijos', e));
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const { data } = await supabase
+          .from('internal_charges')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('activa', true);
+        if (!cancelled) setCharges((data || []) as InternalCharge[]);
+      } catch (e) {
+        console.error('Error cargando gastos fijos', e);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
   }, [user]);
 
   const items: Item[] = [];
