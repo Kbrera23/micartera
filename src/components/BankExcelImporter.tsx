@@ -245,12 +245,13 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
   const [reglasFijos, setReglasFijos] = useState<string[]>([]);
   const [reglasTransfer, setReglasTransfer] = useState<TransferRule[]>([]);
   const [saldoSantander, setSaldoSantander] = useState<number | null>(null);
+  const [filtro, setFiltro] = useState<null | 'duplicados' | 'fijos' | 'ingresos' | 'transferencias' | 'sinfecha'>(null);
 
   const [reglaPropuesta, setReglaPropuesta] = useState<{ comercio: string; categoria: string } | null>(null);
   const [guardandoRegla, setGuardandoRegla] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const reset = () => { setFile(null); setMovimientos([]); setSaldoSantander(null); setProcessing(false); setSaving(false); };
+  const reset = () => { setFile(null); setMovimientos([]); setSaldoSantander(null); setProcessing(false); setSaving(false); setFiltro(null); };
   const handleClose = (o: boolean) => { setOpen(o); if (!o) reset(); };
 
   const validateAndSetFile = (f: File) => {
@@ -605,6 +606,20 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
   const duplicadosCount = movimientos.filter(m => m.duplicado).length;
   const fijosCount = movimientos.filter(m => m.esFijo).length;
 
+  const toggleFiltro = (f: 'duplicados' | 'fijos' | 'ingresos' | 'transferencias' | 'sinfecha') =>
+    setFiltro(prev => (prev === f ? null : f));
+
+  // Filtro solo de visualización: no cambia qué está marcado ni qué se importa.
+  // Los contadores y el total de arriba se siguen calculando sobre todos los movimientos.
+  const movimientosVisibles = filtro
+    ? movimientos.filter(m =>
+        filtro === 'duplicados' ? m.duplicado === true
+        : filtro === 'fijos' ? m.esFijo === true
+        : filtro === 'ingresos' ? m.esIngreso === true
+        : filtro === 'transferencias' ? m.esTransferencia === true
+        : !m.fecha)
+    : movimientos;
+
 
   const formatFechaES = (iso: string | null): string => {
     if (!iso) return '';
@@ -694,29 +709,51 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
                     </span>
                   </div>
                   {duplicadosCount > 0 && (
-                    <div className="text-xs text-amber-400">
+                    <button type="button"
+                      onClick={() => toggleFiltro('duplicados')}
+                      className={cn('text-left text-xs text-amber-400 cursor-pointer -mx-2 px-2 py-1 rounded-lg transition-colors hover:bg-amber-400/10',
+                        filtro === 'duplicados' && 'underline underline-offset-4 bg-amber-400/10')}>
                       ⚠ {duplicadosCount} {duplicadosCount === 1 ? 'movimiento ya existe' : 'movimientos ya existen'} — desmarcados, revísalos antes de confirmar.
-                    </div>
+                    </button>
                   )}
                   {fijosCount > 0 && (
-                    <div className="text-xs text-muted-foreground">
+                    <button type="button"
+                      onClick={() => toggleFiltro('fijos')}
+                      className={cn('text-left text-xs text-muted-foreground cursor-pointer -mx-2 px-2 py-1 rounded-lg transition-colors hover:bg-white/5',
+                        filtro === 'fijos' && 'underline underline-offset-4 bg-white/5')}>
                       🔁 {fijosCount} {fijosCount === 1 ? 'gasto fijo detectado' : 'gastos fijos detectados'} — fuera del recuento porque ya están contados.
-                    </div>
+                    </button>
                   )}
                   {sinFecha > 0 && (
-                    <div className="text-xs text-amber-400">
+                    <button type="button"
+                      onClick={() => toggleFiltro('sinfecha')}
+                      className={cn('text-left text-xs text-amber-400 cursor-pointer -mx-2 px-2 py-1 rounded-lg transition-colors hover:bg-amber-400/10',
+                        filtro === 'sinfecha' && 'underline underline-offset-4 bg-amber-400/10')}>
                       ⚠ {sinFecha} {sinFecha === 1 ? 'movimiento sin fecha' : 'movimientos sin fecha'} — se registrarán con la fecha de hoy.
-                    </div>
+                    </button>
                   )}
                   {ingresosDetectados > 0 && (
-                    <div className="text-xs text-emerald-400">
+                    <button type="button"
+                      onClick={() => toggleFiltro('ingresos')}
+                      className={cn('text-left text-xs text-emerald-400 cursor-pointer -mx-2 px-2 py-1 rounded-lg transition-colors hover:bg-emerald-400/10',
+                        filtro === 'ingresos' && 'underline underline-offset-4 bg-emerald-400/10')}>
                       + {ingresosDetectados} {ingresosDetectados === 1 ? 'ingreso detectado' : 'ingresos detectados'} ({ingresosIncluidos.length} seleccionados, +{formatCurrency(ingresosIncluidos.reduce((s, m) => s + m.importe, 0))})
-                    </div>
+                    </button>
                   )}
                   {transferenciasDetectadas > 0 && (
-                    <div className="text-xs text-sky-400">
+                    <button type="button"
+                      onClick={() => toggleFiltro('transferencias')}
+                      className={cn('text-left text-xs text-sky-400 cursor-pointer -mx-2 px-2 py-1 rounded-lg transition-colors hover:bg-sky-400/10',
+                        filtro === 'transferencias' && 'underline underline-offset-4 bg-sky-400/10')}>
                       ↔ {transferenciasDetectadas} {transferenciasDetectadas === 1 ? 'transferencia interna detectada' : 'transferencias internas detectadas'} ({transferenciasIncluidas.length} seleccionadas, {formatCurrency(transferenciasIncluidas.reduce((s, m) => s + m.importe, 0))}) — salen del Dinero Libre, no cuentan como gasto.
-                    </div>
+                    </button>
+                  )}
+                  {filtro && (
+                    <button type="button"
+                      onClick={() => setFiltro(null)}
+                      className="self-start inline-flex items-center gap-1 text-xs text-primary cursor-pointer -mx-2 px-2 py-1 rounded-lg transition-colors hover:bg-primary/10">
+                      <X className="w-3 h-3" /> Ver todos
+                    </button>
                   )}
 
                 </div>
@@ -736,7 +773,7 @@ export const BankExcelImporter = ({ onImported, gastosRecurrentes = [] }: Props)
                         </tr>
                       </thead>
                       <tbody>
-                        {movimientos.map((m, i) => {
+                        {movimientosVisibles.map((m, i) => {
                           const meta = getCategoryMeta(m.categoria);
                           const baseBg = i % 2 === 0 ? 'hsl(200 40% 11%)' : 'hsl(200 35% 13%)';
                           return (
