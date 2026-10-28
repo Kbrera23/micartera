@@ -41,7 +41,7 @@ describe('selección y borrado de gastos', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Seleccionar Gasto a' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Seleccionar Gasto c' }));
     fireEvent.click(screen.getByRole('button', { name: 'Eliminar seleccionados' }));
-    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Eliminar', exact: true }));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }));
     expect(onRemove.mock.calls).toEqual([['a'], ['c']]);
     fireEvent.click(screen.getByRole('button', { name: /Gastos Únicos/ }));
     openList();
@@ -54,7 +54,7 @@ describe('selección y borrado de gastos', () => {
     openList();
     fireEvent.click(screen.getByRole('checkbox', { name: 'Seleccionar todo' }));
     fireEvent.click(screen.getByRole('button', { name: 'Eliminar seleccionados' }));
-    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Eliminar', exact: true }));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }));
     expect(onRemove.mock.calls).toEqual([['a'], ['b'], ['c']]);
   });
 
@@ -75,7 +75,7 @@ describe('selección y borrado de gastos', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Seleccionar todo' }));
     rerender(<ExpenseListNew {...props} expenses={expenses.slice(1)} />);
     fireEvent.click(screen.getByRole('button', { name: 'Eliminar seleccionados' }));
-    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Eliminar', exact: true }));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }));
     expect(onRemove.mock.calls).toEqual([['b'], ['c']]);
   });
 });
