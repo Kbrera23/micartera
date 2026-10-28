@@ -43,24 +43,31 @@ export const CATEGORY_KEYWORDS: Record<Exclude<CategoryName, 'Otros'>, string[]>
 /**
  * Convierte el importe de texto del banco a número.
  *
- * Maneja formato español (1.234,56) y anglosajón (1234.56), y el caso
- * ambiguo de los miles sin decimales (1.234 -> 1234).
+ * Detecta el separador decimal automáticamente: admite formato español
+ * (1.234,56), anglosajón (2,000.00) y miles sin decimales (1.234 -> 1234).
  */
 export const parseImporte = (raw: string): number => {
   if (!raw) return 0;
-  let str = String(raw).trim();
-  str = str.replace(/[€\s]/g, '');
-  if (str.includes(',')) {
-    // Formato español: los puntos son miles, la coma es decimal
-    str = str.replace(/\./g, '').replace(',', '.');
-  } else {
-    // Sin coma: un punto seguido de 3 dígitos es separador de miles (1.234)
-    const parts = str.split('.');
-    if (parts.length === 2 && parts[1].length === 3) {
-      str = str.replace('.', '');
+  let s = String(raw).replace(/[^\d.,+-]/g, '');
+  if (!s) return 0;
+
+  const neg = /^-/.test(s);
+  s = s.replace(/[+-]/g, '');
+
+  const lastSep = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'));
+  if (lastSep !== -1) {
+    const decimals = s.length - lastSep - 1;
+    if (decimals === 1 || decimals === 2) {
+      // El último separador es el decimal; el resto son separadores de miles.
+      s = s.slice(0, lastSep).replace(/[.,]/g, '') + '.' + s.slice(lastSep + 1).replace(/[.,]/g, '');
+    } else {
+      // Todos los separadores son de miles.
+      s = s.replace(/[.,]/g, '');
     }
   }
-  return parseFloat(str) || 0;
+
+  const n = parseFloat(s);
+  return isFinite(n) ? (neg ? -n : n) : 0;
 };
 
 /**
