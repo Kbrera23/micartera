@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { PurchaseGoal } from '@/hooks/useSupabaseFinances';
 import { GoalCreationModal } from '@/components/GoalCreationModal';
 import { supabase } from '@/integrations/supabase/client';
-import { gastoMedioMensual, ahorroMensual, estimarObjetivo } from '@/lib/goalEstimation';
+import { gastoMedioMensual, estimarObjetivo } from '@/lib/goalEstimation';
 
 interface GoalsSectionProps {
   goals: PurchaseGoal[];
@@ -253,17 +253,29 @@ export const GoalsSection = ({
       const userId = userData.user?.id;
       if (!userId) return;
 
-      const [{ data: gastos }, { data: profile }] = await Promise.all([
+      const [{ data: gastos }, { data: profile }, { data: aportes }] = await Promise.all([
         supabase.from('expenses').select('amount, created_at').eq('user_id', userId),
         supabase.from('profiles').select('monthly_income').eq('user_id', userId).maybeSingle(),
+        supabase.from('savings_log').select('cantidad, mes, anio').eq('user_id', userId),
       ]);
       if (cancelled) return;
 
       const medio = gastoMedioMensual(
         (gastos || []).map((g) => ({ amount: Number(g.amount), created_at: g.created_at }))
       );
+
+      // Lo que sueles apartar cada mes a otras cuentas (provisiones/transferencias).
+      const apartadoPorMes = new Map<string, number>();
+      for (const a of aportes || []) {
+        const clave = `${a.anio}-${a.mes}`;
+        apartadoPorMes.set(clave, (apartadoPorMes.get(clave) || 0) + Number(a.cantidad || 0));
+      }
+      const provisionMedia = apartadoPorMes.size
+        ? Array.from(apartadoPorMes.values()).reduce((s, v) => s + v, 0) / apartadoPorMes.size
+        : 0;
+
       setMesesData(medio.meses);
-      setAhorro(ahorroMensual(Number(profile?.monthly_income || 0), medio.medio));
+      setAhorro(Number(profile?.monthly_income || 0) - medio.medio - provisionMedia);
     };
     load();
     return () => { cancelled = true; };
