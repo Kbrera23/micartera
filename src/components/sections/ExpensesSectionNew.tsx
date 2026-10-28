@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Receipt, RefreshCw, Plus } from 'lucide-react';
 import { AddExpenseForm } from '@/components/AddExpenseFormNew';
+import { Button } from '@/components/ui/button';
 import { ExpenseListNew } from '@/components/ExpenseListNew';
 import { ExpenseFrequency, BankType, Expense, Category } from '@/hooks/useSupabaseFinances';
 import { BankExcelImporter } from '@/components/BankExcelImporter';
@@ -33,6 +34,7 @@ export const ExpensesSection = ({
   refetch,
 }: ExpensesSectionProps) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const visibleRecurring = useMemo(
     () => recurringExpenses.filter(e => !e.is_payment_record),
@@ -116,13 +118,24 @@ export const ExpensesSection = ({
         {/* Formulario */}
         <div className="lg:col-span-1">
           <div className="glass-card rounded-2xl p-4 sticky top-4">
-            <div className="flex items-center gap-2 mb-4">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-auto w-full justify-start p-0 hover:bg-transparent"
+              aria-expanded={showForm}
+              aria-controls="add-expense-form"
+              onClick={() => setShowForm(previous => !previous)}
+            >
               <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
                 <Plus className="w-4 h-4 text-primary" />
               </div>
-              <h3 className="font-semibold text-foreground">Añadir Gasto</h3>
-            </div>
-            <AddExpenseForm onAddExpense={onAddExpense} />
+              <span className="font-semibold text-foreground">Añadir Gasto</span>
+            </Button>
+            {showForm && (
+              <div id="add-expense-form" className="mt-4">
+                <AddExpenseForm onAddExpense={onAddExpense} />
+              </div>
+            )}
           </div>
         </div>
 

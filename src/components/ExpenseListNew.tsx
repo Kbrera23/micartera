@@ -1,7 +1,20 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useEffect, useId, useState } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Repeat, Calendar, Pencil } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Trash2, Repeat, Calendar, Pencil, ChevronDown } from 'lucide-react';
 import { Expense, ExpenseFrequency } from '@/hooks/useSupabaseFinances';
 import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
@@ -49,31 +62,107 @@ export const ExpenseListNew = ({
   onEdit,
   showFrequency = false
 }: ExpenseListProps) => {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const listId = useId();
+  const allSelected = expenses.length > 0 && expenses.every(expense => selected.has(expense.id));
+
+  useEffect(() => {
+    const currentIds = new Set(expenses.map(expense => expense.id));
+    setSelected(previous => {
+      const next = new Set([...previous].filter(id => currentIds.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, [expenses]);
+
+  const toggleSelection = (id: string, checked: boolean) => {
+    setSelected(previous => {
+      const next = new Set(previous);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const removeSelected = () => {
+    selected.forEach(id => onRemove(id));
+    setSelected(new Set());
+  };
+
   return (
     <Card className="glass-card rounded-2xl">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg font-medium">
+      <CardHeader className={cn('p-3', open && 'pb-3')}>
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-auto w-full justify-between gap-3 whitespace-normal p-3 text-left"
+          aria-expanded={open}
+          aria-controls={listId}
+          onClick={() => setOpen(previous => !previous)}
+        >
+          <span className="flex min-w-0 items-center gap-2 text-lg font-medium">
             {isRecurring ? (
-              <div className="p-2 rounded-xl bg-recurring-light">
+              <span className="shrink-0 p-2 rounded-xl bg-recurring-light">
                 <Repeat className="h-5 w-5 text-recurring" />
-              </div>
+              </span>
             ) : (
-              <div className="p-2 rounded-xl bg-expense-light">
+              <span className="shrink-0 p-2 rounded-xl bg-expense-light">
                 <Calendar className="h-5 w-5 text-expense" />
-              </div>
+              </span>
             )}
-            {title}
-          </CardTitle>
-          <span className={cn(
-            'text-lg font-bold',
-            isRecurring ? 'text-recurring' : 'text-expense'
-          )}>
-            {formatCurrencyCompact(total)}
+            <span>{title} · {expenses.length}</span>
           </span>
-        </div>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className={cn(
+              'text-lg font-bold whitespace-nowrap',
+              isRecurring ? 'text-recurring' : 'text-expense'
+            )}>
+              {formatCurrencyCompact(total)}
+            </span>
+            <ChevronDown className={cn('h-4 w-4 transition-transform motion-reduce:transition-none', open && 'rotate-180')} />
+          </span>
+        </Button>
       </CardHeader>
-      <CardContent>
+      {open && <CardContent id={listId} className="px-4 sm:px-6">
+        <div className="mb-3 flex flex-wrap items-center gap-3 border-b border-border pb-3">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox
+              checked={allSelected ? true : selected.size > 0 ? 'indeterminate' : false}
+              disabled={expenses.length === 0}
+              onCheckedChange={checked => setSelected(checked === true ? new Set(expenses.map(expense => expense.id)) : new Set())}
+            />
+            Seleccionar todo
+          </label>
+          {selected.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">{selected.size} seleccionados</span>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="destructive" size="sm">
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar seleccionados
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar {selected.size} gastos?</AlertDialogTitle>
+                    <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction className={buttonVariants({ variant: 'destructive' })} onClick={removeSelected}>
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
+                Quitar selección
+              </Button>
+            </>
+          )}
+        </div>
         {expenses.length === 0 ? (
           <p className="text-muted-foreground text-center py-6 text-sm">
             No hay gastos {isRecurring ? 'recurrentes' : 'únicos'}
@@ -83,8 +172,14 @@ export const ExpenseListNew = ({
             {expenses.map((expense) => (
               <div
                 key={expense.id}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-xl group"
+                className="flex flex-wrap items-center justify-between gap-y-2 p-3 bg-muted/50 rounded-xl group"
               >
+                <Checkbox
+                  className="mr-3"
+                  aria-label={`Seleccionar ${expense.name}`}
+                  checked={selected.has(expense.id)}
+                  onCheckedChange={checked => toggleSelection(expense.id, checked === true)}
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-medium truncate">{expense.name}</span>
@@ -105,6 +200,7 @@ export const ExpenseListNew = ({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                      aria-label={`Editar ${expense.name}`}
                       onClick={() => onEdit(expense)}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -114,6 +210,7 @@ export const ExpenseListNew = ({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                    aria-label={`Eliminar ${expense.name}`}
                     onClick={() => onRemove(expense.id)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -123,7 +220,7 @@ export const ExpenseListNew = ({
             ))}
           </div>
         )}
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 };
