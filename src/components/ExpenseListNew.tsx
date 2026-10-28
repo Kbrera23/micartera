@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -150,11 +150,9 @@ export const ExpenseListNew = ({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction asChild>
-                      <Button type="button" variant="destructive" onClick={removeSelected}>
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
-                      </Button>
+                    <AlertDialogAction className={buttonVariants({ variant: 'destructive' })} onClick={removeSelected}>
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
