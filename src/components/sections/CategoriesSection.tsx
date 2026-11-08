@@ -7,7 +7,7 @@ import { formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 
 const MONTHS_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const BANK_LABELS: Record<BankType, string> = { santander:'Santander', lacaixa:'La Caixa', ing:'ING', revolut:'Revolut', bbva:'BBVA' };
+const BANK_LABELS: Record<BankType, string> = { santander:'Santander', lacaixa:'La Caixa', ing:'ING', revolut:'Revolut', bbva:'BBVA', traderepublic:'Trade Republic' };
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 interface CategoryWithStats {

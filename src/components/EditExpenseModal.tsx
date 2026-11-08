@@ -40,6 +40,7 @@ const BANKS: { value: BankType; label: string }[] = [
   { value: 'ing', label: 'ING' },
   { value: 'revolut', label: 'Revolut' },
   { value: 'bbva', label: 'BBVA' },
+  { value: 'traderepublic', label: 'Trade Republic' },
 ];
 
 const FREQUENCIES: { value: ExpenseFrequency; label: string }[] = [

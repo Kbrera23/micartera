@@ -33,7 +33,7 @@ interface Props {
 }
 
 const BANCO_LABEL: Record<string, string> = {
-  ing: 'ING', revolut: 'Revolut', lacaixa: 'La Caixa', santander: 'Santander', bbva: 'BBVA',
+  ing: 'ING', revolut: 'Revolut', lacaixa: 'La Caixa', santander: 'Santander', bbva: 'BBVA', traderepublic: 'Trade Republic',
 };
 
 export const InternalChargesReminder = ({ refetch }: Props) => {

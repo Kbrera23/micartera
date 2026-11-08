@@ -22,6 +22,7 @@ const BANKS: { id: BankType; name: string; color: string; icon: typeof Building2
   { id: 'ing', name: 'ING', color: 'bg-[#FF6200]', icon: Zap },
   { id: 'revolut', name: 'Revolut', color: 'bg-[#191C1F]', icon: CreditCard },
   { id: 'bbva', name: 'BBVA', color: 'bg-[#004481]', icon: Building2 },
+  { id: 'traderepublic', name: 'Trade Republic', color: 'bg-[#242424]', icon: CreditCard },
 ];
 
 export default function Onboarding() {

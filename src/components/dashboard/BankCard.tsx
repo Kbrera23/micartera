@@ -10,6 +10,7 @@ const BANK_LOGOS: Record<BankType | string, string> = {
   ing: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/ING_Group_N.V._Logo.svg/1200px-ING_Group_N.V._Logo.svg.png',
   revolut: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Revolut_Logo.svg/1200px-Revolut_Logo.svg.png',
   bbva: '',
+  traderepublic: '',
 };
 
 interface BankCardProps {
