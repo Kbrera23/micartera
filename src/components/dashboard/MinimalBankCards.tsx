@@ -1,4 +1,4 @@
-import { formatCurrencyCompact } from '@/lib/currency';
+import { formatCurrency, formatCurrencyCompact } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { BankType } from '@/hooks/useSupabaseFinances';
 import { Info } from 'lucide-react';
@@ -28,6 +28,12 @@ const BANK_TEXT_COLOR: Record<BankType, string> = {
   ing: 'white',
   revolut: '#0a0a0a',
   bbva: 'white',
+};
+
+// Interés anual de las cuentas remuneradas (0,03 = 3% anual).
+// Los bancos que no aparecen aquí no muestran nada.
+const BANK_ANNUAL_INTEREST: Partial<Record<BankType | 'traderepublic', number>> = {
+  traderepublic: 0.03, // 3% anual
 };
 
 export const BankLogo = ({ bankId }: { bankId: BankType }) => {
@@ -139,6 +145,18 @@ export const MinimalBankCards = ({
           )}>
             {formatCurrencyCompact(bank.amount)}
           </p>
+          {(() => {
+            const annual = BANK_ANNUAL_INTEREST[bank.id];
+            if (!annual || bank.amount <= 0) return null;
+            return (
+              <p className={cn(
+                'mt-1 text-xs font-mono',
+                bank.id === 'revolut' ? 'text-gray-700' : 'text-white/60'
+              )}>
+                ~{formatCurrency((bank.amount * annual) / 12)}/mes de interés
+              </p>
+            );
+          })()}
         </div>
       ))}
     </div>
