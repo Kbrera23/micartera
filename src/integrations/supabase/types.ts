@@ -597,7 +597,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      bank_type: "santander" | "lacaixa" | "ing" | "revolut" | "bbva"
+      bank_type:
+        | "santander"
+        | "lacaixa"
+        | "ing"
+        | "revolut"
+        | "bbva"
+        | "traderepublic"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -725,7 +731,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      bank_type: ["santander", "lacaixa", "ing", "revolut", "bbva"],
+      bank_type: [
+        "santander",
+        "lacaixa",
+        "ing",
+        "revolut",
+        "bbva",
+        "traderepublic",
+      ],
     },
   },
 } as const
