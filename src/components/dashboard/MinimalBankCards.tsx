@@ -34,6 +34,7 @@ const BANK_TEXT_COLOR: Record<BankType, string> = {
 // Los bancos que no aparecen aquí no muestran nada.
 const BANK_ANNUAL_INTEREST: Partial<Record<BankType | 'traderepublic', number>> = {
   traderepublic: 0.03, // 3% anual
+  santander: 0.03, // TEMP-CHECK
 };
 
 export const BankLogo = ({ bankId }: { bankId: BankType }) => {
