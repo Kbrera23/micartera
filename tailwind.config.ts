@@ -82,6 +82,9 @@ export default {
         bbva: {
           DEFAULT: "hsl(var(--bbva))",
         },
+        traderepublic: {
+          DEFAULT: "hsl(var(--traderepublic))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

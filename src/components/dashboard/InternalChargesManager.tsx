@@ -32,7 +32,11 @@ interface Props {
   refetch?: () => void;
 }
 
-const BANCOS = ['lacaixa', 'revolut', 'ing', 'santander', 'bbva'];
+const BANCOS = ['lacaixa', 'revolut', 'ing', 'santander', 'bbva', 'traderepublic'];
+const BANCO_LABELS: Record<string, string> = {
+  lacaixa: 'La Caixa', revolut: 'Revolut', ing: 'ING',
+  santander: 'Santander', bbva: 'BBVA', traderepublic: 'Trade Republic',
+};
 const FRECUENCIAS = ['mensual', 'trimestral', 'manual'];
 
 const cardStyle: React.CSSProperties = {
@@ -180,7 +184,7 @@ export const InternalChargesManager = ({ refetch }: Props) => {
                     className="h-9 rounded-lg text-sm px-2 capitalize"
                     style={{ ...cardStyle, color: 'inherit' }}
                   >
-                    {BANCOS.map(b => <option key={b} value={b}>{b}</option>)}
+                    {BANCOS.map(b => <option key={b} value={b}>{BANCO_LABELS[b] || b}</option>)}
                   </select>
                   <select
                     value={c.frecuencia}

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { normalizarBanco } from '@/lib/transferRules';
 
-export type BankType = 'santander' | 'lacaixa' | 'ing' | 'revolut' | 'bbva';
+export type BankType = 'santander' | 'lacaixa' | 'ing' | 'revolut' | 'bbva' | 'traderepublic';
 export type ExpenseFrequency = 'monthly' | 'quarterly' | 'annual';
 
 export interface Profile {

@@ -28,11 +28,12 @@ const BANK_TEXT_COLOR: Record<BankType, string> = {
   ing: 'white',
   revolut: '#0a0a0a',
   bbva: 'white',
+  traderepublic: '#ffffff',
 };
 
 // Interés anual de las cuentas remuneradas (0,03 = 3% anual).
 // Los bancos que no aparecen aquí no muestran nada.
-const BANK_ANNUAL_INTEREST: Partial<Record<BankType | 'traderepublic', number>> = {
+const BANK_ANNUAL_INTEREST: Partial<Record<BankType, number>> = {
   traderepublic: 0.03, // 3% anual
 };
 
@@ -70,6 +71,12 @@ export const BankLogo = ({ bankId }: { bankId: BankType }) => {
           <text x="0" y="20" fontSize="18" fontWeight="900" fontFamily="Arial, sans-serif" fill={color}>BBVA</text>
         </svg>
       );
+    case 'traderepublic':
+      return (
+        <svg viewBox="0 0 135 26" className="h-5 w-auto">
+          <text x="0" y="20" fontSize="17" fontWeight="700" fontFamily="Arial, sans-serif" fill={color}>Trade Republic</text>
+        </svg>
+      );
     default:
       return null;
   }
@@ -99,6 +106,7 @@ export const MinimalBankCards = ({
     { id: 'ing', name: 'ING', amount: withSavings('ing'), bgColor: 'bg-ing' },
     { id: 'revolut', name: 'Revolut', amount: withSavings('revolut'), bgColor: 'bg-revolut' },
     { id: 'bbva', name: 'BBVA', amount: withSavings('bbva'), bgColor: 'bg-bbva' },
+    { id: 'traderepublic', name: 'Trade Republic', amount: withSavings('traderepublic'), bgColor: 'bg-traderepublic' },
   ];
 
   const activeBankIds = userBanks.map(b => b.bank);

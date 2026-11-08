@@ -26,6 +26,7 @@ const BANK_LOGOS: Record<BankType, string> = {
   ing: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/ING_Group_N.V._Logo.svg/1200px-ING_Group_N.V._Logo.svg.png',
   revolut: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Revolut_Logo.svg/1200px-Revolut_Logo.svg.png',
   bbva: '',
+  traderepublic: '',
 };
 
 const BANKS: { id: BankType; name: string; color: string }[] = [
@@ -34,6 +35,7 @@ const BANKS: { id: BankType; name: string; color: string }[] = [
   { id: 'ing', name: 'ING', color: 'bg-ing' },
   { id: 'revolut', name: 'Revolut', color: 'bg-revolut' },
   { id: 'bbva', name: 'BBVA', color: 'bg-bbva' },
+  { id: 'traderepublic', name: 'Trade Republic', color: 'bg-traderepublic' },
 ];
 
 const cardStyle: React.CSSProperties = {
@@ -104,7 +106,7 @@ export const SettingsSection = ({
   const [showFinanzas, setShowFinanzas] = useState(true);
   const [showBancos, setShowBancos] = useState(true);
   const [bankBalances, setBankBalances] = useState<Record<BankType, string>>({
-    santander: '', lacaixa: '', ing: '', revolut: '', bbva: '',
+    santander: '', lacaixa: '', ing: '', revolut: '', bbva: '', traderepublic: '',
   });
 
   useEffect(() => {
@@ -114,7 +116,7 @@ export const SettingsSection = ({
   }, [monthlyIncome, savingsGoal, rent]);
 
   useEffect(() => {
-    const nb: Record<BankType, string> = { santander: '', lacaixa: '', ing: '', revolut: '', bbva: '' };
+    const nb: Record<BankType, string> = { santander: '', lacaixa: '', ing: '', revolut: '', bbva: '', traderepublic: '' };
     userBanks.forEach((b) => {
       if (b.initial_balance > 0) nb[b.bank] = numberToInputCurrency(b.initial_balance);
     });
