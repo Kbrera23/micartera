@@ -116,7 +116,7 @@ export const SettingsSection = ({
   }, [monthlyIncome, savingsGoal, rent]);
 
   useEffect(() => {
-    const nb: Record<BankType, string> = { santander: '', lacaixa: '', ing: '', revolut: '', bbva: '' };
+    const nb: Record<BankType, string> = { santander: '', lacaixa: '', ing: '', revolut: '', bbva: '', traderepublic: '' };
     userBanks.forEach((b) => {
       if (b.initial_balance > 0) nb[b.bank] = numberToInputCurrency(b.initial_balance);
     });
