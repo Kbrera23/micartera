@@ -32,7 +32,7 @@ interface Props {
   refetch?: () => void;
 }
 
-const BANCOS = ['lacaixa', 'revolut', 'ing', 'santander', 'bbva'];
+const BANCOS = ['lacaixa', 'revolut', 'ing', 'santander', 'bbva', 'traderepublic'];
 const FRECUENCIAS = ['mensual', 'trimestral', 'manual'];
 
 const cardStyle: React.CSSProperties = {
