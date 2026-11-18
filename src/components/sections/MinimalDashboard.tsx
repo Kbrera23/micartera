@@ -6,6 +6,7 @@ import { FixedExpensesOverview } from '@/components/dashboard/FixedExpensesOverv
 import { PendingImportCard } from '@/components/dashboard/PendingImportCard';
 import { MonthlySummaryCard } from '@/components/dashboard/MonthlySummaryCard';
 import { MonthComparison } from '@/components/dashboard/MonthComparison';
+import { CategoryDonut } from '@/components/dashboard/CategoryDonut';
 import { EditMonthlyFinances } from '@/components/dashboard/EditMonthlyFinances';
 import { BankType, Expense, ExpenseFrequency, Category, MonthlySaving } from '@/hooks/useSupabaseFinances';
 
@@ -82,6 +83,11 @@ export const MinimalDashboard = ({
       {/* Comparativa del mes (vs media / mes anterior, por categorías) */}
       <div style={{ animationDelay: '90ms' }} className="animate-fade-in">
         <MonthComparison expenses={expenses} categories={categories} />
+      </div>
+
+      {/* Gasto por categoría (donut) */}
+      <div style={{ animationDelay: '105ms' }} className="animate-fade-in">
+        <CategoryDonut expenses={expenses} categories={categories} />
       </div>
 
       {/* Bank Cards Header */}
